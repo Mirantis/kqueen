@@ -1,3 +1,3 @@
-from .kqueen import main
+from .kqueen import run
 
-__all__ = ['main']
+__all__ = ['run']

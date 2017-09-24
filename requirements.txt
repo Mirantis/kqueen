@@ -1,5 +1,10 @@
-flake8
 python-jenkins
-pytest
 requests
 kubernetes
+flask
+pyyaml
+
+# dev
+flake8
+pytest
+ipython

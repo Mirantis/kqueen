@@ -1,3 +1,3 @@
-from .kqueen import main
+from kqueen import run
 
-main()
+run()
