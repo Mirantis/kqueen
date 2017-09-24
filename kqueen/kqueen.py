@@ -9,12 +9,9 @@ import logging
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
-
 app = Flask(__name__)
-cache = SimpleCache()
 
-clusters_timeout = 2 * 60
-
+provisioner = JenkinsProvisioner()
 
 @app.route('/')
 def index():
@@ -35,12 +32,7 @@ def not_implemented(error):
 # clusters
 @app.route('/api/v1/clusters', methods=['GET'])
 def list_clusters():
-    provisioner = JenkinsProvisioner()
-    clusters = cache.get('clusters')
-    if clusters is None:
-        clusters = provisioner.list()
-        cache.set('clusters', clusters, timeout=clusters_timeout)
-
+    clusters = provisioner.list()
     return jsonify({'clusters': clusters})
 
 
