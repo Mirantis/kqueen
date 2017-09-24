@@ -1,0 +1,10 @@
+python-jenkins
+requests
+kubernetes
+flask
+pyyaml
+
+# dev
+flake8
+pytest
+ipython
