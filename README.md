@@ -1,5 +1,7 @@
 # KaaS
 
+[![Build Status](https://travis-ci.org/tomkukral/kqueen.svg?branch=master)](https://travis-ci.org/tomkukral/kqueen)
+
 Kubernetes is today's probably the most promising container orchestration platform and it is gaining huge momentum. There are many different installation tools and hosted solutions:
 
 * [Kubespray](https://github.com/kubernetes-incubator/kubespray)
@@ -40,3 +42,4 @@ We have one central backend service (called *queen*) and this service listens fo
 * **Update** - install newer version of Kubernetes
 * **Autoscale** - watch Kubernetes scheduler or pods and start new minions when all existing minions are fully utilized
 * **Manage addons** - enable or disable cluster addons
+
