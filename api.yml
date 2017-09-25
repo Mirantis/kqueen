@@ -67,6 +67,10 @@ paths:
           description: "Successful operation"
           schema:
             $ref: "#/definitions/Cluster"
+        400:
+          description: "Invalid id supplied"
+        404:
+          description: "Cluster not found"
 
   /clusters/{id}/nodes:
     get:
@@ -83,6 +87,10 @@ paths:
             type: "array"
             items:
               $ref: "#/definitions/ClusterNode"
+        400:
+          description: "Invalid id supplied"
+        404:
+          description: "Cluster not found"
 
   /clusters/{id}/services:
     get:
@@ -99,3 +107,7 @@ paths:
             type: "array"
             items:
               $ref: "#/definitions/ClusterService"
+        400:
+          description: "Invalid id supplied"
+        404:
+          description: "Cluster not found"
