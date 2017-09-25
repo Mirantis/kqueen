@@ -1,8 +1,8 @@
 swagger: "2.0"
 
 info:
-  version: 0.0.1
-  title: Kubernetes queen API
+  version: "0.1"
+  title: Kubernetes Queen API
   description: A simple API to interact with Kubernetes clusters
 
 schemes:
@@ -11,75 +11,91 @@ schemes:
 
 basePath: /api/v1
 
+definitions:
+  Cluster:
+    type: object
+    properties:
+      id:
+        type: "integer"
+        format: "int64"
+      name:
+        type: "string"
+      provisioner:
+        type: "string"
+      state:
+        type: "string"
+        enum:
+          - "deployed"
+          - "failed"
+          - "deleted"
+  ClusterNode:
+    type: object
+    properties:
+      name:
+        type: string
+      # TODO: more properties
+  ClusterService:
+    type: object
+    properties:
+      name:
+        type: string
+      # TODO: more properties
+
 paths:
   # clusters
   /clusters:
     get:
-      description: List all clusters
-      properties:
-        cluster_id:
-          type: string
-        name:
-          type: string
-        provisioner:
-          type: string
-        endpoint:
-          type: string
-        state:
-          type: string
-          values:
-            - deployed
-            - failed
-            - deleted
+      summary: List all clusters
+      responses:
+        200:
+          description: "Successful operation"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/Cluster"
 
-  /clusters/<cluster_id>:
+  /clusters/{id}:
     get:
-      description: Get information about cluster
+      summary: Get information about cluster
       parameters:
-        - name: cluster_id
+        - name: "id"
+          in: "path"
+          required: true
           type: string
-      properties:
-        cluster_id:
-          type: text
-        name:
-          type: string
-        provisioner:
-          type: string
-        outputs:
-          type: string
-          description: Additional outputs provided by provisioner
-        endpoint:
-          type: string
-        state:
-          type: string
-          values:
-            - deployed
-            - failed
-            - deleted
-        authentication:
-          type: dict
-          properties:
-            enging:
-              type: string
-              values:
-                - none
-                - token
-                - certitificate
-                - password
-            settings:
-              type: dict
+      responses:
+        200:
+          description: "Successful operation"
+          schema:
+            $ref: "#/definitions/Cluster"
 
-  /clusters/<cluster_id>/status:
+  /clusters/{id}/nodes:
     get:
-      description: Query status
+      summary: Get information about cluster nodes
       parameters:
-        - name: cluster_id
+        - name: "id"
+          in: "path"
+          required: true
           type: string
-      properties:
-        health:
-          type: status
-        nodes:
-          summary: Kubernetes node objects
-          type: dict
-        services:
-          sumary: Kubernetes services objects
+      responses:
+        200:
+          description: "Successful operation"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/ClusterNode"
+
+  /clusters/{id}/services:
+    get:
+      summary: Get information about cluster services
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          type: string
+      responses:
+        200:
+          description: "Successful operation"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/ClusterService"
