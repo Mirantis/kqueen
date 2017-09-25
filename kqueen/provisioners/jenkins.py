@@ -1,11 +1,7 @@
-from pprint import pprint
 from werkzeug.contrib.cache import SimpleCache
 
 import jenkins
-import json
 import logging
-import requests
-import yaml
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -51,13 +47,13 @@ class JenkinsProvisioner():
                         'state': 'DEPLOYED',
                     }
 
-                    ## parse artifacts
-                    #if build_info.get('artifacts'):
+                    # parse artifacts
+                    # if build_info.get('artifacts'):
                     #    for a in build_info['artifacts']:
                     #        clusters[cluster_id]['artifacts'].append(a['relativePath'])
 
-                   ## read outputs and kubeconfig
-                    #for f in ['outputs.json', 'kubeconfig']:
+                    # read outputs and kubeconfig
+                    # for f in ['outputs.json', 'kubeconfig']:
                     #    url = '{}/{}/{}'.format(
                     #        build_info['url'],
                     #        'artifact',

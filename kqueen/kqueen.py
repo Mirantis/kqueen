@@ -3,7 +3,6 @@ from flask import Flask
 from flask import jsonify
 from flask import make_response
 from provisioners.jenkins import JenkinsProvisioner
-from werkzeug.contrib.cache import SimpleCache
 
 import logging
 
@@ -12,6 +11,7 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 
 provisioner = JenkinsProvisioner()
+
 
 @app.route('/')
 def index():
