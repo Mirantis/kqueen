@@ -1,0 +1,85 @@
+swagger: "2.0"
+
+info:
+  version: 0.0.1
+  title: Kubernetes queen API
+  description: A simple API to interact with Kubernetes clusters
+
+schemes:
+  - https
+  - http
+
+basePath: /api/v1
+
+paths:
+  # clusters
+  /clusters:
+    get:
+      description: List all clusters
+      properties:
+        cluster_id:
+          type: string
+        name:
+          type: string
+        provisioner:
+          type: string
+        endpoint:
+          type: string
+        state:
+          type: string
+          values:
+            - deployed
+            - failed
+            - deleted
+
+  /clusters/<cluster_id>:
+    get:
+      description: Get information about cluster
+      parameters:
+        - name: cluster_id
+          type: string
+      properties:
+        cluster_id:
+          type: text
+        name:
+          type: string
+        provisioner:
+          type: string
+        outputs:
+          type: string
+          description: Additional outputs provided by provisioner
+        endpoint:
+          type: string
+        state:
+          type: string
+          values:
+            - deployed
+            - failed
+            - deleted
+        authentication:
+          type: dict
+          properties:
+            enging:
+              type: string
+              values:
+                - none
+                - token
+                - certitificate
+                - password
+            settings:
+              type: dict
+
+  /clusters/<cluster_id>/status:
+    get:
+      description: Query status
+      parameters:
+        - name: cluster_id
+          type: string
+      properties:
+        health:
+          type: status
+        nodes:
+          summary: Kubernetes node objects
+          type: dict
+        services:
+          sumary: Kubernetes services objects
