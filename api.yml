@@ -40,12 +40,27 @@ definitions:
       name:
         type: string
       # TODO: more properties
+  Provisioner:
+    type: object
+    properties:
+      id:
+        type: "integer"
+        format: "int64"
+      name:
+        type: "string"
+      engine:
+        type: "string"
+      parameters:
+        description: "Engine-specific parameters"
+        type: "object"
 
 paths:
   # clusters
   /clusters:
     get:
       summary: List all clusters
+      produces:
+        - "application/json"
       responses:
         200:
           description: "Successful operation"
@@ -57,6 +72,8 @@ paths:
   /clusters/{id}:
     get:
       summary: Get information about cluster
+      produces:
+        - "application/json"
       parameters:
         - name: "id"
           in: "path"
@@ -71,6 +88,22 @@ paths:
           description: "Invalid id supplied"
         404:
           description: "Cluster not found"
+    delete:
+      summary: "Delete cluster"
+      produces:
+        - "application/json"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          type: string
+      responses:
+        200:
+          description: "Successful operation"
+        400:
+          description: "Invalid id supplied"
+        404:
+          description: "Cluster not found"
 
   /clusters/{id}/nodes:
     get:
@@ -80,6 +113,8 @@ paths:
           in: "path"
           required: true
           type: string
+      produces:
+        - "application/json"
       responses:
         200:
           description: "Successful operation"
@@ -95,6 +130,8 @@ paths:
   /clusters/{id}/services:
     get:
       summary: Get information about cluster services
+      produces:
+        - "application/json"
       parameters:
         - name: "id"
           in: "path"
@@ -111,3 +148,54 @@ paths:
           description: "Invalid id supplied"
         404:
           description: "Cluster not found"
+          
+  # provisioners
+  /provisioners:
+    get:
+      summary: List all provisioners
+      produces:
+        - "application/json"
+      responses:
+        200:
+          description: "Successful operation"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/Provisioner"
+
+  /provisioners/{id}:
+    get:
+      summary: Get information about provisioner
+      produces:
+        - "application/json"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          type: string
+      responses:
+        200:
+          description: "Successful operation"
+          schema:
+            $ref: "#/definitions/Provisioner"
+        400:
+          description: "Invalid id supplied"
+        404:
+          description: "Cluster not found"
+    delete:
+      summary: "Delete provisioner"
+      produces:
+        - "application/json"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          type: string
+      responses:
+        200:
+          description: "Successful operation"
+        400:
+          description: "Invalid id supplied"
+        404:
+          description: "Cluster not found"
+      
