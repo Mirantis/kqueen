@@ -21,7 +21,8 @@ definitions:
       name:
         type: "string"
       provisioner:
-        type: "string"
+        type: "integer"
+        format: "int64"
       state:
         type: "string"
         enum:
