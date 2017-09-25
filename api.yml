@@ -27,6 +27,7 @@ definitions:
         type: "string"
         enum:
           - "deployed"
+          - "pending"
           - "failed"
           - "deleted"
   ClusterNode:
