@@ -1,6 +1,6 @@
 # KaaS
 
-[![Build Status](https://travis-ci.org/tomkukral/kqueen.svg?branch=master)](https://travis-ci.org/tomkukral/kqueen)
+[![Build Status](https://travis-ci.org/Mirantis/kqueen.svg?branch=master)](https://travis-ci.org/Mirantis/kqueen)
 
 Kubernetes is today's probably the most promising container orchestration platform and it is gaining huge momentum. There are many different installation tools and hosted solutions:
 
