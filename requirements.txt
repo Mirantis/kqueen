@@ -7,4 +7,5 @@ pyyaml
 # dev
 flake8
 pytest
+pytest-cov
 ipython
