@@ -16,3 +16,16 @@ def test_main(monkeypatch):
     print(dir(__main__))
 
     assert started, 'run() not executed'
+
+
+def test_setup(monkeypatch):
+    class fake_setup:
+        def __init__(self, **kwargs):
+            self.kwargs = kwargs
+
+    monkeypatch.setattr('setuptools.setup', fake_setup)
+
+    filename = 'README.md'
+
+    from setup import long_description
+    assert open(filename, 'r').read() == long_description
