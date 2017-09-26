@@ -1,6 +1,13 @@
 # KaaS
-
 [![Build Status](https://travis-ci.org/Mirantis/kqueen.svg?branch=master)](https://travis-ci.org/Mirantis/kqueen)
+
+## Development
+
+```
+mkvirtualenv -p /usr/bin/python2 kqueen
+pip3 install -r requirements.txt
+python3 -m kqueen
+```
 
 Kubernetes is today's probably the most promising container orchestration platform and it is gaining huge momentum. There are many different installation tools and hosted solutions:
 
