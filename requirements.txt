@@ -9,3 +9,4 @@ flake8
 pytest
 pytest-cov
 ipython
+coveralls

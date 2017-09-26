@@ -1,5 +1,6 @@
 # KaaS
 [![Build Status](https://travis-ci.org/Mirantis/kqueen.svg?branch=master)](https://travis-ci.org/Mirantis/kqueen)
+[![Coverage Status](https://coveralls.io/repos/github/Mirantis/kqueen/badge.svg)](https://coveralls.io/github/Mirantis/kqueen)
 
 ## Development
 

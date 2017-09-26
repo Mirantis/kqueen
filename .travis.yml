@@ -8,3 +8,4 @@ script:
 - python3 -m flake8
 - python -m pytest --cov=. --cov-report=term-missing:skip-covered
 #- python -m pytest --cov=. --cov-fail-under=80 --cov-report=term-missing:skip-covered
+- coveralls
