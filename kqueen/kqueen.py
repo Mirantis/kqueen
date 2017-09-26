@@ -1,3 +1,8 @@
+# workaround problem with importing provisiones
+# better ways are welcome ...
+import sys
+sys.path.append('./kqueen/')
+
 from flask import abort
 from flask import Flask
 from flask import jsonify
