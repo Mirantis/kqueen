@@ -33,7 +33,7 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'kqueen = kqueen:run',
+            'kqueen = server:run',
         ],
     },
 )

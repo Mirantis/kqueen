@@ -1,13 +1,8 @@
-# workaround problem with importing provisiones
-# better ways are welcome ...
-import sys
-sys.path.append('./kqueen/')
-
 from flask import abort
 from flask import Flask
 from flask import jsonify
 from flask import make_response
-from provisioners.jenkins import JenkinsProvisioner
+from kqueen.provisioners.jenkins import JenkinsProvisioner
 
 import logging
 
@@ -54,7 +49,3 @@ def create_cluster():
 def run():
     logger.debug('kqueen starting')
     app.run(debug=True)
-
-
-if __name__ == '__main__':
-    run()

@@ -1,3 +1,3 @@
-from kqueen import run
+from kqueen import server
 
-run()
+server.run()
