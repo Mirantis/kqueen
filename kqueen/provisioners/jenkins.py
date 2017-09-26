@@ -1,10 +1,12 @@
+from werkzeug.contrib.cache import SimpleCache
+from base import Provisioner
+
 import jenkins
 import logging
 import requests
 import yaml
 
 from flask import current_app as app
-from werkzeug.contrib.cache import SimpleCache
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -12,7 +14,7 @@ logger = logging.getLogger(__name__)
 cache = SimpleCache()
 
 
-class JenkinsProvisioner():
+class JenkinsProvisioner(Provisioner):
     def __init__(self, *args, **kwargs):
         # configuration
         self.jenkins_url = kwargs.get('jenkins_url', app.config['JENKINS_API_URL'])
@@ -62,7 +64,7 @@ class JenkinsProvisioner():
                 return value
         return {}
 
-    def list(self):
+    def list_clusters(self):
         job = self.get_job()
         clusters = {}
 
