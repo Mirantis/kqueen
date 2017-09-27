@@ -62,6 +62,16 @@ class Model:
         return cls.deserialize(response.value, key=key)
 
     @classmethod
+    def exists(cls, object_id):
+        """Check if object exists"""
+
+        try:
+            cls.load(object_id)
+            return True
+        except etcd.EtcdKeyNotFound:
+            return False
+
+    @classmethod
     def deserialize(cls, serialized, **kwargs):
         deser = json.loads(serialized)
         o = cls(**deser)

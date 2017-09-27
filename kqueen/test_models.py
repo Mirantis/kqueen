@@ -60,6 +60,11 @@ class TestClusterModel:
         cluster.save()
         assert hasattr(cluster, '_key'), 'Saved object is missing _key'
 
+    def test_exists(self, cluster):
+        assert not Cluster.exists(cluster.id)
+        cluster.save()
+        assert Cluster.exists(cluster.id)
+
 
 class TestFieldCompare:
     def setup(self):
