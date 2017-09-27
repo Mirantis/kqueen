@@ -65,6 +65,12 @@ class TestClusterModel:
         cluster.save()
         assert Cluster.exists(cluster.id)
 
+    def test_get_db_key_missing(self, cluster):
+        cluster.id.set_value(None)
+
+        with pytest.raises(Exception, match=r'Missing object id'):
+            cluster.get_db_key()
+
 
 class TestFieldCompare:
     def setup(self):

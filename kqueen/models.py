@@ -93,7 +93,7 @@ class Model:
         return fields
 
     def get_db_key(self):
-        if not self.id:
+        if self.id and self.id.empty():
             raise Exception('Missing object id')
 
         return '{}{}'.format(self.__class__.get_db_prefix(), self.id.serialize())
