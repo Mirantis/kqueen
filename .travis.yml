@@ -2,6 +2,11 @@ language: python
 python:
   - '3.5'
   - '3.6'
+sudo: required
+service:
+  - docker
+before_install:
+  - docker-compose up -d
 install:
   - pip3 install -r requirements.txt
 script:
