@@ -9,6 +9,6 @@ services:
       ETCD_INITIAL_ADVERTISE_PEER_URLS: http://localhost:2380
       ETCD_INITIAL_CLUSTER_STATE: new
       ETCD_INITIAL_CLUSTER_TOKEN: etcd-cluster-1
-      ETCD_LISTEN_CLIENT_URLS: http://localhost:2379,http://localhost:4001
+      ETCD_LISTEN_CLIENT_URLS: http://0.0.0.0:4001
       ETCD_LISTEN_PEER_URLS: http://localhost:2380
       ETCD_ADVERTISE_CLIENT_URLS: http://localhost:4001

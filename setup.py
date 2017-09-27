@@ -23,6 +23,7 @@ setup(
         'kubernetes',
         'flask',
         'pyyaml',
+        'python-etcd',
     ],
     classifiers=[
         'Operating System :: POSIX :: Linux',

@@ -3,6 +3,7 @@ requests
 kubernetes
 flask
 pyyaml
+python-etcd
 
 # dev
 flake8
