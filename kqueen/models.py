@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import etcd
 import uuid
 import json
