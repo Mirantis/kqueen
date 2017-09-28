@@ -71,6 +71,20 @@ class TestClusterModel:
         with pytest.raises(Exception, match=r'Missing object id'):
             cluster.get_db_key()
 
+    def test_list_with_objects(self, cluster):
+        cluster.save()
+
+        loaded = Cluster.list()
+        assert str(cluster.id) in loaded
+
+    def test_list_without_objects(self, cluster):
+        cluster.save()
+
+        loaded = Cluster.list(return_objects=False)
+        assert str(cluster.id) in loaded
+        for o_name, o in loaded.items():
+            assert o is None
+
 
 class TestFieldCompare:
     def setup(self):

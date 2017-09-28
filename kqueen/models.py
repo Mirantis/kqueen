@@ -54,17 +54,33 @@ class Model:
         return o
 
     @classmethod
+    def list(cls, return_objects=True):
+        """List objects in the database"""
+        output = {}
+
+        key = cls.get_db_prefix()
+
+        directory = db.client.get(key)
+        for result in directory.children:
+            if return_objects:
+                output[result.key.replace(key, '')] = cls.deserialize(result.value)
+            else:
+                output[result.key.replace(key, '')] = None
+
+        return output
+
+    @classmethod
     def load(cls, object_id):
         """Load object from database"""
 
         key = '{}{}'.format(cls.get_db_prefix(), str(object_id))
-
         try:
             response = db.client.read(key)
+            value = response.value
         except etcd.EtcdKeyNotFound:
             raise
 
-        return cls.deserialize(response.value, key=key)
+        return cls.deserialize(value, key=key)
 
     @classmethod
     def exists(cls, object_id):
