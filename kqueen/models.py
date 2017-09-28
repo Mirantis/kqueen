@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 class EtcdOrm:
     def __init__(self, **kwargs):
         self.client = etcd.Client()
+        self.namespace = 'default'
         self.prefix = kwargs.get('prefix', '/kqueen/obj/')
 
 
@@ -35,7 +36,11 @@ class Model:
 
     @classmethod
     def get_db_prefix(cls):
-        return '{}{}/'.format(db.prefix, cls.get_model_name())
+        return '{prefix}{namespace}/{model}/'.format(
+            prefix=db.prefix,
+            namespace=db.namespace,
+            model=cls.get_model_name(),
+        )
 
     @classmethod
     def create(cls, **kwargs):

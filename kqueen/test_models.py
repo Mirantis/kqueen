@@ -18,7 +18,7 @@ class TestModelMethods:
 
     def test_get_db_prefix(self):
         model_class = Cluster
-        req = '/kqueen/obj/cluster/'
+        req = '/kqueen/obj/default/cluster/'
 
         assert model_class.get_db_prefix() == req
 
