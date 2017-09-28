@@ -1,0 +1,10 @@
+{% if session.logged_in %}
+	<ul class="nav navbar-nav navbar-right">
+	  <li><a href="/logout">Logout</a></li>
+	</ul>
+{% else %}
+	<ul class="nav navbar-nav navbar-right">
+	  <li><a href="/login">Login</a></li>
+	</ul>
+{% endif %}
+

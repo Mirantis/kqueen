@@ -1,0 +1,85 @@
+// *****************************************************************************
+// Variables
+// *****************************************************************************
+
+
+//== Colors
+//
+//## Gray and brand colors for use across Bootstrap.
+
+$brand-primary: #2BBBAD;
+$brand-success: #00C851;
+$brand-warning: #ffbb33;
+$brand-danger: #ff4444;
+$brand-info: #33b5e5;
+
+
+//== Components
+//
+//## Define common padding and border radius sizes and more. Values based on 14px text and 1.428 line-height (~20px to start).
+
+$border-radius-base:        0px;
+$border-radius-large:       0px;
+$border-radius-small:       0px;
+
+
+//== Buttons
+//
+//## For each of Bootstrap's buttons, define text, background and border color.
+
+$btn-primary-border:             $brand-primary;
+$btn-success-border:             $brand-success;
+$btn-info-border:                $brand-info;
+$btn-warning-border:             $brand-warning;
+$btn-danger-border:              $brand-danger;
+
+
+//== Navbar
+//
+//##
+
+// Basics of a navbar
+
+$navbar-default-color:             $brand-primary;
+$navbar-default-bg:                #fff;
+$navbar-default-border:            $navbar-default-color;
+
+// Navbar links
+$navbar-default-link-color:                $brand-primary;
+$navbar-default-link-hover-color:          darken($navbar-default-link-color, 6.5%);
+$navbar-default-link-active-color:         $navbar-default-link-hover-color;
+
+// Navbar toggle
+$navbar-default-toggle-hover-bg:           transparent;
+$navbar-default-toggle-icon-bar-bg:        $brand-primary;
+$navbar-default-toggle-border-color:       transparent;
+
+//=== Inverted navbar
+// Reset inverted navbar basics
+$navbar-inverse-color:                      #fff;
+$navbar-inverse-bg:                         $brand-primary;
+$navbar-inverse-border:                     $navbar-inverse-bg;
+
+$navbar-inverse-link-color:                #eee;
+$navbar-inverse-link-hover-color:          #fff;
+$navbar-inverse-link-active-color:         $navbar-inverse-link-hover-color;
+
+// Inverted navbar toggle
+$navbar-inverse-toggle-hover-bg:            transparent;
+$navbar-inverse-toggle-border-color:        transparent;
+
+//== Pagination
+//
+//##
+
+$pagination-border:                    transparent;
+$pagination-hover-border:              transparent;
+$pagination-active-border:             transparent;
+$pagination-disabled-border:           transparent;
+
+//== Tooltips
+//
+//##
+
+$tooltip-bg:                  $brand-primary;
+

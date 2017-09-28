@@ -99,3 +99,10 @@ ENV/
 
 # mypy
 .mypy_cache/
+
+# ViM swp files
+*.swp
+
+# NPM asset dir
+node_modules/
+
