@@ -128,6 +128,7 @@ class Model:
             # TODO check id doesn't exists
 
             self.id.set_value(newid)
+            return self.id
 
     def save(self):
         """Save object"""
