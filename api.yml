@@ -16,13 +16,13 @@ definitions:
     type: object
     properties:
       id:
-        type: "integer"
-        format: "int64"
+        type: "string"
+        format: "uuid"
       name:
         type: "string"
       provisioner:
-        type: "integer"
-        format: "int64"
+        type: "string"
+        format: "uuid"
       state:
         type: "string"
         enum:
@@ -46,8 +46,8 @@ definitions:
     type: object
     properties:
       id:
-        type: "integer"
-        format: "int64"
+        type: "string"
+        format: "uuid"
       name:
         type: "string"
       engine:
