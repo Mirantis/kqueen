@@ -1,6 +1,7 @@
 from kqueen.models import Cluster
-from kqueen.models import Model
-from kqueen.models import Field
+from kqueen.storages.etcd import Field
+from kqueen.storages.etcd import Model
+from pprint import pprint
 
 import pytest
 import uuid
@@ -84,6 +85,14 @@ class TestClusterModel:
         assert str(cluster.id) in loaded
         for o_name, o in loaded.items():
             assert o is None
+
+    def test_status(self, cluster):
+        cluster.save()
+        status = cluster.status()
+        pprint(status)
+
+        assert isinstance(status, dict)
+        # TODO: add tests for content
 
 
 class TestFieldCompare:

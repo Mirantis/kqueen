@@ -2,6 +2,8 @@ from kqueen.storages.etcd import IdField
 from kqueen.storages.etcd import Model
 from kqueen.storages.etcd import StringField
 
+from kqueen.kubeapi import KubernetesAPI
+
 
 #
 # Model definition
@@ -18,4 +20,10 @@ class Cluster(Model):
     def status(self):
         """Return information about Kubernetes cluster"""
 
-        return {'nodes': 6}
+        kubernetes = KubernetesAPI(cluster=self)
+
+        out = {
+            'nodes': kubernetes.list_nodes()
+        }
+
+        return out

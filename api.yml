@@ -30,6 +30,8 @@ definitions:
           - "pending"
           - "failed"
           - "deleted"
+      kubeconfig:
+        type: "string"
   ClusterNode:
     type: object
     properties:

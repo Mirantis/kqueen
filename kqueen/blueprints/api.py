@@ -5,6 +5,8 @@ from flask import make_response
 from kqueen.models import Cluster
 from uuid import UUID
 
+import json
+
 import logging
 
 logging.basicConfig(level=logging.DEBUG)
@@ -24,12 +26,12 @@ def not_implemented(error):
     return make_response(jsonify({'error': 'Not implemented'}), 500)
 
 
-# api
 @api.route('/')
 def index():
     return jsonify({'response': 'Gutten tag!'})
 
 
+# Clusters
 @api.route('/clusters', methods=['GET'])
 def cluster_list():
     # TODO: implement native serialization
@@ -58,3 +60,19 @@ def cluster_detail(cluster_id):
         abort(404)
 
     return jsonify(obj.get_dict())
+
+@api.route('/clusters/<cluster_id>/status', methods=['GET'])
+def cluster_status(cluster_id):
+
+    try:
+        object_id = UUID(cluster_id, version=4)
+    except ValueError:
+        abort(404)
+
+    # load object
+    try:
+        obj = Cluster.load(object_id)
+    except NameError:
+        abort(404)
+
+    return json.dumps(obj.status())

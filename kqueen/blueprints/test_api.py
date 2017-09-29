@@ -44,3 +44,12 @@ class TestClusterDetails:
     def test_object_not_found(self, client, cluster_id):
         response = client.get(url_for('api.cluster_detail', cluster_id=cluster_id))
         assert response.status_code == 404
+
+class TestClusterStatus:
+    def test_cluster_status_returns(self, cluster, client):
+        cluster.save()
+        cluster_id = cluster.id
+
+        response = client.get(url_for('api.cluster_status', cluster_id=cluster_id))
+        assert response.status_code == 200
+
