@@ -1,13 +1,14 @@
-python-jenkins
-requests
-kubernetes
 flask
-pyyaml
+kubernetes
 python-etcd
+python-jenkins
+pyyaml
+requests
 
 # dev
+coveralls
 flake8
+ipython
 pytest
 pytest-cov
-ipython
-coveralls
+pytest-flask

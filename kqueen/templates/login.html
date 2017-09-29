@@ -5,17 +5,17 @@
   ::-webkit-input-placeholder {
      text-align: center;
   }
-  
+
   :-moz-placeholder { /* Firefox 18- */
-     text-align: center;  
-  }
-  
-  ::-moz-placeholder {  /* Firefox 19+ */
-     text-align: center;  
-  }
-  
-  :-ms-input-placeholder {  
      text-align: center; 
+  }
+
+  ::-moz-placeholder {  /* Firefox 19+ */
+     text-align: center;
+  }
+
+  :-ms-input-placeholder { 
+     text-align: center;
   }
   </style>
   <div class="col-md-6 col-md-offset-3">
@@ -24,7 +24,7 @@
       <h3 style="margin: 5px 0px;">Log In</h3>
     </div>
     <div class="panel-body">
-      <form action="{{ url_for('login') }}" method="post">
+      <form action="{{ url_for('user_views.login') }}" method="post">
         {% if error %}<p class="text-danger"><strong>Error:</strong> {{ error }}{% endif %}
         <div class="form-group">
           <input type="text" name="username" class="form-control text-center" id="login_username" placeholder="Username">
