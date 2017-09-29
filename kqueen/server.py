@@ -2,7 +2,6 @@ from flask import abort
 from flask import current_app
 from flask import flash
 from flask import Flask
-from flask import g
 from flask import jsonify
 from flask import make_response
 from flask import redirect
