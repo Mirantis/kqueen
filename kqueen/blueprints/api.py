@@ -5,8 +5,6 @@ from flask import make_response
 from kqueen.models import Cluster
 from uuid import UUID
 
-from pprint import pprint
-
 import logging
 
 logging.basicConfig(level=logging.DEBUG)
