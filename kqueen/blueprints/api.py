@@ -75,4 +75,4 @@ def cluster_status(cluster_id):
     except NameError:
         abort(404)
 
-    return json.dumps(obj.status())
+    return jsonify(obj.status())
