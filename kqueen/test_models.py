@@ -4,7 +4,6 @@ from kqueen.storages.etcd import Model
 from pprint import pprint
 
 import pytest
-import json
 
 
 class TestModelMethods:
