@@ -58,7 +58,11 @@ class Model:
 
         key = cls.get_db_prefix()
 
-        directory = db.client.get(key)
+        try:
+            directory = db.client.get(key)
+        except etcd.EtcdKeyNotFound:
+            return output
+
         for result in directory.children:
             if return_objects:
                 output[result.key.replace(key, '')] = cls.deserialize(result.value)
