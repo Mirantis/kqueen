@@ -1,8 +1,8 @@
+from kqueen.kubeapi import KubernetesAPI
 from kqueen.storages.etcd import IdField
+from kqueen.storages.etcd import JSONField
 from kqueen.storages.etcd import Model
 from kqueen.storages.etcd import StringField
-
-from kqueen.kubeapi import KubernetesAPI
 
 
 #
@@ -15,7 +15,7 @@ class Cluster(Model):
     name = StringField()
     provisioner = StringField()
     state = StringField()
-    kubeconfig = StringField()
+    kubeconfig = JSONField()
 
     def status(self):
         """Return information about Kubernetes cluster"""

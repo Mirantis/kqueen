@@ -4,7 +4,7 @@ from kqueen.storages.etcd import Model
 from pprint import pprint
 
 import pytest
-import uuid
+import json
 
 
 class TestModelMethods:
@@ -25,17 +25,6 @@ class TestModelMethods:
 
 
 class TestClusterModel:
-    @pytest.fixture
-    def cluster(self):
-        _uuid = uuid.uuid4()
-        create_kwargs = {
-            'name': 'mycluster',
-            'color': 'red',
-            'id': _uuid,
-        }
-
-        return Cluster.create(**create_kwargs)
-
     def test_create(self, cluster):
         assert cluster.validate()
         assert cluster.save()
@@ -93,6 +82,17 @@ class TestClusterModel:
 
         assert isinstance(status, dict)
         # TODO: add tests for content
+
+    def test_kubeconfig_is_dict(self, cluster):
+        cluster.save()
+
+        assert isinstance(cluster.kubeconfig.value, dict)
+
+    def test_kubeconfig_load_is_dict(self, cluster):
+        cluster.save()
+
+        loaded = Cluster.load(cluster.id.value)
+        assert isinstance(loaded.kubeconfig.value, dict), 'Loaded kubeconfig is not dict'
 
 
 class TestFieldCompare:
