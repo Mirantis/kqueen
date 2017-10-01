@@ -5,8 +5,6 @@ from flask import make_response
 from kqueen.models import Cluster
 from uuid import UUID
 
-import json
-
 import logging
 
 logging.basicConfig(level=logging.DEBUG)
@@ -60,6 +58,7 @@ def cluster_detail(cluster_id):
         abort(404)
 
     return jsonify(obj.get_dict())
+
 
 @api.route('/clusters/<cluster_id>/status', methods=['GET'])
 def cluster_status(cluster_id):
