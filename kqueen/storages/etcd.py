@@ -217,6 +217,22 @@ class IdField(Field):
     pass
 
 
+class JSONField(Field):
+    """JSON is stored as value"""
+
+    def set_value(self, value):
+        if isinstance(value, str):
+            self.value = json.loads(value)
+        elif isinstance(value, dict):
+            self.value = value
+
+    def serialize(self):
+        if self.value and isinstance(self.value, dict):
+            return json.dumps(self.value)
+        else:
+            return None
+
+
 db = EtcdOrm()
 
 # TODO: implement required fields
