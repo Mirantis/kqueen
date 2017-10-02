@@ -4,6 +4,8 @@ python-etcd
 python-jenkins
 pyyaml
 requests
+python-keystoneclient
+python-heatclient
 
 # dev
 coveralls
