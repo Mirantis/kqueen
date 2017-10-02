@@ -1,6 +1,12 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h2>Cluster Deployment</h2>
+<h2>Deploy Kubernetes Cluster</h2>
+<form method="POST" action="/cluster-deploy">
+    {{ form.hidden_tag() }}
+    <p>{{ form.name.label }} {{ form.name(size=20) }}</p>
+    <p>{{ form.provisioner.label }} {{ form.provisioner(size=20) }}</p>
+    <p><input type="submit" value="Deploy" class="btn btn-primary"></p>
+</form>
 {% endblock %}
 

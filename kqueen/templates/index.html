@@ -1,6 +1,22 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h2>Gutten tag</h2>
+<h2>Profile Details</h2>
+
+<p>Username: {{ username }}</p>
+
+<h3>Running clusters</h3>
+
+<a href="/cluster-deploy" role="button" class="btn btn-primary">Deploy cluster</a>
+
+
+{{ clusters }}
+
+<h3>Available provisioners</h3>
+
+<a href="/provisioner-create" role="button" class="btn btn-primary">Create provisioner</a>
+
+{{ provisioners }}
+
 {% endblock %}
 

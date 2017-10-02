@@ -7,6 +7,7 @@ from flask import request
 from flask import session
 from flask import url_for
 from kqueen.wrappers import login_required
+from kqueen.forms import ProvisionerCreateForm, ClusterCreateForm
 
 import logging
 
@@ -19,7 +20,8 @@ user_views = Blueprint('user_views', __name__)
 @user_views.route('/')
 @login_required
 def index():
-    return render_template('index.html')
+    username = current_app.config['USERNAME']
+    return render_template('index.html', username=username)
 
 
 @user_views.route('/login', methods=['GET', 'POST'])
@@ -54,19 +56,25 @@ def catalog():
     return render_template('catalog.html')
 
 
-@user_views.route('/deploy')
+@user_views.route('/provisioner-create', methods=['GET', 'POST'])
 @login_required
 def cluster_deploy():
-    return render_template('cluster_deploy.html')
+    form = ProvisionerCreateForm()
+    if form.validate_on_submit():
+        return redirect('/')
+    return render_template('provisioner_create.html', form=form)
 
 
-@user_views.route('/list')
+@user_views.route('/cluster-deploy', methods=['GET', 'POST'])
 @login_required
-def cluster_list():
-    return render_template('cluster_list.html')
+def provisioner_create():
+    form = ClusterCreateForm()
+    if form.validate_on_submit():
+        return redirect('/')
+    return render_template('cluster_deploy.html', form=form)
 
 
-@user_views.route('/detail')
+@user_views.route('/cluster-detail')
 @login_required
 def cluster_detail():
     return render_template('cluster_detail.html')

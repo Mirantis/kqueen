@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Create Provisioner</h2>
+<form method="POST" action="/provisioner-create">
+    {{ form.hidden_tag() }}
+    <p>{{ form.name.label }} {{ form.name(size=20) }}</p>
+    <p>{{ form.access_id.label }} {{ form.access_id(size=20) }}</p>
+    <p>{{ form.access_key.label }} {{ form.access_key(size=20) }}</p>
+    <p><input type="submit" value="Create" class="btn btn-primary"></p>
+</form>
+{% endblock %}
+
