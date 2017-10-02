@@ -23,7 +23,8 @@ class Cluster(Model):
         kubernetes = KubernetesAPI(cluster=self)
 
         out = {
-            'nodes': kubernetes.list_nodes()
+            'nodes': kubernetes.list_nodes(),
+            'version': kubernetes.get_version(),
         }
 
         return out

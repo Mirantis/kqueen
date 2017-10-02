@@ -21,3 +21,13 @@ class TestKubeApi:
         api = KubernetesAPI(cluster=cluster)
 
         assert hasattr(api, 'cluster')
+
+    def test_version(self, cluster):
+        api = KubernetesAPI(cluster=cluster)
+
+        version = api.get_version()
+        print(version)
+
+        assert isinstance(version, dict)
+        assert 'git_version' in version
+        assert 'platform' in version
