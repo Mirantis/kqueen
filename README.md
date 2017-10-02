@@ -8,6 +8,7 @@
 ```
 mkvirtualenv -p /usr/bin/python3 kqueen
 pip3 install -r requirements.txt
+docker-compose up -d
 python3 -m kqueen
 ```
 
