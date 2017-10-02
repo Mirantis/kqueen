@@ -1,6 +1,6 @@
 
 {% macro render_form(form) %}
-<form method="post" action=".">
+<form method="post">
     {{ form.hidden_tag() }}
     {% for field in form %}
       {% if not field.flags.hidden %}
@@ -12,15 +12,15 @@
 {% endmacro %}
 
 {% macro render_field(field) %}
-  <div class="form-group">
-    <label for="{{ field.id }}">{{ field.label }}</label>
+  <div class="form-group{% if field.errors %} has-error{% endif %}">
+    <label for="{{ field.id }}" class="control-label">{{ field.label }}</label>
     {{ field(class_="form-control")|safe }}
   {% if field.errors %}
-    <ul class=errors>
+    <span class="help-block">
     {% for error in field.errors %}
-      <li>{{ error }}</li>
+      {{ error }}
     {% endfor %}
-    </ul>
+    </span>
   {% endif %}
   </div>
 {% endmacro %}

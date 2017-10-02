@@ -90,10 +90,18 @@ ul.link-list {
 // Form
 // *****************************************************************************
 
-.form-control:focus {
-  border-color: $brand-primary;
+.kill-box-shadow {
   box-shadow: none;
   -webkit-box-shadow: none;
+}
+
+.has-error .form-control:focus {
+  @extend .kill-box-shadow;
+}
+
+.form-control:focus {
+  @extend .kill-box-shadow;
+  border-color: $brand-primary;
 }
 
 .button-form {
