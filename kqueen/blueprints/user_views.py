@@ -8,6 +8,7 @@ from flask import session
 from flask import url_for
 from kqueen.wrappers import login_required
 from kqueen.forms import ProvisionerCreateForm, ClusterCreateForm
+from kqueen.tables import ClusterTable, ProvisionerTable
 
 import logging
 
@@ -21,10 +22,31 @@ user_views = Blueprint('user_views', __name__)
 @login_required
 def index():
     username = current_app.config['USERNAME']
+    from kqueen.models import Cluster, Provisioner
+
+    clusters = []
+    for cluster in list(Cluster.list(return_objects=True).values()):
+        data = cluster.get_dict()
+        # TODO: teach ORM to get related objects for us
+        prv = Provisioner.load(data['provisioner'])
+        data['provisioner'] = prv.name.value
+        data['actions'] = 'Some Action'
+        clusters.append(data)
+    clustertable = ClusterTable(clusters)
+
+    provisioners = []
+    for provisioner in list(Provisioner.list(return_objects=True).values()):
+        data = provisioner.get_dict()
+        # TODO: teach get_dict to return properties as well?
+        data['engine_name'] = Provisioner.load(data['id']).engine_name
+        data['actions'] = 'Some ACtion'
+        provisioners.append(data)
+    provisionertable = ProvisionerTable(provisioners)
+
     #clusters = Etcd.cluster.models.all()
     #provisioners = Etcd.provisioner.models.all()
 
-    return render_template('index.html', username=username)
+    return render_template('index.html', username=username, clustertable=clustertable, provisionertable=provisionertable)
 
 
 @user_views.route('/login', methods=['GET', 'POST'])
@@ -81,3 +103,4 @@ def provisioner_create():
 @login_required
 def cluster_detail():
     return render_template('cluster_detail.html')
+

@@ -99,6 +99,22 @@ ul.link-list {
 // Table
 // *****************************************************************************
 
+.table-container {
+  margin: 20px 0px 50px 0px;
+  .table-actions {
+    padding: 12px 0px;
+    text-align: right;
+  }
+  .table {
+    .status_column {
+      width: 100px;
+    }
+    .action_column {
+      width: 200px;
+    }
+  }
+}
+
 .table-center {
   text-align: center;
   th {

@@ -7,16 +7,22 @@
 
 <h3>Running clusters</h3>
 
-<a href="/cluster-deploy" role="button" class="btn btn-primary">Deploy cluster</a>
-
-
-{{ clusters }}
+<div class="table-container">
+  <div class="table-actions">
+    <a href="/cluster-deploy" role="button" class="btn btn-primary">Deploy cluster</a>
+  </div>
+  {{ clustertable }}
+</div>
 
 <h3>Available provisioners</h3>
 
-<a href="/provisioner-create" role="button" class="btn btn-primary">Create provisioner</a>
 
-{{ provisioners }}
+<div class="table-container">
+  <div class="table-actions">
+    <a href="/provisioner-create" role="button" class="btn btn-primary">Create provisioner</a>
+  </div>
+  {{ provisionertable }}
+</div>
 
 {% endblock %}
 
