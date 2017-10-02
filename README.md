@@ -5,7 +5,7 @@
 ## Development
 
 ```
-mkvirtualenv -p /usr/bin/python2 kqueen
+mkvirtualenv -p /usr/bin/python3 kqueen
 pip3 install -r requirements.txt
 python3 -m kqueen
 ```
