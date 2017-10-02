@@ -1,3 +1,4 @@
+from flask import abort
 from flask import Blueprint
 from flask import current_app
 from flask import flash
@@ -10,6 +11,7 @@ from kqueen.wrappers import login_required
 from kqueen.forms import ProvisionerCreateForm, ClusterCreateForm
 from kqueen.models import Cluster, Provisioner
 from kqueen.tables import ClusterTable, ProvisionerTable
+from uuid import UUID
 
 import logging
 
@@ -30,7 +32,6 @@ def index():
         # TODO: teach ORM to get related objects for us
         prv = Provisioner.load(data['provisioner'])
         data['provisioner'] = prv.name.value
-        data['actions'] = 'Some Action'
         clusters.append(data)
     clustertable = ClusterTable(clusters)
 
@@ -39,7 +40,6 @@ def index():
         data = provisioner.get_dict()
         # TODO: teach get_dict to return properties as well?
         data['engine_name'] = Provisioner.load(data['id']).engine_name
-        data['actions'] = 'Some ACtion'
         provisioners.append(data)
     provisionertable = ProvisionerTable(provisioners)
 
@@ -97,11 +97,33 @@ def provisioner_create():
             if provisioner.alive():
                 provisioner.state.value = 'OK'
             provisioner.save()
+            flash('Provisioner %s successfully created.' % provisioner.name, 'success')
         except Exception as e:
             logging.error('Could not create provisioner: %s' % repr(e))
             flash('Could not create provisioner.', 'danger')
         return redirect('/')
     return render_template('provisioner_create.html', form=form)
+
+
+@user_views.route('/provisioner-delete/<provisioner_id>')
+@login_required
+def provisioner_delete(provisioner_id):
+    try:
+        object_id = UUID(provisioner_id, version=4)
+    except ValueError:
+        abort(404)
+
+    # load object
+    try:
+        obj = Provisioner.load(object_id)
+        obj.delete()
+        flash('Provisioner %s successfully deleted.' % obj.name, 'success')
+        return redirect('/')
+    except NameError:
+        abort(404)
+    except Exception as e:
+        logging.error(e) 
+        abort(500)
 
 
 @user_views.route('/cluster-deploy', methods=['GET', 'POST'])
@@ -113,8 +135,26 @@ def cluster_deploy():
     return render_template('cluster_deploy.html', form=form)
 
 
-@user_views.route('/cluster-detail')
+@user_views.route('/cluster-detail/<cluster_id>')
 @login_required
-def cluster_detail():
-    return render_template('cluster_detail.html')
+def cluster_detail(cluster_id):
+    try:
+        object_id = UUID(cluster_id, version=4)
+    except ValueError:
+        abort(404)
+
+    # load object
+    try:
+        obj = Cluster.load(object_id)
+    except NameError:
+        abort(404)
+
+    return render_template('cluster_detail.html', cluster=obj.get_dict())
+
+
+@user_views.route('/cluster-delete/<cluster_id>')
+@login_required
+def cluster_delete(cluster_id):
+    # TODO: actually deprovision cluster
+    return redirect('/')
 
