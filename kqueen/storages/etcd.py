@@ -217,6 +217,10 @@ class IdField(Field):
     pass
 
 
+class SecretField(Field):
+    pass
+
+
 class JSONField(Field):
     """JSON is stored as value"""
 
