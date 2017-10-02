@@ -21,6 +21,9 @@ user_views = Blueprint('user_views', __name__)
 @login_required
 def index():
     username = current_app.config['USERNAME']
+    #clusters = Etcd.cluster.models.all()
+    #provisioners = Etcd.provisioner.models.all()
+
     return render_template('index.html', username=username)
 
 

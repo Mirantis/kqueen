@@ -1,0 +1,23 @@
+
+{% macro render_form(form) %}
+<form method="POST" action=".">
+    {{ form.hidden_tag() }}
+    {% for field in form %}
+    {{ render_field(field) }}
+    {% endfor %}
+    <p><input type="submit" value="Submit" class="btn btn-primary"></p>
+</form>
+{% endmacro %}
+
+{% macro render_field(field) %}
+  <dt>{{ field.label }}
+  <dd>{{ field(**kwargs)|safe }}
+  {% if field.errors %}
+    <ul class=errors>
+    {% for error in field.errors %}
+      <li>{{ error }}</li>
+    {% endfor %}
+    </ul>
+  {% endif %}
+  </dd>
+{% endmacro %}
