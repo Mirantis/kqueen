@@ -4,6 +4,8 @@ python-etcd
 python-jenkins
 pyyaml
 requests
+
+# heat provisioner
 python-keystoneclient
 python-heatclient
 
