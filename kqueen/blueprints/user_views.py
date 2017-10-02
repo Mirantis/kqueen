@@ -8,6 +8,7 @@ from flask import session
 from flask import url_for
 from kqueen.wrappers import login_required
 from kqueen.forms import ProvisionerCreateForm, ClusterCreateForm
+from kqueen.models import Cluster, Provisioner
 from kqueen.tables import ClusterTable, ProvisionerTable
 
 import logging
@@ -22,7 +23,6 @@ user_views = Blueprint('user_views', __name__)
 @login_required
 def index():
     username = current_app.config['USERNAME']
-    from kqueen.models import Cluster, Provisioner
 
     clusters = []
     for cluster in list(Cluster.list(return_objects=True).values()):
@@ -42,9 +42,6 @@ def index():
         data['actions'] = 'Some ACtion'
         provisioners.append(data)
     provisionertable = ProvisionerTable(provisioners)
-
-    #clusters = Etcd.cluster.models.all()
-    #provisioners = Etcd.provisioner.models.all()
 
     return render_template('index.html', username=username, clustertable=clustertable, provisionertable=provisionertable)
 
@@ -86,6 +83,23 @@ def catalog():
 def provisioner_create():
     form = ProvisionerCreateForm()
     if form.validate_on_submit():
+        try:
+            # Instantiate new provisioner DB object
+            provisioner = Provisioner(
+                name=form.name.data,
+                engine=form.engine.data,
+                state='Not Available',
+                location='-',
+                access_id=form.access_id.data,
+                access_key=form.access_key
+            )
+            # Check if provisioner lives
+            if provisioner.alive():
+                provisioner.state.value = 'OK'
+            provisioner.save()
+        except Exception as e:
+            logging.error('Could not create provisioner: %s' % repr(e))
+            flash('Could not create provisioner.', 'danger')
         return redirect('/')
     return render_template('provisioner_create.html', form=form)
 
