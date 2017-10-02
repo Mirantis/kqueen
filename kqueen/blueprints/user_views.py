@@ -45,5 +45,28 @@ def login():
 def logout():
     session.pop('logged_in', None)
     flash('You were logged out', 'success')
-
     return redirect(url_for('user_views.index'))
+
+
+@user_views.route('/catalog')
+@login_required
+def catalog():
+    return render_template('catalog.html')
+
+
+@user_views.route('/deploy')
+@login_required
+def cluster_deploy():
+    return render_template('cluster_deploy.html')
+
+
+@user_views.route('/list')
+@login_required
+def cluster_list():
+    return render_template('cluster_list.html')
+
+
+@user_views.route('/detail')
+@login_required
+def cluster_detail():
+    return render_template('cluster_detail.html')
