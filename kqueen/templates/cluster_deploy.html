@@ -2,7 +2,8 @@
 
 {% from "partial/form.html" import render_form %}
 
+{% block page_header %}Deploy Kubernetes Cluster{% endblock %}
+
 {% block content %}
-<h2>Deploy Kubernetes Cluster</h2>
 {{ render_form(form) }}
 {% endblock %}

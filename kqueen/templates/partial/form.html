@@ -1,17 +1,20 @@
 
 {% macro render_form(form) %}
-<form method="POST" action=".">
+<form method="post" action=".">
     {{ form.hidden_tag() }}
     {% for field in form %}
-    {{ render_field(field) }}
+      {% if not field.flags.hidden %}
+      {{ render_field(field) }}
+      {% endif %}
     {% endfor %}
-    <p><input type="submit" value="Submit" class="btn btn-primary"></p>
+    <input type="submit" value="Submit" class="btn btn-primary">
 </form>
 {% endmacro %}
 
 {% macro render_field(field) %}
-  <dt>{{ field.label }}
-  <dd>{{ field(**kwargs)|safe }}
+  <div class="form-group">
+    <label for="{{ field.id }}">{{ field.label }}</label>
+    {{ field(class_="form-control")|safe }}
   {% if field.errors %}
     <ul class=errors>
     {% for error in field.errors %}
@@ -19,5 +22,6 @@
     {% endfor %}
     </ul>
   {% endif %}
-  </dd>
+  </div>
 {% endmacro %}
+

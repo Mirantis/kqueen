@@ -83,7 +83,7 @@ def catalog():
 
 @user_views.route('/provisioner-create', methods=['GET', 'POST'])
 @login_required
-def cluster_deploy():
+def provisioner_create():
     form = ProvisionerCreateForm()
     if form.validate_on_submit():
         return redirect('/')
@@ -92,7 +92,7 @@ def cluster_deploy():
 
 @user_views.route('/cluster-deploy', methods=['GET', 'POST'])
 @login_required
-def provisioner_create():
+def cluster_deploy():
     form = ClusterCreateForm()
     if form.validate_on_submit():
         return redirect('/')
