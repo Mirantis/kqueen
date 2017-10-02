@@ -69,6 +69,16 @@ class HeatProvisioner():
             logger.debug('Stack {} missing in cache'.format(cluster_id))
             try:
                 self.get_stack()
+
+                outputs = {}
+                for output in self.stack.outputs:
+                    outputs[output['output_key']] = output['output_value']
+
+                clusters[cluster_id] = {
+                    'name': self.stack_name,
+                    'state': self.stack.status,
+                    'outputs': outputs
+                }
             except heatclient.exc.HTTPNotFound:
                 logger.debug('Stack {} not found'.format(self.stack_name))
                 clusters[cluster_id] = {
@@ -76,16 +86,6 @@ class HeatProvisioner():
                     'state': 'NOT_FOUND',
                     'outputs': {}
                 }
-            outputs = {}
-            for output in self.stack.outputs:
-                outputs[output['output_key']] = output['output_value']
-
-            clusters[cluster_id] = {
-                'name': self.stack_name,
-                'state': self.stack.status,
-                'outputs': outputs
-            }
-
             cache.set(cluster_id, clusters[cluster_id], timeout=self.cache_timeout)
 
         return clusters
