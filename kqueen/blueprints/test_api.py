@@ -42,3 +42,11 @@ class TestClusterStatus:
 
         response = client.get(url_for('api.cluster_status', cluster_id=cluster_id))
         assert response.status_code == 200
+
+        rj = response.json
+        print(rj)
+
+        assert 'nodes' in rj
+        assert 'version' in rj
+        assert 'git_version' in rj['version']
+        assert 'platform' in rj['version']

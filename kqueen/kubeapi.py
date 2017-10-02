@@ -23,8 +23,12 @@ class KubernetesAPI:
         print(self.kubeconfig_file)
 
         # set apis
+        api_client = config.new_client_from_config(config_file=self.kubeconfig_file)
         self.api_corev1 = client.CoreV1Api(
-            api_client=config.new_client_from_config(config_file=self.kubeconfig_file)
+            api_client=api_client,
+        )
+        self.api_version = client.VersionApi(
+            api_client=api_client,
         )
 
     def get_kubeconfig_file(self):
@@ -36,6 +40,9 @@ class KubernetesAPI:
         f.close()
 
         return configfile
+
+    def get_version(self):
+        return self.api_version.get_code().to_dict()
 
     def list_nodes(self):
         out = []
