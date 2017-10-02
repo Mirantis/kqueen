@@ -6,9 +6,23 @@ services:
       - 127.0.0.1:4001:4001
     environment:
       ETCD_NAME: 0
-      ETCD_INITIAL_ADVERTISE_PEER_URLS: http://localhost:2380
+      ETCD_INITIAL_ADVERTISE_PEER_URLS: http://etcd:2380
       ETCD_INITIAL_CLUSTER_STATE: new
       ETCD_INITIAL_CLUSTER_TOKEN: etcd-cluster-1
       ETCD_LISTEN_CLIENT_URLS: http://0.0.0.0:4001
-      ETCD_LISTEN_PEER_URLS: http://localhost:2380
-      ETCD_ADVERTISE_CLIENT_URLS: http://localhost:4001
+      ETCD_LISTEN_PEER_URLS: http://0.0.0.0:2380
+      ETCD_ADVERTISE_CLIENT_URLS: http://etcd:4001
+  apiserver:
+    image: gcr.io/google_containers/hyperkube-amd64:v1.8.0
+    ports:
+      - 127.0.0.1:8080:8080
+    command:
+      - /hyperkube
+      - apiserver
+      - --insecure-bind-address=0.0.0.0
+      - --external-hostname=apiserver
+      - --bind-address=0.0.0.0
+      - --secure-port=0
+      - --etcd-servers=http://etcd:4001
+      - --service-cluster-ip-range=10.254.0.1/24
+      - --v=2

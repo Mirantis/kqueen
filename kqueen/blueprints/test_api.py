@@ -1,18 +1,7 @@
 from flask import url_for
-from kqueen.models import Cluster
 from uuid import uuid4
 
 import pytest
-
-
-@pytest.fixture
-def cluster():
-    create_kwargs = {
-        'name': 'mycluster',
-        'provisioner': 'Jenkins',
-        'state': 'failed',
-    }
-    return Cluster.create(**create_kwargs)
 
 
 def test_root(client):
@@ -44,3 +33,12 @@ class TestClusterDetails:
     def test_object_not_found(self, client, cluster_id):
         response = client.get(url_for('api.cluster_detail', cluster_id=cluster_id))
         assert response.status_code == 404
+
+
+class TestClusterStatus:
+    def test_cluster_status_returns(self, cluster, client):
+        cluster.save()
+        cluster_id = cluster.id
+
+        response = client.get(url_for('api.cluster_status', cluster_id=cluster_id))
+        assert response.status_code == 200

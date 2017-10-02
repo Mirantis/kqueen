@@ -1,9 +1,9 @@
 from kqueen.models import Cluster
-from kqueen.models import Model
-from kqueen.models import Field
+from kqueen.storages.etcd import Field
+from kqueen.storages.etcd import Model
+from pprint import pprint
 
 import pytest
-import uuid
 
 
 class TestModelMethods:
@@ -24,17 +24,6 @@ class TestModelMethods:
 
 
 class TestClusterModel:
-    @pytest.fixture
-    def cluster(self):
-        _uuid = uuid.uuid4()
-        create_kwargs = {
-            'name': 'mycluster',
-            'color': 'red',
-            'id': _uuid,
-        }
-
-        return Cluster.create(**create_kwargs)
-
     def test_create(self, cluster):
         assert cluster.validate()
         assert cluster.save()
@@ -84,6 +73,25 @@ class TestClusterModel:
         assert str(cluster.id) in loaded
         for o_name, o in loaded.items():
             assert o is None
+
+    def test_status(self, cluster):
+        cluster.save()
+        status = cluster.status()
+        pprint(status)
+
+        assert isinstance(status, dict)
+        # TODO: add tests for content
+
+    def test_kubeconfig_is_dict(self, cluster):
+        cluster.save()
+
+        assert isinstance(cluster.kubeconfig.value, dict)
+
+    def test_kubeconfig_load_is_dict(self, cluster):
+        cluster.save()
+
+        loaded = Cluster.load(cluster.id.value)
+        assert isinstance(loaded.kubeconfig.value, dict), 'Loaded kubeconfig is not dict'
 
 
 class TestFieldCompare:
