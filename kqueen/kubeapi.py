@@ -18,7 +18,6 @@ class KubernetesAPI:
             raise ValueError('Missing parameter cluster')
 
         logger.debug('Initialized KubernetesAPI for {}'.format(self.cluster))
-
         self.kubeconfig_file = self.get_kubeconfig_file()
 
         # set apis
@@ -30,9 +29,9 @@ class KubernetesAPI:
     def get_kubeconfig_file(self):
         # TODO: make configfile name random
         configfile = '/tmp/kubernetes'
-
         f = open(configfile, 'w')
-        f.write(yaml.dump(self.cluster.kubeconfig.value, indent=2))
+        kubeconfig = self.cluster.get_kubeconfig()
+        f.write(yaml.dump(kubeconfig, indent=2))
         f.close()
 
         return configfile
@@ -124,3 +123,4 @@ class KubernetesAPI:
             out.append(item.to_dict())
 
         return out
+

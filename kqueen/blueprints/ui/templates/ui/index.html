@@ -9,17 +9,16 @@
 
 <div class="table-container">
   <div class="table-actions">
-    <a href="/cluster-deploy" role="button" class="btn btn-primary">Deploy cluster</a>
+    <a href="{{ url_for('ui.cluster_deploy') }}" role="button" class="btn btn-primary">Deploy cluster</a>
   </div>
   {{ clustertable }}
 </div>
 
 <h3>Available provisioners</h3>
 
-
 <div class="table-container">
   <div class="table-actions">
-    <a href="/provisioner-create" role="button" class="btn btn-primary">Create provisioner</a>
+    <a href="{{ url_for('ui.provisioner_create') }}" role="button" class="btn btn-primary">Create provisioner</a>
   </div>
   {{ provisionertable }}
 </div>
