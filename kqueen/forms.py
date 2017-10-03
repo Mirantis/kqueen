@@ -10,6 +10,7 @@ class LoginForm(FlaskForm):
 
 PROVISIONER_ENGINES = [('kqueen.provisioners.jenkins.JenkinsProvisioner', 'JenkinsProvisioner')]
 
+
 class ProvisionerCreateForm(FlaskForm):
     name = StringField('Name', validators=[DataRequired()])
     engine = SelectField('Engine', choices=PROVISIONER_ENGINES)
@@ -20,4 +21,3 @@ class ProvisionerCreateForm(FlaskForm):
 class ClusterCreateForm(FlaskForm):
     name = StringField('Name', validators=[DataRequired()])
     provisioner = StringField('Provisioner', validators=[DataRequired()])
-

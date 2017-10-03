@@ -62,4 +62,3 @@ class Provisioner(Model):
     def alive(self):
         """Test availability of provisioner and return bool"""
         return True
-

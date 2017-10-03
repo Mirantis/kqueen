@@ -122,7 +122,7 @@ def provisioner_delete(provisioner_id):
     except NameError:
         abort(404)
     except Exception as e:
-        logging.error(e) 
+        logging.error(e)
         abort(500)
 
 
@@ -157,4 +157,3 @@ def cluster_detail(cluster_id):
 def cluster_delete(cluster_id):
     # TODO: actually deprovision cluster
     return redirect('/')
-

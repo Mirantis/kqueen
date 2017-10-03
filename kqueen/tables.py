@@ -23,7 +23,7 @@ class ClusterTable(Table):
         attr_list=['name'],
         url_kwargs=dict(cluster_id='id')
     )
-    #name = Col('Name')
+    # name = Col('Name')
     provisioner = Col('Provider')
     state = StatusCol('Status')
     delete = DeleteCol(
@@ -31,6 +31,7 @@ class ClusterTable(Table):
         'user_views.cluster_delete',
         url_kwargs=dict(cluster_id='id')
     )
+
 
 class ProvisionerTable(Table):
     # Table meta
@@ -45,4 +46,3 @@ class ProvisionerTable(Table):
         'user_views.provisioner_delete',
         url_kwargs=dict(provisioner_id='id')
     )
-

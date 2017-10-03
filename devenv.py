@@ -13,7 +13,6 @@ uuid_provisioner_local = str(uuid4())
 kubeconfig_url = 'https://ci.mcp.mirantis.net/job/deploy-aws-k8s_ha_calico/199/artifact/kubeconfig'
 
 
-
 try:
     provisioner = Provisioner(
         id=uuid_provisioner_jenkins,
@@ -67,4 +66,3 @@ cluster = Cluster(
 
 print(cluster.kubeconfig.value)
 cluster.save()
-
