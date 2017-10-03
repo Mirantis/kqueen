@@ -1,6 +1,28 @@
 {% extends "base.html" %}
 
+{% block page_header %}Profile Details{% endblock %}
+
 {% block content %}
-<h2>Gutten tag</h2>
+<p>Username: {{ username }}</p>
+
+<h3>Running clusters</h3>
+
+<div class="table-container">
+  <div class="table-actions">
+    <a href="/cluster-deploy" role="button" class="btn btn-primary">Deploy cluster</a>
+  </div>
+  {{ clustertable }}
+</div>
+
+<h3>Available provisioners</h3>
+
+
+<div class="table-container">
+  <div class="table-actions">
+    <a href="/provisioner-create" role="button" class="btn btn-primary">Create provisioner</a>
+  </div>
+  {{ provisionertable }}
+</div>
+
 {% endblock %}
 

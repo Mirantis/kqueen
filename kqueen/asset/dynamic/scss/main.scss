@@ -17,6 +17,11 @@ ul.link-list {
   padding-left: 0px;
 }
 
+.page-header {
+  padding-bottom: 8px;
+  margin: 12px 0px 18px 0px;
+}
+
 // *****************************************************************************
 // Navbar
 // *****************************************************************************
@@ -85,10 +90,18 @@ ul.link-list {
 // Form
 // *****************************************************************************
 
-.form-control:focus {
-  border-color: $brand-primary;
+.kill-box-shadow {
   box-shadow: none;
   -webkit-box-shadow: none;
+}
+
+.has-error .form-control:focus {
+  @extend .kill-box-shadow;
+}
+
+.form-control:focus {
+  @extend .kill-box-shadow;
+  border-color: $brand-primary;
 }
 
 .button-form {
@@ -98,6 +111,22 @@ ul.link-list {
 // *****************************************************************************
 // Table
 // *****************************************************************************
+
+.table-container {
+  margin: 20px 0px 50px 0px;
+  .table-actions {
+    padding: 12px 0px;
+    text-align: right;
+  }
+  .table {
+    .status_column {
+      width: 100px;
+    }
+    .action_column {
+      width: 100px;
+    }
+  }
+}
 
 .table-center {
   text-align: center;

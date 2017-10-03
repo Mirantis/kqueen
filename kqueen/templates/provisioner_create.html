@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% from "partial/form.html" import render_form %}
+
+{% block page_header %}Create Provisioner{% endblock %}
+
+{% block content %}
+{{ render_form(form) }}
+{% endblock %}
+
