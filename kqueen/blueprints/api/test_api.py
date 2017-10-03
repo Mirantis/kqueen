@@ -44,12 +44,13 @@ class TestClusterStatus:
         assert response.status_code == 200
 
         rj = response.json
-        print(rj)
 
+        assert 'deployments' in rj
         assert 'nodes' in rj
-        assert 'version' in rj
         assert 'nodes_pods' in rj
         assert 'pods' in rj
+        assert 'services' in rj
+        assert 'version' in rj
         assert 'git_version' in rj['version']
         assert 'platform' in rj['version']
 
