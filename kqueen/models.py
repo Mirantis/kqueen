@@ -27,6 +27,8 @@ class Cluster(Model):
         out = {
             'nodes': kubernetes.list_nodes(),
             'version': kubernetes.get_version(),
+            'nodes_pods': kubernetes.count_pods_by_node(),
+            'pods': kubernetes.list_pods(),
         }
 
         return out

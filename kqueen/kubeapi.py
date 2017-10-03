@@ -20,7 +20,6 @@ class KubernetesAPI:
         logger.debug('Initialized KubernetesAPI for {}'.format(self.cluster))
 
         self.kubeconfig_file = self.get_kubeconfig_file()
-        print(self.kubeconfig_file)
 
         # set apis
         api_client = config.new_client_from_config(config_file=self.kubeconfig_file)
@@ -87,4 +86,12 @@ class KubernetesAPI:
 
         return out
 
+    def count_pods_by_node(self):
+        out = {}
 
+        pods = self.list_pods_by_node()
+
+        for node_name, pods in pods.items():
+            out[node_name] = len(pods)
+
+        return out
