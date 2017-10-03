@@ -56,3 +56,19 @@ class KubernetesAPI:
             out.append(node.to_dict())
 
         return out
+
+    def list_pods(self):
+        """List pods in all namespaces"""
+        out = []
+
+        try:
+            response = self.api_corev1.list_pod_for_all_namespaces(
+                include_uninitialized=True
+            ).items
+        except ApiException:
+            raise
+
+        for pod in response:
+            out.append(pod.to_dict())
+
+        return out

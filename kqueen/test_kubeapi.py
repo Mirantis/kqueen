@@ -31,3 +31,9 @@ class TestKubeApi:
         assert isinstance(version, dict)
         assert 'git_version' in version
         assert 'platform' in version
+
+    def test_pod_list(self, cluster):
+        api = KubernetesAPI(cluster=cluster)
+        pods = api.list_pods()
+
+        assert isinstance(pods, list)
