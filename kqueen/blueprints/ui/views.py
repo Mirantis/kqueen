@@ -34,8 +34,11 @@ def index():
     for cluster in list(Cluster.list(return_objects=True).values()):
         data = cluster.get_dict()
         # TODO: teach ORM to get related objects for us
-        prv = Provisioner.load(data['provisioner'])
-        data['provisioner'] = prv.name.value
+        try:
+            prv = Provisioner.load(data['provisioner'])
+            data['provisioner'] = prv.name.value
+        except:
+            pass
         clusters.append(data)
     clustertable = ClusterTable(clusters)
 
@@ -121,9 +124,13 @@ def provisioner_delete(provisioner_id):
 
     # load object
     try:
+        used_provisioners = [c.provisioner.value for c in list(Cluster.list(return_objects=True).values())]
         obj = Provisioner.load(object_id)
-        obj.delete()
-        flash('Provisioner %s successfully deleted.' % obj.name, 'success')
+        if str(object_id) not in used_provisioners:
+            obj.delete()
+            flash('Provisioner %s successfully deleted.' % obj.name, 'success')
+        else:
+            flash('Provisioner %s is used by deployed cluster, cannot delete.' % obj.name, 'warning')
         return redirect('/')
     except NameError:
         abort(404)
@@ -168,3 +175,4 @@ def cluster_detail(cluster_id):
 def cluster_delete(cluster_id):
     # TODO: actually deprovision cluster
     return redirect('/')
+
