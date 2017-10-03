@@ -251,4 +251,3 @@ def cluster_deployment_status(cluster_id):
     except:
         res = 1
     return jsonify({'response': res, 'progress': progress, 'result': result})
-

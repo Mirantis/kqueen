@@ -31,7 +31,7 @@ class JenkinsProvisioner():
 
     def provision(self, obj_id, **kwargs):
         # TODO: write extension for Python Jenkins so we can catch headers and return
-        # queue item ID in jenkins.build_job response which we can immediatelly save 
+        # queue item ID in jenkins.build_job response which we can immediatelly save
         # on Cluster object and keep working with it, so we can avoid using anchor to
         # distinguish which builds were triggered by this app
         # More informations here: https://issues.jenkins-ci.org/browse/JENKINS-12827
@@ -57,7 +57,6 @@ class JenkinsProvisioner():
 
     def get(self, obj_id):
         _list = self.list()
-        cluster_id = None
         for key, value in _list.items():
             if obj_id == value['obj_id']:
                 return value
@@ -123,4 +122,3 @@ class JenkinsProvisioner():
                 # ONLY GET 5 LATEST BUILDS
 
         return clusters
-

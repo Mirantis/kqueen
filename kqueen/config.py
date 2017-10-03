@@ -16,4 +16,3 @@ try:
     from kqueen.config_local import *
 except:
     pass
-
