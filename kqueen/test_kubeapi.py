@@ -1,5 +1,4 @@
 from kqueen.kubeapi import KubernetesAPI
-from pprint import pprint
 
 import pytest
 
