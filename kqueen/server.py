@@ -1,7 +1,7 @@
 from flask import Flask
 from flask import redirect
 from flask import url_for
-from kqueen.blueprints.api import api
+from kqueen.blueprints.api.views import api
 from kqueen.blueprints.ui.views import ui
 from kqueen.serializers import CustomJSONEncoder
 
