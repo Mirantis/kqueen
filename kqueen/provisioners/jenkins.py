@@ -27,7 +27,7 @@ class JenkinsProvisioner():
         self.job_name = kwargs.get('job_name', app.config['JENKINS_JOB_NAME'])
 
     def get_job(self):
-        return self.client.get_job_info(self.job_name)
+        return self.client.get_job_info(self.job_name, depth=1)
 
     def provision(self, obj_id, **kwargs):
         # TODO: write extension for Python Jenkins so we can catch headers and return
@@ -65,10 +65,9 @@ class JenkinsProvisioner():
 
     def list(self):
         job = self.get_job()
-
         clusters = {}
 
-        for idx, build in enumerate(job['builds']):
+        for build in job['builds']:
             logger.debug('Reading build {}'.format(build))
 
             cluster_id = 'cluster-{}-{}'.format(self.provisioner, build['number'])
@@ -76,13 +75,12 @@ class JenkinsProvisioner():
 
             if clusters[cluster_id] is None:
                 logger.debug('Build {} missing in cache'.format(cluster_id))
-                build_info = self.client.get_build_info(self.job_name, build['number'])
-                _parameters = [d for d in build_info.get('actions', []) if d.get('parameters', [])]
+                _parameters = [d for d in build.get('actions', []) if d.get('parameters', [])]
                 parameters = _parameters[0].get('parameters', []) if _parameters else []
 
                 stack_name = ''
-                if build_info['result'] in ['SUCCESS'] and build_info.get('description'):
-                    stack_name = build_info['description'].split(' ')[0]
+                if build['result'] in ['SUCCESS'] and build.get('description'):
+                    stack_name = build['description'].split(' ')[0]
                 # LOOKUP STACKS WITH OUR ANCHOR AND DON'T THINK ABOUT IT TOO MUCH
                 _obj_id = [p.get('value', '') for p in parameters if p.get('name', '') == 'STACK_NAME' and p.get('value', '').startswith('KQUEEN')]
                 obj_id = _obj_id[0].split('__')[1] if _obj_id else None
@@ -92,9 +90,9 @@ class JenkinsProvisioner():
                     'artifacts': [],
                     'obj_id': obj_id,
                     'build_number': build['number'],
-                    'build_timestamp': build_info['timestamp'],
-                    'build_estimated_duration': build_info['estimatedDuration'],
-                    'state': build_info['result'] if build_info['result'] else 'Deploying'
+                    'build_timestamp': build['timestamp'],
+                    'build_estimated_duration': build['estimatedDuration'],
+                    'state': build['result'] if build['result'] else 'Deploying'
                 }
 
                 # parse artifacts
@@ -123,8 +121,6 @@ class JenkinsProvisioner():
                 if clusters[cluster_id]['state'] != 'Deploying':
                     cache.set(cluster_id, clusters[cluster_id], timeout=self.cache_timeout)
                 # ONLY GET 5 LATEST BUILDS
-                if idx >= 5:
-                    break
 
         return clusters
 
