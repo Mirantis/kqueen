@@ -6,6 +6,7 @@ from flask import abort
 from flask import Blueprint
 from flask import current_app
 from flask import flash
+from flask import jsonify
 from flask import redirect
 from flask import render_template
 from flask import request
@@ -14,9 +15,10 @@ from flask import url_for
 from kqueen.models import Cluster
 from kqueen.models import Provisioner
 from kqueen.wrappers import login_required
-from uuid import UUID
+from uuid import UUID, uuid4
 
 import logging
+import time
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -29,7 +31,6 @@ ui = Blueprint('ui', __name__, template_folder='templates')
 @login_required
 def index():
     username = current_app.config['USERNAME']
-
     clusters = []
     for cluster in list(Cluster.list(return_objects=True).values()):
         data = cluster.get_dict()
@@ -41,7 +42,6 @@ def index():
             pass
         clusters.append(data)
     clustertable = ClusterTable(clusters)
-
     provisioners = []
     for provisioner in list(Provisioner.list(return_objects=True).values()):
         data = provisioner.get_dict()
@@ -145,6 +145,35 @@ def provisioner_delete(provisioner_id):
 def cluster_deploy():
     form = ClusterCreateForm()
     if form.validate_on_submit():
+        cluster_id = str(uuid4())
+        # Create DB object
+        try:
+            cluster = Cluster(
+                id=cluster_id,
+                name=form.name.data,
+                state='Deploying',
+                provisioner=form.provisioner.data,
+                kubeconfig={},
+            )
+            cluster.save()
+        except Exception as e:
+            flash('Could not create cluster %s.' % form.name.data, 'danger')
+            logging.error('Creating cluster %s failed with following reason: %s' % (form.name.data, repr(e)))
+            return redirect('/')
+
+        # Actually provision cluster
+        res = False
+        try:
+            prv = Provisioner.load(form.provisioner.data).engine_cls()
+            res = prv.provision(cluster_id)
+        except Exception as e:
+            flash('Could not create cluster %s.' % form.name.data, 'danger')
+            logging.error('Creating cluster %s failed with following reason: %s' % (form.name.data, repr(e)))
+            return redirect('/')
+        if res:
+            flash('Provisioning of cluster %s is in progress.' % form.name.data, 'success')
+        else:
+            flash('Could not create cluster %s.' % form.name.data, 'danger')
         return redirect('/')
     return render_template('ui/cluster_deploy.html', form=form)
 
@@ -160,6 +189,7 @@ def cluster_detail(cluster_id):
     # load object
     try:
         obj = Cluster.load(object_id)
+        obj.get_state()
     except NameError:
         abort(404)
 
@@ -175,4 +205,37 @@ def cluster_detail(cluster_id):
 def cluster_delete(cluster_id):
     # TODO: actually deprovision cluster
     return redirect('/')
+
+
+@ui.route('/clusters/<cluster_id>/deployment-status')
+@login_required
+def cluster_deployment_status(cluster_id):
+    try:
+        object_id = UUID(cluster_id, version=4)
+    except ValueError:
+        logging.debug('%s not valid UUID' % cluster_id)
+        abort(404)
+
+    # load object
+    try:
+        obj = Cluster.load(object_id)
+    except NameError:
+        logging.debug('Cluster with UUID %s not found' % cluster_id)
+        abort(404)
+
+    res = 0
+    progress = 1
+    result = 'UNKNOWN'
+    try:
+        prv = obj.get_provisioner()
+        if prv:
+            data = prv.engine_cls().get(cluster_id)
+            result = data['state']
+            if data['state'] == 'Deploying':
+                progress = int((((time.time() * 1000) - data['build_timestamp']) / data['build_estimated_duration']) * 100)
+            else:
+                progress = 100
+    except:
+        res = 1
+    return jsonify({'response': res, 'progress': progress, 'result': result})
 

@@ -17,14 +17,9 @@ def create_app():
 
     app.register_blueprint(ui, url_prefix='/ui')
     app.register_blueprint(api, url_prefix='/api/v1')
-
-    # DEMO LOGIN
-    app.config.update(dict(
-        USERNAME='admin',
-        PASSWORD='default',
-        SECRET_KEY='secret'
-    ))
-
+    loaded = app.config.from_pyfile('config.py', silent=True)
+    if not loaded:
+        logging.warning('Config file kqueen.cfg could not be loaded.')
     return app
 
 

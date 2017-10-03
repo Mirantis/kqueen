@@ -7,10 +7,41 @@ Cluster - {{ cluster.name }}
 
 {% block content %}
 
-<ul>
-  <li><a href="{{ url_for('api.cluster_kubeconfig', cluster_id=cluster.id) }}">Download kubeconfig</a></li>
-  <li>State: {{ cluster.state }}</li>
-</ul>
+<div class="well clearfix">
+<div class="text-center">
+<div class="col-sm-4">
+  <a href="{{ url_for('api.cluster_kubeconfig', cluster_id=cluster.id) }}">Download kubeconfig</a>
+</div>
+<div class="col-sm-4" id="state">
+  State: {{ cluster.state }}
+</div>
+<div class="col-sm-4" id="progress">
+  {% if cluster.state == 'Deploying' %}
+    {% set initial_progress = 1 %}
+  {% else %}
+    {% set initial_progress = 100 %}
+  {% endif %}
+  <div class="progress-bar" style="width: {{ initial_progress }}%;">{{ initial_progress }}%</div>
+</div>
+</div>
+</div>
+
+{% if cluster.name != 'testing' %}
+<script>
+(function(){
+  var progressRefreshFn = function(){
+    $.get("{{ url_for('ui.cluster_deployment_status', cluster_id=cluster.id) }}", function(res){
+      console.log(JSON.stringify(res));
+      $('#progress .progress-bar').css('width', res.progress + '%').html(res.progress + '%');
+      if(res.result != 'Deploying'){
+        clearInterval(interval);
+      }
+    });
+  };
+  var interval = setInterval(progressRefreshFn, 5000);
+})();
+</script>
+{% endif %}
 
 {% set images = [] %}
 <h3>Nodes</h3>
@@ -53,7 +84,7 @@ Cluster - {{ cluster.name }}
       </td>
       {% set capacity = node['status']['capacity']['pods']|int %}
       {% set allocatable = node['status']['allocatable']['pods']|int %}
-      <td>{{ allocatable }} {{ capacity }}</td>
+      <td>{{ allocatable }}/{{ capacity }}</td>
       <td class="status_column" colspan="2">
         <div class="progress-bar" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: 60%;">60%</div>
       </td>
