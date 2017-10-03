@@ -30,8 +30,6 @@ Cluster - {{ cluster.name }}
 {% for node in status.nodes %}
 <tr>
 
-<td>
-
 <td>{{ node['metadata']['name'] }}</td>
 <td>{{ node['status']['node_info']['kubelet_version'] }}</td>
 <td>
