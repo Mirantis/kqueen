@@ -9,6 +9,6 @@ def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if not session.get('logged_in', False):
-            return redirect(url_for('user_views.login', next=request.url))
+            return redirect(url_for('ui.login', next=request.url))
         return f(*args, **kwargs)
     return decorated_function

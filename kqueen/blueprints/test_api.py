@@ -50,3 +50,12 @@ class TestClusterStatus:
         assert 'version' in rj
         assert 'git_version' in rj['version']
         assert 'platform' in rj['version']
+
+
+class TestClusterKubeconfig:
+    def test_kubeconfig(self, cluster, client):
+        cluster.save()
+
+        url = url_for('api.cluster_kubeconfig', cluster_id=cluster.id)
+        response = client.get(url)
+        assert response.json == cluster.kubeconfig.value

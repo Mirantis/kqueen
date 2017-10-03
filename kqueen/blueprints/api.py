@@ -75,3 +75,20 @@ def cluster_status(cluster_id):
         abort(404)
 
     return jsonify(obj.status())
+
+
+@api.route('/clusters/<cluster_id>/kubeconfig', methods=['GET'])
+def cluster_kubeconfig(cluster_id):
+
+    try:
+        object_id = UUID(cluster_id, version=4)
+    except ValueError:
+        abort(404)
+
+    # load object
+    try:
+        obj = Cluster.load(object_id)
+    except NameError:
+        abort(404)
+
+    return jsonify(obj.kubeconfig.value)

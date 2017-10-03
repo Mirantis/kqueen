@@ -1,3 +1,7 @@
+from .forms import ClusterCreateForm
+from .forms import ProvisionerCreateForm
+from .tables import ClusterTable
+from .tables import ProvisionerTable
 from flask import abort
 from flask import Blueprint
 from flask import current_app
@@ -7,10 +11,9 @@ from flask import render_template
 from flask import request
 from flask import session
 from flask import url_for
+from kqueen.models import Cluster
+from kqueen.models import Provisioner
 from kqueen.wrappers import login_required
-from kqueen.forms import ProvisionerCreateForm, ClusterCreateForm
-from kqueen.models import Cluster, Provisioner
-from kqueen.tables import ClusterTable, ProvisionerTable
 from uuid import UUID
 
 import logging
@@ -18,10 +21,11 @@ import logging
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-user_views = Blueprint('user_views', __name__)
+ui = Blueprint('ui', __name__, template_folder='templates')
 
 
-@user_views.route('/')
+# logins
+@ui.route('/')
 @login_required
 def index():
     username = current_app.config['USERNAME']
@@ -43,10 +47,10 @@ def index():
         provisioners.append(data)
     provisionertable = ProvisionerTable(provisioners)
 
-    return render_template('index.html', username=username, clustertable=clustertable, provisionertable=provisionertable)
+    return render_template('ui/index.html', username=username, clustertable=clustertable, provisionertable=provisionertable)
 
 
-@user_views.route('/login', methods=['GET', 'POST'])
+@ui.route('/login', methods=['GET', 'POST'])
 def login():
     error = None
     if request.method == 'POST':
@@ -62,23 +66,25 @@ def login():
                 return redirect(next_url)
             return redirect(url_for('index'))
 
-    return render_template('login.html', error=error)
+    return render_template('ui/login.html', error=error)
 
 
-@user_views.route('/logout')
+@ui.route('/logout')
 def logout():
     session.pop('logged_in', None)
     flash('You were logged out', 'success')
-    return redirect(url_for('user_views.index'))
+    return redirect(url_for('ui.index'))
 
 
-@user_views.route('/catalog')
+# catalog
+@ui.route('/catalog')
 @login_required
 def catalog():
-    return render_template('catalog.html')
+    return render_template('ui/catalog.html')
 
 
-@user_views.route('/provisioner-create', methods=['GET', 'POST'])
+# provisioner
+@ui.route('/provisioners/create', methods=['GET', 'POST'])
 @login_required
 def provisioner_create():
     form = ProvisionerCreateForm()
@@ -102,10 +108,10 @@ def provisioner_create():
             logging.error('Could not create provisioner: %s' % repr(e))
             flash('Could not create provisioner.', 'danger')
         return redirect('/')
-    return render_template('provisioner_create.html', form=form)
+    return render_template('ui/provisioner_create.html', form=form)
 
 
-@user_views.route('/provisioner-delete/<provisioner_id>')
+@ui.route('/provisioners/<provisioner_id>/delete')
 @login_required
 def provisioner_delete(provisioner_id):
     try:
@@ -126,16 +132,17 @@ def provisioner_delete(provisioner_id):
         abort(500)
 
 
-@user_views.route('/cluster-deploy', methods=['GET', 'POST'])
+# cluster
+@ui.route('/clusters/deploy', methods=['GET', 'POST'])
 @login_required
 def cluster_deploy():
     form = ClusterCreateForm()
     if form.validate_on_submit():
         return redirect('/')
-    return render_template('cluster_deploy.html', form=form)
+    return render_template('ui/cluster_deploy.html', form=form)
 
 
-@user_views.route('/cluster-detail/<cluster_id>')
+@ui.route('/clusters/<cluster_id>/detail')
 @login_required
 def cluster_detail(cluster_id):
     try:
@@ -149,10 +156,14 @@ def cluster_detail(cluster_id):
     except NameError:
         abort(404)
 
-    return render_template('cluster_detail.html', cluster=obj.get_dict())
+    return render_template(
+        'ui/cluster_detail.html',
+        cluster=obj.get_dict(),
+        status=obj.status(),
+    )
 
 
-@user_views.route('/cluster-delete/<cluster_id>')
+@ui.route('/clusters/<cluster_id>/delete')
 @login_required
 def cluster_delete(cluster_id):
     # TODO: actually deprovision cluster
