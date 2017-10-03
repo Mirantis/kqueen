@@ -84,7 +84,7 @@ def catalog():
 
 
 # provisioner
-@ui.route('/provisioner-create', methods=['GET', 'POST'])
+@ui.route('/provisioners/create', methods=['GET', 'POST'])
 @login_required
 def provisioner_create():
     form = ProvisionerCreateForm()
@@ -111,7 +111,7 @@ def provisioner_create():
     return render_template('ui/provisioner_create.html', form=form)
 
 
-@ui.route('/provisioner-delete/<provisioner_id>')
+@ui.route('/provisioners/<provisioner_id>/delete')
 @login_required
 def provisioner_delete(provisioner_id):
     try:
@@ -133,7 +133,7 @@ def provisioner_delete(provisioner_id):
 
 
 # cluster
-@ui.route('/cluster-deploy', methods=['GET', 'POST'])
+@ui.route('/clusters/deploy', methods=['GET', 'POST'])
 @login_required
 def cluster_deploy():
     form = ClusterCreateForm()
@@ -142,7 +142,7 @@ def cluster_deploy():
     return render_template('ui/cluster_deploy.html', form=form)
 
 
-@ui.route('/clusterl/<cluster_id>/detail')
+@ui.route('/clusters/<cluster_id>/detail')
 @login_required
 def cluster_detail(cluster_id):
     try:
@@ -156,10 +156,14 @@ def cluster_detail(cluster_id):
     except NameError:
         abort(404)
 
-    return render_template('ui/cluster_detail.html', cluster=obj.get_dict())
+    return render_template(
+        'ui/cluster_detail.html',
+        cluster=obj.get_dict(),
+        status=obj.status(),
+    )
 
 
-@ui.route('/cluster/<cluster_id>/delete')
+@ui.route('/clusters/<cluster_id>/delete')
 @login_required
 def cluster_delete(cluster_id):
     # TODO: actually deprovision cluster

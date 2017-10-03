@@ -7,6 +7,75 @@ Cluster - {{ cluster.name }}
 
 {% block content %}
 
-{{ cluster }}
-{% endblock %}
+</ul>
+<li><a href="{{ url_for('api.cluster_kubeconfig', cluster_id=cluster.id) }}">Download kubeconfig</a></li>
+<li>State: {{ cluster.state }}</li>
 
+</ul>
+
+{% set images = [] %}
+
+
+<h2>Nodes</h2>
+<table class="table table-striped">
+<tr>
+<th>Name</th>
+<th>Version</th>
+<th>IP</th>
+<th>OS</th>
+<th>Kernel</th>
+<th>Status</th>
+<th>Pods</th>
+</tr>
+{% for node in status.nodes %}
+<tr>
+
+<td>
+
+<td>{{ node['metadata']['name'] }}</td>
+<td>{{ node['status']['node_info']['kubelet_version'] }}</td>
+<td>
+  <ul>
+{% for a in node['status']['addresses'] %}
+  <li>{{ a['type'] }}: {{ a['address'] }}</li>
+{% endfor %}
+  </ul>
+</td>
+<td>{{ node['status']['node_info']['os_image'] }}</td>
+<td>{{ node['status']['node_info']['kernel_version'] }}</td>
+
+<td>
+{% for s in node['status']['conditions'] %}
+{% if s['type'] != 'Ready' %}
+{% if s['status'] == 'False' %}
+  {% set icon = 'ok' %}
+{% else %}
+  {% set icon = 'remove' %}
+{% endif %}
+
+<span class="glyphicon glyphicon-{{ icon }}" aria-hidden="true"></span> {{ s['type'] }}<br>
+{% endif %}
+
+{% endfor %}
+
+
+</td>
+
+
+{% set capacity = node['status']['capacity']['pods']|int %}
+{% set allocatable = node['status']['allocatable']['pods']|int %}
+
+
+<td>{{ allocatable }} {{ capacity }}</td>
+<td style="min-width: 200px">
+<div class="progress-bar" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: 60%;">
+    60%
+</div>
+</td>
+</tr>
+
+{% endfor %}
+</table>
+
+
+{% endblock %}
