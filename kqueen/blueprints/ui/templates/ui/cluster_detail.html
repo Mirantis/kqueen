@@ -77,21 +77,60 @@ Cluster - {{ cluster.name }}
             {% else %}
               {% set icon = 'remove' %}
             {% endif %}
-          <span class="glyphicon glyphicon-{{ icon }}" aria-hidden="true"></span> {{ s['type'] }}<br>
+          <span class="glyphicon glyphicon-{{ icon }}" aria-hidden="true"></span>&nbsp;{{ s['type'] }}<br>
           {% endif %}
         {% endfor %}
       </td>
       {% set maxpods = node['status']['allocatable']['pods']|int %}
       {% set pods = status.nodes_pods.get(node['metadata']['name'])|int %}
       {% set percentage = (pods/maxpods*100)|int %}
-      <td> {{ pods }}/{{ maxpods }}</td>
-      <td class="status_column" colspan="2">
+      <td>
+        <div>{{ pods }}/{{ maxpods }}</div>
         <div class="progress-bar" role="progressbar" aria-valuenow="{{ percentage }}" aria-valuemin="0" aria-valuemax="100" style="width: {{ percentage }}%;">{{ percentage }}%</div>
       </td>
     </tr>
     {% endfor %}
   </table>
 </div>
+
+<h3>Workload</h3>
+
+<div class="table-container">
+  <table class="table" id="table-nodes">
+    <tr>
+      <th>Name</th>
+      <th>Namespace</th>
+      <th>Replicas</th>
+      <th>Containers</th>
+    </tr>
+    {% for deployment in status.deployments %}
+    <tr>
+    <td>{{ deployment['metadata']['name'] }}</td>
+    <td>{{ deployment['metadata']['namespace'] }}</td>
+    <td>
+      {% set ready = deployment.get('status', {}).get('ready_replicas', 'N')|int %}
+      {% set desired = deployment.get('spec', {}).get('replicas', 'N')|int %}
+      {% if desired > 0 %}
+        {% set percentage = (ready/desired*100)|int %}
+      {% else %}
+        {% set percentage = 0|int %}
+      {% endif %}
+      <div align="center">{{ ready  }}/{{ desired }}</div>
+      <div class="progress-bar" role="progressbar" aria-valuenow="{{ percentage }}" aria-valuemin="0" aria-valuemax="100" style="width: {{ percentage }}%;">{{ percentage }}%</div>
+    </td>
+    <td>
+    {% set containers = deployment.get('spec', {}).get('template', {}).get('spec', {}).get('containers') %}
+    <ul>
+    {% for container in containers %}
+      <li><b>{{ container['name'] }}</b> {{ container['image'] }}</li>
+    {% endfor %}
+    </ul>
+    </td>
+    </tr>
+    {% endfor %}
+  </table>
+</div>
+
 
 <h3>Services</h3>
 
