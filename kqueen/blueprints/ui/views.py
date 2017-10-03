@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 ui = Blueprint('ui', __name__, template_folder='templates')
 
 
+# logins
 @ui.route('/')
 @login_required
 def index():
@@ -75,12 +76,14 @@ def logout():
     return redirect(url_for('ui.index'))
 
 
+# catalog
 @ui.route('/catalog')
 @login_required
 def catalog():
     return render_template('ui/catalog.html')
 
 
+# provisioner
 @ui.route('/provisioner-create', methods=['GET', 'POST'])
 @login_required
 def provisioner_create():
@@ -129,6 +132,7 @@ def provisioner_delete(provisioner_id):
         abort(500)
 
 
+# cluster
 @ui.route('/cluster-deploy', methods=['GET', 'POST'])
 @login_required
 def cluster_deploy():
@@ -138,7 +142,7 @@ def cluster_deploy():
     return render_template('ui/cluster_deploy.html', form=form)
 
 
-@ui.route('/cluster-detail/<cluster_id>')
+@ui.route('/clusterl/<cluster_id>/detail')
 @login_required
 def cluster_detail(cluster_id):
     try:
@@ -155,7 +159,7 @@ def cluster_detail(cluster_id):
     return render_template('ui/cluster_detail.html', cluster=obj.get_dict())
 
 
-@ui.route('/cluster-delete/<cluster_id>')
+@ui.route('/cluster/<cluster_id>/delete')
 @login_required
 def cluster_delete(cluster_id):
     # TODO: actually deprovision cluster

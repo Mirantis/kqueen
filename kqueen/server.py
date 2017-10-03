@@ -36,4 +36,5 @@ def run():
     def root():
         return redirect(url_for('ui.index', status_code=302))
 
-    app.run()
+    # TODO: make debug code optional
+    app.run(debug=True)
