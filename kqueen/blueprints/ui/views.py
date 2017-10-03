@@ -7,10 +7,13 @@ from flask import render_template
 from flask import request
 from flask import session
 from flask import url_for
+from .forms import ClusterCreateForm
+from .forms import ProvisionerCreateForm
+from kqueen.models import Cluster
+from kqueen.models import Provisioner
 from kqueen.wrappers import login_required
-from kqueen.forms import ProvisionerCreateForm, ClusterCreateForm
-from kqueen.models import Cluster, Provisioner
-from kqueen.tables import ClusterTable, ProvisionerTable
+from .tables import ClusterTable
+from .tables import ProvisionerTable
 from uuid import UUID
 
 import logging
