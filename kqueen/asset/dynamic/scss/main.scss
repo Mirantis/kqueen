@@ -138,6 +138,26 @@ ul.link-list {
   }
 }
 
+#table-nodes {
+  > thead {
+    > tr {
+      > th {
+        vertical-align: middle;
+      }
+    }
+  }
+  > tbody {
+    > tr {
+      > td {
+        vertical-align: middle;
+        ul {
+          padding-left: 18px;
+        }
+      }
+    }
+  }
+}
+
 // *****************************************************************************
 // Flicker on Load Fix for Glyphicons
 // *****************************************************************************

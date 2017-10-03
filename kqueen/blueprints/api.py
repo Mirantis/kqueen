@@ -92,3 +92,4 @@ def cluster_kubeconfig(cluster_id):
         abort(404)
 
     return jsonify(obj.kubeconfig.value)
+
