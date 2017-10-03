@@ -43,7 +43,6 @@ Cluster - {{ cluster.name }}
 </script>
 {% endif %}
 
-{% set images = [] %}
 <h3>Nodes</h3>
 
 <div class="table-container">
@@ -82,15 +81,59 @@ Cluster - {{ cluster.name }}
           {% endif %}
         {% endfor %}
       </td>
-      {% set capacity = node['status']['capacity']['pods']|int %}
-      {% set allocatable = node['status']['allocatable']['pods']|int %}
-      <td>{{ allocatable }}/{{ capacity }}</td>
+      {% set maxpods = node['status']['allocatable']['pods']|int %}
+      {% set pods = status.nodes_pods.get(node['metadata']['name'])|int %}
+      {% set percentage = (pods/maxpods*100)|int %}
+      <td> {{ pods }}/{{ maxpods }}</td>
       <td class="status_column" colspan="2">
-        <div class="progress-bar" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: 60%;">60%</div>
+        <div class="progress-bar" role="progressbar" aria-valuenow="{{ percentage }}" aria-valuemin="0" aria-valuemax="100" style="width: {{ percentage }}%;">{{ percentage }}%</div>
       </td>
     </tr>
     {% endfor %}
   </table>
 </div>
+
+<h3>Services</h3>
+
+<div class="table-container">
+  <table class="table" id="table-nodes">
+    <tr>
+      <th>Name</th>
+      <th>Namespace</th>
+      <th>Cluster IP</th>
+      <th>Ports</th>
+      <th>External IP</th>
+    </tr>
+    {% for service in status.services %}
+    <tr>
+    <td>{{ service['metadata']['name'] }}</td>
+    <td>{{ service['metadata']['namespace'] }}</td>
+    <td><a href="http://{{ service['spec']['cluster_ip'] }}">{{ service['spec']['cluster_ip'] }}</a></td>
+    <td>
+      <ul>
+      {% for port in service['spec']['ports'] %}
+        <li>{{ port['port'] }}/{{ port['protocol'] }} {{ port.get('name', '') }}</li>
+      {% endfor %}
+      </ul>
+    </td>
+    <td>
+    {% if service.get('status', {}).get('load_balancer', {}).get('ingress') %}
+      {% for endpoint in service['status']['load_balancer'].get('ingress', []) %}
+        {% if endpoint.get('hostname') %}
+          {% for port in service['spec']['ports'] %}
+            <a href="{{ port['name'] }}://{{ endpoint['hostname'] }}:{{ port['port'] }}">{{ endpoint['hostname'] }}:{{ port['port'] }} {{ port['name']|upper }}</a>
+          {% endfor %}
+        {% endif %}
+      {% endfor %}
+    {% endif %}
+    </td>
+    </tr>
+    {% endfor %}
+  </table>
+</div>
+
+
+
+
 
 {% endblock %}
