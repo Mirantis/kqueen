@@ -84,6 +84,15 @@ class Cluster(Model):
         except:
             out = {}
 
+        out = {
+            'nodes': kubernetes.list_nodes(),
+            'version': kubernetes.get_version(),
+            'nodes_pods': kubernetes.count_pods_by_node(),
+            'pods': kubernetes.list_pods(),
+            'services': kubernetes.list_services(),
+            'deployments': kubernetes.list_deployments(),
+        }
+
         return out
 
 

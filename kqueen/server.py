@@ -1,7 +1,7 @@
 from flask import Flask
 from flask import redirect
 from flask import url_for
-from kqueen.blueprints.api import api
+from kqueen.blueprints.api.views import api
 from kqueen.blueprints.ui.views import ui
 from kqueen.serializers import CustomJSONEncoder
 
@@ -29,7 +29,7 @@ def run():
 
     @app.route('/')
     def root():
-        return redirect(url_for('ui.index', status_code=302))
+        return redirect(url_for('ui.index'), code=302)
 
     # TODO: make debug code optional
     app.run(debug=True)
