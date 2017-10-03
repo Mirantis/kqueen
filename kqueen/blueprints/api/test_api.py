@@ -48,6 +48,8 @@ class TestClusterStatus:
 
         assert 'nodes' in rj
         assert 'version' in rj
+        assert 'nodes_pods' in rj
+        assert 'pods' in rj
         assert 'git_version' in rj['version']
         assert 'platform' in rj['version']
 

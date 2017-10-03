@@ -20,7 +20,6 @@ class KubernetesAPI:
         logger.debug('Initialized KubernetesAPI for {}'.format(self.cluster))
 
         self.kubeconfig_file = self.get_kubeconfig_file()
-        print(self.kubeconfig_file)
 
         # set apis
         api_client = config.new_client_from_config(config_file=self.kubeconfig_file)
@@ -54,5 +53,45 @@ class KubernetesAPI:
 
         for node in response:
             out.append(node.to_dict())
+
+        return out
+
+    def list_pods(self):
+        """List pods in all namespaces"""
+        out = []
+
+        try:
+            response = self.api_corev1.list_pod_for_all_namespaces(
+                include_uninitialized=True
+            ).items
+        except ApiException:
+            raise
+
+        for pod in response:
+            out.append(pod.to_dict())
+
+        return out
+
+    def list_pods_by_node(self):
+        out = {}
+        pods = self.list_pods()
+
+        for pod in pods:
+            node = pod['spec'].get('node_name', 'Unknown')
+
+            if node not in out:
+                out[node] = []
+
+            out[node].append('a')
+
+        return out
+
+    def count_pods_by_node(self):
+        out = {}
+
+        pods = self.list_pods_by_node()
+
+        for node_name, pods in pods.items():
+            out[node_name] = len(pods)
 
         return out
