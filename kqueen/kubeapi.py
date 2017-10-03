@@ -72,3 +72,19 @@ class KubernetesAPI:
             out.append(pod.to_dict())
 
         return out
+
+    def list_pods_by_node(self):
+        out = {}
+        pods = self.list_pods()
+
+        for pod in pods:
+            node = pod['spec'].get('node_name', 'Unknown')
+
+            if node not in out:
+                out[node] = []
+
+            out[node].append('a')
+
+        return out
+
+

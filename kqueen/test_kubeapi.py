@@ -37,3 +37,10 @@ class TestKubeApi:
         pods = api.list_pods()
 
         assert isinstance(pods, list)
+
+    def test_list_pods_by_node(self, cluster):
+        api = KubernetesAPI(cluster=cluster)
+
+        pods = api.list_pods_by_node()
+
+        assert isinstance(pods, dict)
