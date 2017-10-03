@@ -34,7 +34,7 @@ def run():
 
     @app.route('/')
     def root():
-        return redirect(url_for('ui.index', status_code=302))
+        return redirect(url_for('ui.index'), code=302)
 
     # TODO: make debug code optional
     app.run(debug=True)
