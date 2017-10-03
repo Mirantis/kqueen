@@ -11,7 +11,7 @@
     <title>KQueen</title>
 
     <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400" rel="stylesheet">
-    {% include "partial/favicon.html" %}
+    {% include "ui/partial/favicon.html" %}
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/main.min.css') }}">
 
     <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
@@ -34,7 +34,7 @@
           <a class="navbar-brand" href="/">KQueen</a>
         </div>
         <div id="navbar" class="navbar-collapse collapse">
-          {% include "partial/menu.html" %}
+          {% include "ui/partial/menu.html" %}
         </div>
       </div>
     </nav>
@@ -63,6 +63,6 @@
     <script src="{{ url_for('static', filename='js/underscore-min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/all.min.js') }}"></script>
 
-    {% include "partial/footer.html" %}
+    {% include "ui/partial/footer.html" %}
   </body>
 </html>

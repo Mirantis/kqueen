@@ -19,7 +19,7 @@ class ClusterTable(Table):
     # Table fields
     name = LinkCol(
         'Name',
-        'user_views.cluster_detail',
+        'ui.cluster_detail',
         attr_list=['name'],
         url_kwargs=dict(cluster_id='id')
     )
@@ -28,7 +28,7 @@ class ClusterTable(Table):
     state = StatusCol('Status')
     delete = DeleteCol(
         'Delete',
-        'user_views.cluster_delete',
+        'ui.cluster_delete',
         url_kwargs=dict(cluster_id='id')
     )
 
@@ -43,6 +43,6 @@ class ProvisionerTable(Table):
     state = StatusCol('Status')
     delete = DeleteCol(
         'Delete',
-        'user_views.provisioner_delete',
+        'ui.provisioner_delete',
         url_kwargs=dict(provisioner_id='id')
     )

@@ -11,7 +11,7 @@ services:
       ETCD_INITIAL_CLUSTER_TOKEN: etcd-cluster-1
       ETCD_LISTEN_CLIENT_URLS: http://0.0.0.0:4001
       ETCD_LISTEN_PEER_URLS: http://0.0.0.0:2380
-      ETCD_ADVERTISE_CLIENT_URLS: http://etcd:4001
+      ETCD_ADVERTISE_CLIENT_URLS: http://127.0.0.1:4001,http://etcd:4001
   apiserver:
     image: gcr.io/google_containers/hyperkube-amd64:v1.8.0
     depends_on:
