@@ -193,10 +193,23 @@ def cluster_detail(cluster_id):
     except NameError:
         abort(404)
 
+    # load information about clusters
+    try:
+        cluster = obj.get_dict()
+    except:
+        cluster = None
+        flash('Unable to load cluster', 'danger')
+
+    try:
+        status = obj.status()
+    except:
+        status = None
+        flash('Unable to get information about cluster', 'danger')
+
     return render_template(
         'ui/cluster_detail.html',
-        cluster=obj.get_dict(),
-        status=obj.status(),
+        cluster=cluster,
+        status=status,
     )
 
 
