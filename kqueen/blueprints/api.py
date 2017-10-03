@@ -76,6 +76,7 @@ def cluster_status(cluster_id):
 
     return jsonify(obj.status())
 
+
 @api.route('/clusters/<cluster_id>/kubeconfig', methods=['GET'])
 def cluster_kubeconfig(cluster_id):
 
