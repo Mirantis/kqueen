@@ -3,13 +3,13 @@ from kqueen.models import Provisioner
 from wtforms import PasswordField, SelectField, StringField
 from wtforms.validators import DataRequired
 
+PROVISIONER_ENGINES = [('kqueen.provisioners.jenkins.JenkinsProvisioner', 'JenkinsProvisioner')]
+
 
 class LoginForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired()])
     password = PasswordField('Password', validators=[DataRequired()])
 
-
-PROVISIONER_ENGINES = [('kqueen.provisioners.jenkins.JenkinsProvisioner', 'JenkinsProvisioner')]
 
 class ProvisionerCreateForm(FlaskForm):
     name = StringField('Name', validators=[DataRequired()])
@@ -26,5 +26,3 @@ def _get_provisioners():
 class ClusterCreateForm(FlaskForm):
     name = StringField('Name', validators=[DataRequired()])
     provisioner = SelectField('Provisioner', choices=_get_provisioners())
-
-

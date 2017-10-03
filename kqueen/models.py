@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 # Model definition
 #
 
+
 class Cluster(Model):
     id = IdField()
     external_id = StringField()
@@ -123,4 +124,3 @@ class Provisioner(Model):
     def alive(self):
         """Test availability of provisioner and return bool"""
         return True
-
