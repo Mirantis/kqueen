@@ -32,8 +32,10 @@ ui = Blueprint('ui', __name__, template_folder='templates')
 def index():
     username = current_app.config['USERNAME']
     clusters = []
+    healthy = 0
     for cluster in list(Cluster.list(return_objects=True).values()):
         data = cluster.get_dict()
+        healthy = (healthy + 1) if 'Error' not in data['state'] else healthy
         # TODO: teach ORM to get related objects for us
         try:
             prv = Provisioner.load(data['provisioner'])
@@ -50,7 +52,12 @@ def index():
         provisioners.append(data)
     provisionertable = ProvisionerTable(provisioners)
 
-    return render_template('ui/index.html', username=username, clustertable=clustertable, provisionertable=provisionertable)
+    overview = {
+        'clusters': len(clusters),
+        'health': int((healthy / len(clusters)) * 100),
+        'username': username
+    }
+    return render_template('ui/index.html', overview=overview, clustertable=clustertable, provisionertable=provisionertable)
 
 
 @ui.route('/login', methods=['GET', 'POST'])
@@ -247,6 +254,8 @@ def cluster_deployment_status(cluster_id):
             result = data['state']
             if data['state'] == 'Deploying':
                 progress = int((((time.time() * 1000) - data['build_timestamp']) / data['build_estimated_duration']) * 100)
+                if progress > 99:
+                    progress = 99
             else:
                 progress = 100
     except:

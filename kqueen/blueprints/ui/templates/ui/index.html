@@ -3,7 +3,20 @@
 {% block page_header %}Profile Details{% endblock %}
 
 {% block content %}
-<p>Username: {{ username }}</p>
+<div class="well overview">
+  <div class="col-sm-4">
+    <span>User: {{ overview.username }}</span>
+  </div>
+  <div class="col-sm-4">
+    <span>Running clusters: {{ overview.clusters }}</span>
+  </div>
+  <div class="col-sm-4">
+    <div class="progress-bar-background">
+      <span>Health {{ overview.health }}%</span>
+      <div class="progress-bar" style="width: {{ overview.health }}%;"></div>
+    </div>
+  </div>
+</div>
 
 <h3>Running clusters</h3>
 

@@ -22,6 +22,12 @@ ul.link-list {
   margin: 12px 0px 18px 0px;
 }
 
+.well.overview {
+  margin-bottom: 50px;
+  @extend .clearfix;
+  @extend .text-center;
+}
+
 // *****************************************************************************
 // Navbar
 // *****************************************************************************
@@ -186,5 +192,31 @@ footer {
   a:active {
     color: #fff;
   }
+}
+
+// *****************************************************************************
+// Progress bar
+// *****************************************************************************
+
+.progress-bar-background {
+  height: 20px;
+  width: 100%;
+  text-align: center;
+  position: relative;
+  background-color: lighten($brand-primary, 15%);
+  z-index: 1;
+  > span {
+    position: relative;
+    color: #fff;
+    z-index: 3;
+  }
+}
+
+.progress-bar {
+  height: 100%;
+  position: absolute;
+  left: 0px;
+  top: 0px;
+  z-index: 2;
 }
 
