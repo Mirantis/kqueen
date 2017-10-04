@@ -130,6 +130,15 @@ ul.link-list {
     }
     .action_column {
       width: 100px;
+      @extend .text-right;
+      a {
+        color: $brand-danger;
+        &:hover,
+        &:focus,
+        &:active {
+          color: darken($brand-danger, 10%);
+        }
+      }
     }
   }
 }
