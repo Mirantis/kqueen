@@ -43,8 +43,8 @@ Cluster - {{ cluster.name }}
 </script>
 {% endif %}
 
+{% if 'nodes' in status %}
 <h3>Nodes</h3>
-
 <div class="table-container">
   <table class="table" id="table-nodes">
     <tr>
@@ -92,9 +92,10 @@ Cluster - {{ cluster.name }}
     {% endfor %}
   </table>
 </div>
+{% endif %}
 
+{% if 'deployment' in status %}
 <h3>Workload</h3>
-
 <div class="table-container">
   <table class="table" id="table-nodes">
     <tr>
@@ -130,10 +131,11 @@ Cluster - {{ cluster.name }}
     {% endfor %}
   </table>
 </div>
+{% endif %}
 
 
+{% if 'services' in status %}
 <h3>Services</h3>
-
 <div class="table-container">
   <table class="table" id="table-nodes">
     <tr>
@@ -170,9 +172,6 @@ Cluster - {{ cluster.name }}
     {% endfor %}
   </table>
 </div>
-
-
-
-
+{% endif %}
 
 {% endblock %}

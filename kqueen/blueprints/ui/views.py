@@ -200,11 +200,12 @@ def cluster_detail(cluster_id):
         cluster = None
         flash('Unable to load cluster', 'danger')
 
-    try:
-        status = obj.status()
-    except:
-        status = None
-        flash('Unable to get information about cluster', 'danger')
+    status = {}
+    if obj.get_state() == 'OK':
+        try:
+            status = obj.status()
+        except:
+            flash('Unable to get information about cluster', 'danger')
 
     return render_template(
         'ui/cluster_detail.html',
