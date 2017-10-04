@@ -55,8 +55,8 @@ Cluster - {{ cluster.name }}
       <th>IP</th>
       <th>OS</th>
       <th>Kernel</th>
-      <th>Status</th>
-      <th colspan=2 class="status_column">Pods</th>
+      <th class="status_column">Status</th>
+      <th colspan=2 class="action_column">Pods</th>
     </tr>
     {% for node in status.nodes %}
     <tr>
@@ -71,7 +71,7 @@ Cluster - {{ cluster.name }}
       </td>
       <td>{{ node['status']['node_info']['os_image'] }}</td>
       <td>{{ node['status']['node_info']['kernel_version'] }}</td>
-      <td>
+      <td class="status_column">
         {% for s in node['status']['conditions'] %}
           {% if s['type'] != 'Ready' %}
             {% if s['status'] == 'False' %}
@@ -86,7 +86,7 @@ Cluster - {{ cluster.name }}
       {% set maxpods = node['status']['allocatable']['pods']|int %}
       {% set pods = status.nodes_pods.get(node['metadata']['name'])|int %}
       {% set percentage = (pods/maxpods*100)|int %}
-      <td class="status_column">
+      <td class="action_column">
         <div class="progress-bar-background">
           <span>{{ pods }}/{{ maxpods }}</span>
           <div class="progress-bar" style="width: {{ percentage }}%;"></div>
