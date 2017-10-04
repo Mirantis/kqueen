@@ -33,7 +33,7 @@ class Cluster(Model):
             c_data = prv.get(str(self.id))
             if c_data['state'] == 'Deploying':
                 return self.state.value
-            self.state.value = 'OK' if c_data['state'] == 'SUCCESS' else 'FAIL'
+            self.state.value = 'OK' if c_data['state'] == 'SUCCESS' else 'Error'
             self.save()
             return self.state.value
         except:
