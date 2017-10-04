@@ -6,6 +6,7 @@ python-etcd
 python-jenkins
 pyyaml
 requests
+gunicorn
 
 # dev
 coveralls
