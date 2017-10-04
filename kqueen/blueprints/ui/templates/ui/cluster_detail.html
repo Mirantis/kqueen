@@ -56,6 +56,7 @@ Cluster - {{ cluster.name }}
       <th>OS</th>
       <th>Kernel</th>
       <th class="status_column">Status</th>
+      <th>Size</th>
       <th colspan=2 class="action_column">Pods</th>
     </tr>
     {% for node in status.nodes %}
@@ -65,7 +66,9 @@ Cluster - {{ cluster.name }}
       <td>
         <ul>
           {% for a in node['status']['addresses'] %}
-          <li>{{ a['type'] }}: {{ a['address'] }}</li>
+            {% if a['type'] not in ['LegacyHostIP', 'InternalDNS', 'ExternalDNS', 'Hostname'] %}
+              <li>{{ a['type'] }}: {{ a['address'] }}</li>
+            {% endif %}
           {% endfor %}
         </ul>
       </td>
@@ -79,9 +82,12 @@ Cluster - {{ cluster.name }}
             {% else %}
               {% set icon = 'remove' %}
             {% endif %}
-          <span class="glyphicon glyphicon-{{ icon }}" aria-hidden="true"></span>&nbsp;{{ s['type'] }}<br>
+          <abbr title="{{ s['type'] }}"><span class="glyphicon glyphicon-{{ icon }}" aria-hidden="true"></span></abbr>
           {% endif %}
         {% endfor %}
+      </td>
+      <td>
+      {{ node['status']['allocatable']['cpu'] }} / {{ '%.02f GB' % (node['status']['allocatable']['memory'].replace('Ki', '')|int/1000000)  }}
       </td>
       {% set maxpods = node['status']['allocatable']['pods']|int %}
       {% set pods = status.nodes_pods.get(node['metadata']['name'])|int %}

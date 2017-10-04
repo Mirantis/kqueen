@@ -123,4 +123,3 @@ class KubernetesAPI:
             out.append(item.to_dict())
 
         return out
-

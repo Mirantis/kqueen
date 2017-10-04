@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
+from kqueen.models import Cluster
+from kqueen.models import Provisioner
+
 import requests
 import yaml
-
-from kqueen.models import Cluster, Provisioner
-from uuid import uuid4
 
 uuid_jenkins = 'c88b05d6-a107-4636-a3cc-eb5c90562f8f'
 uuid_local = '2d51891a-adac-4bbc-a725-eed20cc67849'
