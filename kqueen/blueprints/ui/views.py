@@ -35,14 +35,17 @@ def index():
     healthy = 0
     for cluster in list(Cluster.list(return_objects=True).values()):
         data = cluster.get_dict()
-        healthy = (healthy + 1) if 'Error' not in data['state'] else healthy
-        # TODO: teach ORM to get related objects for us
-        try:
-            prv = Provisioner.load(data['provisioner'])
-            data['provisioner'] = prv.name.value
-        except:
-            pass
-        clusters.append(data)
+        if data and 'state' in data:
+            if 'Error' not in data['state']:
+                healthy = healthy + 1
+
+            # TODO: teach ORM to get related objects for us
+            try:
+                prv = Provisioner.load(data['provisioner'])
+                data['provisioner'] = prv.name.value
+            except:
+                pass
+            clusters.append(data)
     clustertable = ClusterTable(clusters)
     provisioners = []
     for provisioner in list(Provisioner.list(return_objects=True).values()):
@@ -74,7 +77,7 @@ def login():
             next_url = request.form.get('next', '')
             if next_url:
                 return redirect(next_url)
-            return redirect(url_for('index'))
+            return redirect(url_for('.index'))
 
     return render_template('ui/login.html', error=error)
 
@@ -232,7 +235,7 @@ def cluster_delete(cluster_id):
 @login_required
 def cluster_deployment_status(cluster_id):
     try:
-        object_id = UUID(cluster_id, version=4)
+        object_id = UUID(cluster_id, version=5)
     except ValueError:
         logging.debug('%s not valid UUID' % cluster_id)
         abort(404)
