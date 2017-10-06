@@ -1,3 +1,5 @@
+from flask import current_app
+from flask import url_for
 from kqueen.models import Cluster
 from kqueen.server import create_app
 
@@ -25,3 +27,12 @@ def cluster():
     }
 
     return Cluster.create(**create_kwargs)
+
+
+@pytest.fixture
+def client_login(client):
+    client.post(url_for('ui.login'), data={
+        'username': current_app.config['USERNAME'],
+        'password': current_app.config['PASSWORD'],
+    })
+    return client
