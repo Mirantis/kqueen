@@ -1,0 +1,12 @@
+  <div class="miraload" style="display: none;">
+    <div class="hexagon"><div class="hexagon-in1"><div class="hexagon-in2" id="particles"></div></div></div>
+  </div>
+
+  <script src="{{ url_for('static', filename='js/particles.min.js') }}"></script>
+  <script>
+    $(window).bind('beforeunload', function(){
+      $('.miraload').css('display', 'initial');
+      particlesJS.load('particles', "{{ url_for('static', filename='js/particles.json') }}");
+    });
+  </script>
+
