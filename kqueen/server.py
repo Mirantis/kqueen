@@ -17,9 +17,11 @@ def create_app():
 
     app.register_blueprint(ui, url_prefix='/ui')
     app.register_blueprint(api, url_prefix='/api/v1')
-    loaded = app.config.from_pyfile('config.py', silent=True)
-    if not loaded:
-        logging.warning('Config file kqueen.cfg could not be loaded.')
+
+    config_loaded = app.config.from_pyfile('config.py', silent=True)
+    if not config_loaded:
+        logging.warning('Config file kqueen.py could not be loaded.')
+
     return app
 
 
