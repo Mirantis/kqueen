@@ -10,7 +10,7 @@ mkvirtualenv -p /usr/bin/python3 kqueen
 pip3 install -r requirements.txt
 pip3 install --editable .
 docker-compose up -d
-python3 -m kqueen
+kqueen
 ```
 
 Kubernetes is today's probably the most promising container orchestration platform and it is gaining huge momentum. There are many different installation tools and hosted solutions:
