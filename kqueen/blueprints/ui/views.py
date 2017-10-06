@@ -54,7 +54,7 @@ def index():
 
     overview = {
         'clusters': len(clusters),
-        'health': int((healthy / len(clusters)) * 100),
+        'health': int((healthy / len(clusters)) * 100) if (healthy and clusters) else 100,
         'username': username
     }
     return render_template('ui/index.html', overview=overview, clustertable=clustertable, provisionertable=provisionertable)
