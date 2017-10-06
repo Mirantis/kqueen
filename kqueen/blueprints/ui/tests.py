@@ -17,7 +17,11 @@ def test_login_required(client, view, values):
 
 
 def test_index(client_login):
-
-    response = client_login.get(url_for('ui.index'))
-
+    response = client_login.get(url_for('.index'))
     assert response.status_code == 200
+
+
+def test_logout(client_login):
+    response = client_login.get(url_for('.logout'))
+    assert response.status_code == 302
+    assert response.headers['Location'].endswith(url_for('.index'))
