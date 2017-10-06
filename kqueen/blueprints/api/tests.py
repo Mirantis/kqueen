@@ -54,6 +54,19 @@ class TestClusterStatus:
         assert 'git_version' in rj['version']
         assert 'platform' in rj['version']
 
+    @pytest.mark.parametrize('cluster_id', [
+        uuid4(),
+        'abc123'
+    ])
+    @pytest.mark.parametrize('url', [
+        'cluster_status',
+        'cluster_kubeconfig'
+    ])
+    def test_cluster_status_404(self, client, url, cluster_id):
+        url = url_for('api.{}'.format(url), cluster_id=cluster_id)
+        response = client.get(url)
+        assert response.status_code == 404
+
 
 class TestClusterKubeconfig:
     def test_kubeconfig(self, cluster, client):
