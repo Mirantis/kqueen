@@ -67,7 +67,7 @@ class HeatProvisioner():
         for cluster in clusters:
             self.clusters[cluster.id] = cluster
 
-    def __process_required_files(self, env_paths):
+    def __process_required_files(self, template_file, env_paths):
         merged_files, merged_env = {}, {}
 
         for path in env_paths:
@@ -84,7 +84,9 @@ class HeatProvisioner():
             # Change back to original context
             os.chdir(cur_dir)
 
-        return merged_files, merged_env
+        composite_templates, template = template_utils.process_template_path(template_file)
+        merged_files.update(composite_templates)
+        return template, merged_files, merged_env
 
     def __get_stack(self, stack_id):
         return self.heat_cli.stacks.get(stack_id)
@@ -99,16 +101,15 @@ class HeatProvisioner():
         cluster_id = 'cluster-{}-{}'.format(self.provisioner, stack_name)
 
         if cluster_id not in self.clusters:
-            with open(template_file, 'r') as t:
-                # Load all required files for template
-                merged_files, merged_env = self.__process_required_files(env_paths)
+            # Load all required files for template
+            template, merged_files, merged_env = self.__process_required_files(template_file, env_paths)
 
-                try:
-                    # Create stack
-                    r = self.__create_stack(stack_name, t.read(), merged_files, merged_env)
-                except Exception as e:
-                    logger.error('Stack {} failed to create with reason: {}'.format(stack_name, str(e)))
-                    return None
+            try:
+                # Create stack
+                r = self.__create_stack(stack_name, template, merged_files, merged_env)
+            except Exception as e:
+                logger.error('Stack {} failed to create with reason: {}'.format(stack_name, str(e)))
+                return None
 
             self.clusters[cluster_id] = {
                 'name': cluster_id,
