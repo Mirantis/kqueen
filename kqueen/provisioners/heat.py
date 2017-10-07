@@ -7,7 +7,6 @@ import heatclient
 import heatclient.client
 from heatclient.common import template_utils
 
-import os
 import logging
 from werkzeug.contrib.cache import SimpleCache
 
@@ -68,22 +67,7 @@ class HeatProvisioner():
             self.clusters[cluster.id] = cluster
 
     def __process_required_files(self, template_file, env_paths):
-        merged_files, merged_env = {}, {}
-
-        for path in env_paths:
-            # Load files in context
-            cur_dir = os.getcwd()
-            if os.path.dirname(path) != '':
-                os.chdir(os.path.dirname(path))
-
-            # Append to return
-            m_f, m_e = template_utils.process_multiple_environments_and_files(env_paths=[os.path.basename(path)])
-            merged_files.update(m_f)
-            merged_env.update(m_e)
-
-            # Change back to original context
-            os.chdir(cur_dir)
-
+        merged_files, merged_env = template_utils.process_multiple_environments_and_files(env_paths)
         composite_templates, template = template_utils.process_template_path(template_file)
         merged_files.update(composite_templates)
         return template, merged_files, merged_env
