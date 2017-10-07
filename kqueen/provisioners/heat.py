@@ -1,12 +1,15 @@
+import keystoneclient
 from keystoneauth1 import session
 from keystoneauth1.identity import v2
 from keystoneauth1.identity import v3
-from werkzeug.contrib.cache import SimpleCache
 
 import heatclient
 import heatclient.client
-import keystoneclient
+from heatclient.common import template_utils
+
+import os
 import logging
+from werkzeug.contrib.cache import SimpleCache
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -15,7 +18,17 @@ cache = SimpleCache()
 
 
 class HeatProvisioner():
-    def __init__(self, *args, **kwargs):
+
+    def __init__(self, clusters=[], *args, **kwargs):
+        self.provisioner = 'heat'
+        self.cache_timeout = kwargs.get('cache_timeout', 5 * 60)
+
+        self.__cli_setup(*args, **kwargs)
+
+        self.clusters = {}
+        self.__import_clusters(clusters)
+
+    def __cli_setup(self, *args, **kwargs):
         # Get keystone version
         keystone_cli = keystoneclient.client.Client(endpoint=kwargs.get('auth_url'))
 
@@ -50,40 +63,133 @@ class HeatProvisioner():
         sess = session.Session(auth=auth)
         self.heat_cli = heatclient.client.Client('1', session=sess)
 
-        self.provisioner = 'heat'
-        self.cache_timeout = kwargs.get('cache_timeout', 5 * 60)
+    def __import_clusters(self, clusters):
+        for cluster in clusters:
+            self.clusters[cluster.id] = cluster
 
-        self.stack_name = kwargs.get('stack_name')
+    def __process_required_files(self, env_paths):
+        merged_files, merged_env = {}, {}
 
-    def get_stack(self):
-        self.stack = self.heat_cli.stacks.get(self.stack_name)
+        for path in env_paths:
+            # Load files in context
+            cur_dir = os.getcwd()
+            if os.path.dirname(path) != '':
+                os.chdir(os.path.dirname(path))
 
-    def list(self):
-        clusters = {}
-        cluster_id = 'cluster-{}-{}'.format(self.provisioner, self.stack_name)
-        clusters[cluster_id] == cache.get(cluster_id)
+            # Append to return
+            m_f, m_e = template_utils.process_multiple_environments_and_files(env_paths=[os.path.basename(path)])
+            merged_files.update(m_f)
+            merged_env.update(m_e)
 
-        if clusters[cluster_id] is None:
-            logger.debug('Stack {} missing in cache'.format(cluster_id))
+            # Change back to original context
+            os.chdir(cur_dir)
+
+        return merged_files, merged_env
+
+    def __get_stack(self, stack_id):
+        return self.heat_cli.stacks.get(stack_id)
+
+    def __create_stack(self, stack_name, template, files, environment):
+        return self.heat_cli.stacks.create(stack_name=stack_name, template=template, files=files, environment=environment)
+
+    def __delete_stack(self, stack_id):
+        return self.heat_cli.stacks.delete(stack_id=stack_id)
+
+    def create(self, stack_name, template_file, env_paths=[]):
+        cluster_id = 'cluster-{}-{}'.format(self.provisioner, stack_name)
+
+        if cluster_id not in self.clusters:
+            with open(template_file, 'r') as t:
+                # Load all required files for template
+                merged_files, merged_env = self.__process_required_files(env_paths)
+
+                try:
+                    # Create stack
+                    r = self.__create_stack(stack_name, t.read(), merged_files, merged_env)
+                except Exception as e:
+                    logger.error('Stack {} failed to create with reason: {}'.format(stack_name, str(e)))
+                    return None
+
+            self.clusters[cluster_id] = {
+                'name': cluster_id,
+                'provisioner': self.provisioner,
+                'state': 'CREATE_IN_PROGRESS',
+                'parameters': {
+                    'stack_id': r['stack']['id'],
+                    'outputs': {},
+                },
+                'kubeconfig': ''
+            }
+        else:
+            logger.error('Stack {} already exists. Create aborted'.format(stack_name))
+
+        return self.clusters[cluster_id]
+
+    def get(self, cluster_id, cacheEnabled=True, kubeconfig_output_key='kubeconfig'):
+        if cacheEnabled and cache.get(cluster_id):
+            return cache.get(cluster_id)
+
+        if cluster_id in self.clusters:
+            stack_id = self.clusters[cluster_id]['parameters']['stack_id']
             try:
-                self.get_stack()
+                stack = self.__get_stack(stack_id)
+                logger.debug('Stack {} found'.format(stack_id))
 
                 outputs = {}
-                for output in self.stack.outputs:
+                for output in stack.outputs:
                     outputs[output['output_key']] = output['output_value']
 
-                clusters[cluster_id] = {
-                    'name': self.stack_name,
-                    'state': self.stack.status,
-                    'outputs': outputs
-                }
-            except heatclient.exc.HTTPNotFound:
-                logger.debug('Stack {} not found'.format(self.stack_name))
-                clusters[cluster_id] = {
-                    'name': self.stack_name,
-                    'state': 'NOT_FOUND',
-                    'outputs': {}
-                }
-            cache.set(cluster_id, clusters[cluster_id], timeout=self.cache_timeout)
+                self.clusters[cluster_id]['state'] = stack.status
+                self.clusters[cluster_id]['parameters']['outputs'] = outputs
+                if kubeconfig_output_key in outputs:
+                    self.clusters[cluster_id]['kubeconfig'] = outputs[kubeconfig_output_key]
 
-        return clusters
+                cache.set(cluster_id, self.clusters[cluster_id], timeout=self.cache_timeout)
+            except heatclient.exc.HTTPNotFound:
+                if self.clusters[cluster_id]['state'] == 'DELETE_IN_PROGRESS':
+                    logger.info('Stack {} was succesfully deleted'.format(stack_id))
+                else:
+                    logger.error('Stack {} not found. Local DB is out of sync with target. Removing cluster: {} from local DB '.format(stack_id, cluster_id))
+                self.clusters.pop(cluster_id)
+                cache.delete(cluster_id)
+                return None
+        else:
+            logger.error('Cluster {} not managed by this provisioner'.format(cluster_id))
+            return None
+
+        return self.clusters[cluster_id]
+
+    def get_kubeconfig(self, cluster_id, cacheEnabled=True, kubeconfig_output_key='kubeconfig'):
+        if cacheEnabled and cache.get(cluster_id):
+            return cache.get(cluster_id)['kubeconfig']
+
+        return self.get(cluster_id, cacheEnabled, kubeconfig_output_key)['kubeconfig']
+
+    def list(self, cacheEnabled=True):
+        if not cacheEnabled:
+            for cluster_id in self.clusters:
+                self.clusters[cluster_id] = self.get(cluster_id, cacheEnabled=False)
+        return self.clusters
+
+    def delete(self, cluster_id):
+        if cluster_id in self.clusters:
+            stack_id = self.clusters[cluster_id]['parameters']['stack_id']
+            try:
+                self.__delete_stack(stack_id)
+                cache.delete(cluster_id)
+                self.clusters[cluster_id]['state'] = 'DELETE_IN_PROGRESS'
+                return True
+            except heatclient.exc.HTTPNotFound:
+                if self.clusters[cluster_id]['state'] == 'DELETE_IN_PROGRESS':
+                    logger.info('Stack {} was succesfully deleted'.format(stack_id))
+                else:
+                    logger.error('Stack {} not found. Local DB is out of sync with target. Removing cluster: {} from local DB '.format(stack_id, cluster_id))
+                self.clusters.pop(cluster_id)
+                cache.delete(cluster_id)
+                return True
+            except Exception as e:
+                logger.error('Stack {} failed to delete with reason: {}'.format(stack_id, str(e)))
+                return False
+        else:
+            logger.debug('Cluster {} not managed by this provisioner'.format(cluster_id))
+            return False
