@@ -1,3 +1,5 @@
+DEBUG = True
+
 # Demo login
 USERNAME = 'admin'
 PASSWORD = 'default'

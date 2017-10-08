@@ -15,6 +15,8 @@ kqueen
 
 ## Configuration
 
+We load configuration from file `config_dev.py` by default and this can be configured by `KQUEEN_CONFIG_FILE` environment varialbe.
+
 | Configuration option | Type | Default value | Description |
 | --- | --- | --- | --- |
 
