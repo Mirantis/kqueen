@@ -6,6 +6,7 @@ from kqueen.blueprints.ui.views import ui
 from kqueen.serializers import CustomJSONEncoder
 
 import logging
+import os
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -18,9 +19,10 @@ def create_app():
     app.register_blueprint(ui, url_prefix='/ui')
     app.register_blueprint(api, url_prefix='/api/v1')
 
-    config_loaded = app.config.from_pyfile('config.py', silent=True)
-    if not config_loaded:
-        logging.warning('Config file kqueen.py could not be loaded.')
+    # load configuration
+    config_file = os.environ.get('KQUEEN_CONFIG_FILE', 'config_dev.py')
+    if not app.config.from_pyfile(config_file):
+        logging.warning('Config file {} could not be loaded.'.format(config_file))
 
     return app
 

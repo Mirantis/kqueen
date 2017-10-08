@@ -13,11 +13,23 @@ docker-compose up -d
 kqueen
 ```
 
+## Configuration
+
+| Configuration option | Type | Default value | Description |
+| --- | --- | --- | --- |
+
+| `KQUEEN_CONFIG_FILE` | Environment variable | `config_dev.py` | Configuration file to load |
+
+
+
+
+## Rationale
+
 Kubernetes is today's probably the most promising container orchestration platform and it is gaining huge momentum. There are many different installation tools and hosted solutions:
 
 * [Kubespray](https://github.com/kubernetes-incubator/kubespray)
 * [Kubeadm](https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/)
-* [Kubernetes salt formula](https://github.com/salt-formulas/salt-formula-kubernetes)
+* [Kubernetes Salt formula](https://github.com/salt-formulas/salt-formula-kubernetes)
 
 
 * [Google Container engine](https://cloud.google.com/container-engine)
