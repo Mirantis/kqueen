@@ -7,12 +7,24 @@
 //
 //## Gray and brand colors for use across Bootstrap.
 
-$brand-primary: #2BBBAD;
-$brand-success: #00C851;
-$brand-warning: #ffbb33;
-$brand-danger: #ff4444;
-$brand-info: #33b5e5;
+$mira-red:               #e02d3a;
+$mira-green:             #4bbfaf;
+$mira-blue:              #004d99;
+$mira-orange:            #cc9900;
 
+$gray-darker:            lighten(#000, 13.5%) !default; // #222
+$gray-dark:              lighten(#000, 20%) !default;   // #333
+$gray-mira-dark:         #424242;
+$gray:                   #6e6e6e !default;
+$gray-mira-transparent:  rgba(49, 49, 49, 0.7);
+$gray-light:             #BBB !default;
+$gray-lighter:           lighten(#000, 93.5%) !default; // #eee
+
+$brand-primary:         $mira-red;
+$brand-success:         $mira-green;
+$brand-info:            $mira-blue;
+$brand-warning:         $mira-orange;
+$brand-danger:          lighten($mira-red, 15%);
 
 //== Components
 //
@@ -40,6 +52,7 @@ $btn-danger-border:              $brand-danger;
 
 // Basics of a navbar
 
+$navbar-height:			   56px;
 $navbar-default-color:             $brand-primary;
 $navbar-default-bg:                #fff;
 $navbar-default-border:            $navbar-default-color;

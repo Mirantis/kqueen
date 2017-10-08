@@ -19,6 +19,7 @@
     "gulp-watch": "^4.3.11",
     "jquery": "1.9.1 - 2",
     "os": "^0.1.1",
+    "particles.js": "^2.0.0",
     "path": "^0.12.7",
     "run-sequence": "^1.2.2",
     "underscore": "^1.8.3"

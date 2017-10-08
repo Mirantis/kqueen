@@ -63,14 +63,28 @@ gulp.task('jquery', function() {
 		.pipe(gulp.dest(folderAsset + '/static/js/'));
 });
 
+
 // Underscore Task
 gulp.task('underscore', function() {
 	return gulp.src('node_modules/underscore/underscore-min.*')
 		.pipe(gulp.dest(folderAsset + '/static/js/'));
 });
 
+// Particles Task
+gulp.task('particles', function() {
+        var minify = require('gulp-minify');
+        return gulp.src('node_modules/particles.js/particles.js')
+                .pipe(minify({
+                        ext:{
+                                src:'.js',
+                                min:'.min.js'
+                        }
+                }))
+                .pipe(gulp.dest(folderAsset + '/static/js/'));
+});
+
 // All JS
-gulp.task('javascript-all', ['javascript', 'jquery', 'underscore']);
+gulp.task('javascript-all', ['javascript', 'jquery', 'underscore', 'particles']);
 
 // Fonts Task
 gulp.task('fonts', function() {

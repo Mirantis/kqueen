@@ -7,73 +7,184 @@ Cluster - {{ cluster.name }}
 
 {% block content %}
 
-</ul>
-<li><a href="{{ url_for('api.cluster_kubeconfig', cluster_id=cluster.id) }}">Download kubeconfig</a></li>
-<li>State: {{ cluster.state }}</li>
-
-</ul>
-
-{% set images = [] %}
-
-
-<h2>Nodes</h2>
-<table class="table table-striped">
-<tr>
-<th>Name</th>
-<th>Version</th>
-<th>IP</th>
-<th>OS</th>
-<th>Kernel</th>
-<th>Status</th>
-<th>Pods</th>
-</tr>
-{% for node in status.nodes %}
-<tr>
-
-<td>{{ node['metadata']['name'] }}</td>
-<td>{{ node['status']['node_info']['kubelet_version'] }}</td>
-<td>
-  <ul>
-{% for a in node['status']['addresses'] %}
-  <li>{{ a['type'] }}: {{ a['address'] }}</li>
-{% endfor %}
-  </ul>
-</td>
-<td>{{ node['status']['node_info']['os_image'] }}</td>
-<td>{{ node['status']['node_info']['kernel_version'] }}</td>
-
-<td>
-{% for s in node['status']['conditions'] %}
-{% if s['type'] != 'Ready' %}
-{% if s['status'] == 'False' %}
-  {% set icon = 'ok' %}
-{% else %}
-  {% set icon = 'remove' %}
-{% endif %}
-
-<span class="glyphicon glyphicon-{{ icon }}" aria-hidden="true"></span> {{ s['type'] }}<br>
-{% endif %}
-
-{% endfor %}
-
-
-</td>
-
-
-{% set capacity = node['status']['capacity']['pods']|int %}
-{% set allocatable = node['status']['allocatable']['pods']|int %}
-
-
-<td>{{ allocatable }} {{ capacity }}</td>
-<td style="min-width: 200px">
-<div class="progress-bar" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: 60%;">
-    60%
+<div class="well overview">
+  <div class="col-sm-4">
+    <a href="{{ url_for('api.cluster_kubeconfig', cluster_id=cluster.id) }}" class="btn btn-primary btn-xs">Download kubeconfig</a>
+  </div>
+  <div class="col-sm-4" id="state">
+    State: {{ cluster.state }}
+  </div>
+  <div class="col-sm-4" id="progress">
+    {% if cluster.state == 'Deploying' %}
+      {% set initial_progress = 1 %}
+    {% else %}
+      {% set initial_progress = 100 %}
+    {% endif %}
+    <div class="progress-bar-background">
+      <span>{% if cluster.state == 'Deploying' %}{{ initial_progress }}%{% else %}Done{% endif %}</span>
+      <div class="progress-bar" style="width: {{ initial_progress }}%;"></div>
+    </div>
+  </div>
 </div>
-</td>
-</tr>
 
-{% endfor %}
-</table>
+{% if cluster.state == 'Deploying' %}
+<script>
+(function(){
+  var progressRefreshFn = function(){
+    $.get("{{ url_for('ui.cluster_deployment_status', cluster_id=cluster.id) }}", function(res){
+      console.log(JSON.stringify(res));
+      $('#progress .progress-bar').css('width', res.progress + '%')
+      $('#progress .progress-bar-background > span').html(res.progress + '%');
+      if(res.result != 'Deploying'){
+        clearInterval(interval);
+      }
+    });
+  };
+  var interval = setInterval(progressRefreshFn, 10000);
+})();
+</script>
+{% endif %}
 
+{% if 'nodes' in status %}
+<h3>Nodes</h3>
+<div class="table-container">
+  <table class="table" id="table-nodes">
+    <tr>
+      <th>Name</th>
+      <th>Version</th>
+      <th>IP</th>
+      <th>OS</th>
+      <th>Kernel</th>
+      <th class="status_column">Status</th>
+      <th>Size</th>
+      <th colspan=2 class="action_column">Pods</th>
+    </tr>
+    {% for node in status.nodes %}
+    <tr>
+      <td>{{ node['metadata']['name'] }}</td>
+      <td>{{ node['status']['node_info']['kubelet_version'] }}</td>
+      <td>
+        <ul>
+          {% for a in node['status']['addresses'] %}
+            {% if a['type'] not in ['LegacyHostIP', 'InternalDNS', 'ExternalDNS', 'Hostname'] %}
+              <li>{{ a['type'] }}: {{ a['address'] }}</li>
+            {% endif %}
+          {% endfor %}
+        </ul>
+      </td>
+      <td>{{ node['status']['node_info']['os_image'] }}</td>
+      <td>{{ node['status']['node_info']['kernel_version'] }}</td>
+      <td class="status_column">
+        {% for s in node['status']['conditions'] %}
+          {% if s['type'] != 'Ready' %}
+            {% if s['status'] == 'False' %}
+              {% set icon = 'ok' %}
+            {% else %}
+              {% set icon = 'remove' %}
+            {% endif %}
+          <abbr title="{{ s['type'] }}"><span class="glyphicon glyphicon-{{ icon }}" aria-hidden="true"></span></abbr>
+          {% endif %}
+        {% endfor %}
+      </td>
+      <td>
+      {{ node['status']['allocatable']['cpu'] }} / {{ '%.02f GB' % (node['status']['allocatable']['memory'].replace('Ki', '')|int/1000000)  }}
+      </td>
+      {% set maxpods = node['status']['allocatable']['pods']|int %}
+      {% set pods = status.nodes_pods.get(node['metadata']['name'])|int %}
+      {% set percentage = (pods/maxpods*100)|int %}
+      <td class="action_column">
+        <div class="progress-bar-background">
+          <span>{{ pods }}/{{ maxpods }}</span>
+          <div class="progress-bar" style="width: {{ percentage }}%;"></div>
+        </div>
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+</div>
+{% endif %}
+
+{% if 'deployments' in status %}
+<h3>Workload</h3>
+<div class="table-container">
+  <table class="table" id="table-nodes">
+    <tr>
+      <th>Name</th>
+      <th>Namespace</th>
+      <th>Replicas</th>
+      <th>Containers</th>
+    </tr>
+    {% for deployment in status.deployments %}
+    <tr>
+    <td>{{ deployment['metadata']['name'] }}</td>
+    <td>{{ deployment['metadata']['namespace'] }}</td>
+    <td>
+      {% set ready = deployment.get('status', {}).get('ready_replicas', 'N')|int %}
+      {% set desired = deployment.get('spec', {}).get('replicas', 'N')|int %}
+      {% if desired > 0 %}
+        {% set percentage = (ready/desired*100)|int %}
+      {% else %}
+        {% set percentage = 0|int %}
+      {% endif %}
+      <div class="progress-bar-background">
+        <span>{{ ready  }}/{{ desired }}</span>
+        <div class="progress-bar" style="width: {{ percentage }}%;"></div>
+      </div>
+    </td>
+    <td>
+    {% set containers = deployment.get('spec', {}).get('template', {}).get('spec', {}).get('containers') %}
+    <ul>
+    {% for container in containers %}
+      <li><b>{{ container['name'] }}</b> {{ container['image'] }}</li>
+    {% endfor %}
+    </ul>
+    </td>
+    </tr>
+    {% endfor %}
+  </table>
+</div>
+{% endif %}
+
+
+{% if 'services' in status %}
+<h3>Services</h3>
+<div class="table-container">
+  <table class="table" id="table-nodes">
+    <tr>
+      <th>Name</th>
+      <th>Namespace</th>
+      <th>Cluster IP</th>
+      <th>Ports</th>
+      <th>External IP</th>
+    </tr>
+    {% for service in status.services %}
+    <tr>
+    <td>{{ service['metadata']['name'] }}</td>
+    <td>{{ service['metadata']['namespace'] }}</td>
+    <td><a href="http://{{ service['spec']['cluster_ip'] }}">{{ service['spec']['cluster_ip'] }}</a></td>
+    <td>
+      <ul>
+      {% for port in service['spec']['ports'] %}
+        <li>{{ port['port'] }}/{{ port['protocol'] }} {{ port.get('name', '') }}</li>
+      {% endfor %}
+      </ul>
+    </td>
+    <td>
+    {% if service.get('status', {}).get('load_balancer', {}).get('ingress') %}
+      {% for endpoint in service['status']['load_balancer'].get('ingress', []) %}
+        {% if endpoint.get('hostname') %}
+          {% for port in service['spec']['ports'] %}
+            <a href="{{ port['name'] }}://{{ endpoint['hostname'] }}:{{ port['port'] }}">{{ endpoint['hostname'] }}:{{ port['port'] }} {{ port['name']|upper }}</a>
+          {% endfor %}
+        {% endif %}
+      {% endfor %}
+    {% endif %}
+    </td>
+    </tr>
+    {% endfor %}
+  </table>
+</div>
+{% endif %}
 
 {% endblock %}
+

@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-version = '0.1'
+version = '0.2'
 
 with open('README.md') as f:
     long_description = ''.join(f.readlines())
@@ -34,7 +34,7 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'kqueen = server:run',
+            'kqueen = kqueen.server:run',
         ],
     },
 )
