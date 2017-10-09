@@ -172,29 +172,25 @@ gulp.task('favicon-update', function(done) {
 });
 
 // Run server
+var runningServer;
 gulp.task('run-server', function(cb) {
-	child.exec('. venv/bin/activate; export PYTHONPATH=`pwd`; python -m kqueen', function(err, stdout, stderr) {
-        	console.log(stdout);
+        if (runningServer) runningServer.kill()
+        runningServer = child.exec('. venv/bin/activate; export PYTHONPATH=`pwd`; python -m kqueen', {maxBuffer: 1024 * 10000}, function(err, stdout, stderr) {
+                console.log(stdout);
                 console.log(stderr);
                 cb(err);
         });
-});
-
-// Reload server
-gulp.task('reload-run-server', function() {
-        process.exit();
-	child.spawn('gulp', ['run-server'], {stdio: 'inherit'});
 });
 
 // Monitor files for changes
 gulp.task('watch', function () {
     watch('./kqueen/asset/dynamic/**/*.scss', function() {
     	gulp.start('sass');
-        gulp.start('reload-run-server');
+        gulp.start('run-server');
     });
     watch('./kqueen/asset/dynamic/**/*.js', function() {
         gulp.start('javascript-all');
-        gulp.start('reload-run-server');
+        gulp.start('run-server');
     });
 });
 
