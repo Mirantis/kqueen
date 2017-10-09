@@ -14,3 +14,5 @@ ipython
 pytest
 pytest-cov
 pytest-flask
+sphinx
+sphinx_rtd_theme
