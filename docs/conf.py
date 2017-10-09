@@ -33,7 +33,7 @@
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
-#    'sphinx.ext.doctest',
+    'sphinx.ext.doctest',
     'sphinx.ext.intersphinx'
 ]
 
@@ -171,9 +171,6 @@ texinfo_documents = [
      author, 'kqueen', 'One line description of project.',
      'Miscellaneous'),
 ]
-
-
-
 
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {'https://docs.python.org/': None}
