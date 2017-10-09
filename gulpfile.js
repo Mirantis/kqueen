@@ -64,10 +64,10 @@ gulp.task('jquery', function() {
 });
 
 
-// Underscore Task
-gulp.task('underscore', function() {
-	return gulp.src('node_modules/underscore/underscore-min.*')
-		.pipe(gulp.dest(folderAsset + '/static/js/'));
+// bootstrapjs Task
+gulp.task('bootstrapjs', function() {
+        return gulp.src(bootstrapDir + '/assets/javascripts/bootstrap.min.js')
+                .pipe(gulp.dest(folderAsset + '/static/js/'));
 });
 
 // Particles Task
@@ -84,7 +84,7 @@ gulp.task('particles', function() {
 });
 
 // All JS
-gulp.task('javascript-all', ['javascript', 'jquery', 'underscore', 'particles']);
+gulp.task('javascript-all', ['javascript', 'jquery', 'bootstrapjs', 'particles']);
 
 // Fonts Task
 gulp.task('fonts', function() {
@@ -171,15 +171,34 @@ gulp.task('favicon-update', function(done) {
 	});
 });
 
-// Monitor files for changes
-gulp.task('watch', ['build'], function () {
-    watch('./kqueen/asset/dynamic/**/*.scss', batch(function (events, done) {
-        gulp.start('sass', done);
-    }));
-    watch('./kqueen/asset/dynamic/**/*.js', batch(function (events, done) {
-        gulp.start('javascript-all', done);
-    }));
+// Run server
+gulp.task('run-server', function(cb) {
+	child.exec('. venv/bin/activate; export PYTHONPATH=`pwd`; python -m kqueen', function(err, stdout, stderr) {
+        	console.log(stdout);
+                console.log(stderr);
+                cb(err);
+        });
 });
+
+// Reload server
+gulp.task('reload-run-server', function() {
+        process.exit();
+	child.spawn('gulp', ['run-server'], {stdio: 'inherit'});
+});
+
+// Monitor files for changes
+gulp.task('watch', function () {
+    watch('./kqueen/asset/dynamic/**/*.scss', function() {
+    	gulp.start('sass');
+        gulp.start('reload-run-server');
+    });
+    watch('./kqueen/asset/dynamic/**/*.js', function() {
+        gulp.start('javascript-all');
+        gulp.start('reload-run-server');
+    });
+});
+
+gulp.task('dev', ['run-server', 'watch']);
 
 // Init - every task
 gulp.task('build', ['sass', 'javascript-all', 'favicon']);
