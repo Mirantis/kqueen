@@ -1,6 +1,8 @@
 from kqueen.kubeapi import KubernetesAPI
+from pprint import pprint as print
 
 import pytest
+import yaml
 
 
 class TestKubeApi:
@@ -32,6 +34,12 @@ class TestKubeApi:
         assert 'git_version' in version
         assert 'platform' in version
 
+    def test_nodes(self, cluster):
+        api = KubernetesAPI(cluster=cluster)
+        nodes = api.list_nodes()
+
+        assert isinstance(nodes, list)
+
     def test_pod_list(self, cluster):
         api = KubernetesAPI(cluster=cluster)
         pods = api.list_pods()
@@ -56,3 +64,30 @@ class TestKubeApi:
 
         deployments = api.list_deployments()
         assert isinstance(deployments, list)
+
+    def test_resource_by_node(self, cluster):
+        api = KubernetesAPI(cluster=cluster)
+
+        resources = api.resources_by_node()
+        assert isinstance(resources, dict)
+
+    def test_resource_by_node_faked(self, cluster, monkeypatch):
+        def fake_list_pods(self):
+            with open('kqueen/fixtures/testdata_list_pods_by_node.yml', 'r') as stream:
+                data_loaded = yaml.load(stream)
+            return data_loaded
+
+        monkeypatch.setattr(KubernetesAPI, 'list_pods_by_node', fake_list_pods)
+
+        api = KubernetesAPI(cluster=cluster)
+        resources = api.resources_by_node()
+
+        req = {
+            'minion1': {
+                'limits': {'cpu': 5.0, 'memory': 2147483648.0},
+                'requests': {'cpu': 1.1, 'memory': 512102400.0}
+            }
+        }
+        print(resources)
+
+        assert resources == req

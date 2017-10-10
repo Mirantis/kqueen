@@ -1,0 +1,24 @@
+{
+  'minion1': [
+    {
+      'spec': {
+        'containers': [
+          {
+            'resources': {
+              'requests': {'cpu': '100m', 'memory': '512M'},
+              'limits': {'cpu': '1', 'memory': '1Gi'}
+            }
+          },
+          {
+            'resources': {
+              'requests': {'cpu': '1', 'memory': '100Ki'},
+              'limits': {'cpu': '4', 'memory': '1Gi'}
+            }
+          },
+          {}
+        ]
+      }
+    }
+  ]
+
+}
