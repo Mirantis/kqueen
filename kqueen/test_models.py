@@ -42,7 +42,7 @@ class TestClusterModel:
 
     def test_added_key(self, cluster):
         """Test _key is added after saving"""
-        cluster.id.set_value(None)
+        cluster.id = None
 
         assert not hasattr(cluster, '_key')
 
@@ -55,7 +55,7 @@ class TestClusterModel:
         assert Cluster.exists(cluster.id)
 
     def test_get_db_key_missing(self, cluster):
-        cluster.id.set_value(None)
+        cluster.id = None
 
         with pytest.raises(Exception, match=r'Missing object id'):
             cluster.get_db_key()
@@ -85,13 +85,13 @@ class TestClusterModel:
     def test_kubeconfig_is_dict(self, cluster):
         cluster.save()
 
-        assert isinstance(cluster.kubeconfig.value, dict)
+        assert isinstance(cluster.kubeconfig, dict)
 
     def test_kubeconfig_load_is_dict(self, cluster):
         cluster.save()
 
-        loaded = Cluster.load(cluster.id.value)
-        assert isinstance(loaded.kubeconfig.value, dict), 'Loaded kubeconfig is not dict'
+        loaded = Cluster.load(cluster.id)
+        assert isinstance(loaded.kubeconfig, dict), 'Loaded kubeconfig is not dict'
 
 
 class TestFieldCompare:
