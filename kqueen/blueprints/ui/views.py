@@ -17,7 +17,6 @@ from kqueen.models import Provisioner
 from kqueen.wrappers import login_required
 from uuid import UUID, uuid4
 
-import json
 import logging
 import time
 
@@ -109,17 +108,11 @@ def provisioner_create():
                 name=form.name.data,
                 engine=form.engine.data,
                 state=app.config['PROVISIONER_UNKNOWN_STATE'],
-                parameters=json.loads({
+                parameters={
                     'username': form.username.data,
                     'password': form.password.data
-                })
+                }
             )
-            # Check if provisioner lives
-            if provisioner.alive() == True:
-                provisioner.state.value = app.config['PROVISIONER_OK_STATE']
-            elif provisioner.alive() == False:
-                provisioner.state.value = app.config['PROVISIONER_ERROR_STATE']
-
             provisioner.save()
             flash('Provisioner %s successfully created.' % provisioner.name, 'success')
         except Exception as e:

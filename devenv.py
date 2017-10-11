@@ -17,13 +17,14 @@ try:
     provisioner = Provisioner(
         id=uuid_provisioner_jenkins,
         name='My AWS',
-        engine='kqueen.provisioners.jenkins.JenkinsProvisioner',
         state='OK',
-        location='-',
-        access_id='demo',
-        access_key='Demo123'
+        engine='kqueen.provisioners.jenkins.JenkinsProvisioner',
+        parameters={
+            'username': 'demo',
+            'password': 'Demo123'
+        }
     )
-    provisioner.save()
+    provisioner.save(check_status=False)
 except:
     print('Adding aws provisioner failed')
 
@@ -45,13 +46,11 @@ try:
     provisioner = Provisioner(
         id=uuid_provisioner_local,
         name='Manual',
-        engine='local',
         state='OK',
-        location='-',
-        access_id='',
-        access_key=''
+        engine='local',
+        parameters={}
     )
-    provisioner.save()
+    provisioner.save(check_status=False)
 except:
     print('Adding aws provisioner failed')
 

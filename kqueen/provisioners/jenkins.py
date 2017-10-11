@@ -21,43 +21,83 @@ STATE_MAP = {
 
 
 class JenkinsProvisioner(Provisioner):
-    def __init__(self, cluster, *args, **kwargs):
-        # Save related cluster on instance
-        self.cluster = cluster
-        # configuration
-        self.jenkins_url = app.config['JENKINS_API_URL']
+    provisioner = 'jenkins'
+    jenkins_url = app.config['JENKINS_API_URL']
+    username = app.config['JENKINS_USERNAME']
+    password = app.config['JENKINS_PASSWORD']
+    provision_job_name = app.config['JENKINS_PROVISION_JOB_NAME']
+    anchor_parameter = app.config['JENKINS_ANCHOR_PARAMETER']
+    parameter_schema = {
+        'username': {
+            'type': 'text',
+            'required': True,
+            'initial': None
+        },
+        'password': {
+            'type': 'password',
+            'required': True,
+            'initial': None
+        }
+    }
+
+    def __init__(self, cluster, **kwargs):
+        """
+        Implementation of :func:`~kqueen.provisioners.base.Provisioner.__init__`
+        """
+        # Call parent init to save cluster on self
+        super(JenkinsProvisioner, self).__init__(cluster, **kwargs)
+        # Client initialization
+        self.username = kwargs.get('username', self.username)
+        self.password = kwargs.get('password', self.password)
         self.client = self._get_client()
-        self.provisioner = 'jenkins'
+        # Cache settings
         self.cache_timeout = 5 * 60
-        self.provision_job_name = app.config['JENKINS_PROVISION_JOB_NAME']
 
     def _get_provision_job_builds(self):
+        """
+        Get builds history of Jenkins job used to provision clusters
+
+        Returns:
+            dict: More information at :func:`~jenkins.Jenkins.get_job_info`
+        """ 
         return self.client.get_job_info(self.provision_job_name, depth=1)
 
-    @staticmethod
-    def check_backend():
+    @classmethod
+    def provisioner_status(cls):
+        """
+        Implementation of :func:`~kqueen.provisioners.base.Provisioner.provisioner_status`
+        """
         conn_kw = {
             'username': app.config['JENKINS_USERNAME'],
             'password': app.config['JENKINS_PASSWORD']
         }
-        status = False
+        status = app.config['PROVISIONER_UNKNOWN_STATE']
         try:
             client = jenkins.Jenkins(app.config['JENKINS_API_URL'], **conn_kw)
             version = client.get_version()
             if version:
-                status = True
+                status = app.config['PROVISIONER_OK_STATE']
         except Exception as e:
             logger.error('Could not contact JenkinsProvisioner backend: %s' % repr(e))
+            status = app.config['PROVISIONER_ERROR_STATE']
         return status
 
     def _get_client(self):
-        conn_kw = {
-            'username': app.config['JENKINS_USERNAME'],
-            'password': app.config['JENKINS_PASSWORD']
-        }
-        return jenkins.Jenkins(app.config['JENKINS_API_URL'], **conn_kw)
+        """
+        Initialize Jenkins client
+
+        Returns:
+            :obj:`jenkins.Jenkins`: initialized Jenkins client
+        """
+        return jenkins.Jenkins(self.jenkins_url, **{
+            'username': self.username,
+            'password': self.password
+        })
 
     def provision(self, **kwargs):
+        """
+        Implementation of :func:`~kqueen.provisioners.base.Provisioner.provision`
+        """
         cluster_id = self.cluster.id.value
         ctx = app.config['JENKINS_PROVISION_JOB_CTX']
         # PATCH THE CTX TO CONTAIN ANCHOR WITH OBJ UUID
@@ -72,6 +112,9 @@ class JenkinsProvisioner(Provisioner):
         return (None, None)
 
     def get_kubeconfig(self):
+        """
+        Implementation of :func:`~kqueen.provisioners.base.Provisioner.get_kubeconfig`
+        """
         cluster_external_id = self._get_external_id()
         if not cluster_external_id:
             return {}
@@ -85,6 +128,15 @@ class JenkinsProvisioner(Provisioner):
         return kubeconfig
 
     def _get_external_id(self):
+        """
+        Get external ID of cluster, in this case Jenkins job ID.
+
+        First we try to get external_id from related object metadata, if there is no external_id
+        yet, we need to look it up in build history of our configured provisioning Jenkins job
+
+        Returns:
+            int: Jenkins job ID 
+        """
         metadata = self.cluster.metadata.value or {}
         external_id = metadata.get('external_id', None)
         if external_id:
@@ -104,7 +156,7 @@ class JenkinsProvisioner(Provisioner):
 
     def _get_by_id(self):
         cluster_id = self.cluster.id.value
-        _list = self.list()
+        _list = self.cluster_list()
         cluster = [c for c in _list if c['id'] == cluster_id]
         return cluster[0] if cluster else {}
 
@@ -123,9 +175,13 @@ class JenkinsProvisioner(Provisioner):
         cluster = self._get_cluster_from_build(build)
         return cluster or {}
 
-    def get(self):
-        # First try to get cluster by external_id, because its much more
-        # efficient in this implementation, else return from the slower method
+    def cluster_get(self):
+        """
+        Implementation of :func:`~kqueen.provisioners.base.Provisioner.cluster_get`
+
+        First we try to get cluster by external_id, because its much more efficient in this
+        implementation. If its not possible yet, we return from the slower method
+        """
         cluster = self._get_by_external_id()
         if cluster:
             return cluster
@@ -179,7 +235,10 @@ class JenkinsProvisioner(Provisioner):
 
         return cluster
 
-    def list(self):
+    def cluster_list(self):
+        """
+        Implementation of :func:`~kqueen.provisioners.base.Provisioner.cluster_list`
+        """
         job = self._get_provision_job_builds()
         clusters = []
 
@@ -191,11 +250,14 @@ class JenkinsProvisioner(Provisioner):
         return clusters
 
     def get_progress(self):
+        """
+        Implementation of :func:`~kqueen.provisioners.base.Provisioner.get_progress`
+        """
         response = 0
         progress = 1
         result = app.config['CLUSTER_UNKNOWN_STATE']
         try:
-            cluster = self.get()
+            cluster = self.cluster_get()
             result = cluster['state']
             if cluster['state'] == app.config['CLUSTER_PROVISIONING_STATE']:
                 # Determine approximate percentage of progress, it is based on estimation
@@ -212,4 +274,10 @@ class JenkinsProvisioner(Provisioner):
         except:
             response = 1
         return {'response': response, 'progress': progress, 'result': result}
+
+    def get_parameter_schema(self):
+        """
+        Implementation of :func:`~kqueen.provisioners.base.Provisioner.get_parameter_schema`
+        """
+        return self.parameter_schema
 

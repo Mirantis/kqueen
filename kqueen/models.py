@@ -29,12 +29,11 @@ class Cluster(Model):
         if self.state.value != app.config['CLUSTER_PROVISIONING_STATE']:
             return self.state.value
         try:
-            cluster = self.provisioner_instance.get()
+            cluster = self.provisioner_instance.cluster_get()
             if cluster['state'] == app.config['CLUSTER_PROVISIONING_STATE']:
                 return self.state.value
             self.state.value = cluster['state']
             self.save()
-            return self.state.value
         except:
             pass
         return self.state.value
@@ -59,7 +58,10 @@ class Cluster(Model):
     def get_kubeconfig(self):
         if self.kubeconfig.value:
             return self.kubeconfig.value
-        return self.provisioner_instance.get_kubeconfig()
+        kubeconfig = self.provisioner_instance.get_kubeconfig()
+        self.kubeconfig.value = kubeconfig
+        self.save()
+        return kubeconfig
 
     def status(self):
         """Return information about Kubernetes cluster"""
@@ -103,9 +105,18 @@ class Provisioner(Model):
     def engine_name(self):
         return self.get_engine_cls().__name__ if self.get_engine_cls() else self.engine.value
 
-    def alive(self):
+    def status(self, save=True):
+        state = app.config['PROVISIONER_UNKNOWN_STATE']
         _class = self.get_engine_cls()
         if _class:
-            return _class.check_backend()
-        return None
+            state = _class.provisioner_status()
+        if save:
+            self.state.value = state
+            self.save()
+        return state
+
+    def save(self, check_status=True):
+        if check_status:
+            self.state.value = self.status(save=False)
+        return super(Provisioner, self).save()
 

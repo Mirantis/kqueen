@@ -27,7 +27,7 @@ class Provisioner:
         """
         self.cluster = cluster
 
-    def list(self):
+    def cluster_list(self):
         """Get all clusters available on backend.
 
         Returns:
@@ -44,7 +44,7 @@ class Provisioner:
         """
         raise NotImplementedError
 
-    def get(self):
+    def cluster_get(self):
         """Get single cluster from backend related to this provisioner instance.
 
         Although this function doesn't take any arguments, it is expected that
@@ -94,7 +94,7 @@ class Provisioner:
                 second item is error in case of failure, can be None::
 
                     (True, None)                            # successful deprovisioning
-                    (False, 'Could not connect to backend') # failed provisioning
+                    (False, 'Could not connect to backend') # failed deprovisioning
         """
         raise NotImplementedError
 
@@ -106,11 +106,11 @@ class Provisioner:
         relevant object which we want to get kubeconfig for.
 
         Returns:
-            dict: Dictionary form of kubeconfig (`yaml.load`)
+            dict: Dictionary form of kubeconfig (`yaml.load(kubeconfig_file)`)
         """
         raise NotImplementedError
 
-    def get_parameters(self):
+    def get_parameter_schema(self):
         """Return parameters specific for this Provisioner implementation.
 
         This method should return parameters specific to the Provisioner implementation,
@@ -118,10 +118,18 @@ class Provisioner:
         in parameters attribute (JSONField) of the `kqueen.models.Provisioner` object.
 
         Returns:
-            dict: Dictionary representation of the parameters with type hints.::
+            dict: Dictionary representation of the parameters with hints for form rendering.::
                 {
-                    'username': 'text',
-                    'password': 'password'
+                    'username': {
+                        'type': 'text',
+                        'required': True,
+                        'initial': None
+                    }
+                    'password': {
+                        'type': 'password',
+                        'required': True,
+                        'initial': None
+                    }
                 }
         """
         raise NotImplementedError
@@ -144,11 +152,11 @@ class Provisioner:
         raise NotImplementedError
 
     @staticmethod
-    def check_backend():
+    def provisioner_status():
         """Check if backend this Provisioner implements is reachable and/or working.
 
         Returns:
-            bool: True if reachable/working, False otherwise.
+            str: Return status of provisioner, should use statuses from `app.config`
         """
         raise NotImplementedError
 
