@@ -14,8 +14,8 @@ class LoginForm(FlaskForm):
 class ProvisionerCreateForm(FlaskForm):
     name = StringField('Name', validators=[DataRequired()])
     engine = SelectField('Engine', choices=PROVISIONER_ENGINES)
-    access_id = StringField('Access ID', validators=[DataRequired()])
-    access_key = PasswordField('Access key', validators=[DataRequired()])
+    username = StringField('Username', validators=[DataRequired()])
+    password = PasswordField('Password', validators=[DataRequired()])
 
 
 def _get_provisioners():

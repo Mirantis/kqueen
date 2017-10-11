@@ -1,5 +1,5 @@
 from importlib import import_module
-
+from flask import current_app as app
 from kqueen.kubeapi import KubernetesAPI
 from kqueen.storages.etcd import IdField
 from kqueen.storages.etcd import JSONField
@@ -19,21 +19,20 @@ logger = logging.getLogger(__name__)
 
 class Cluster(Model):
     id = IdField()
-    external_id = StringField()
     name = StringField()
     provisioner = StringField()
     state = StringField()
     kubeconfig = JSONField()
+    metadata = JSONField()
 
     def get_state(self):
-        if self.state.value != 'Deploying':
+        if self.state.value != app.config['CLUSTER_PROVISIONING_STATE']:
             return self.state.value
         try:
-            prv = self.get_provisioner().engine_cls()
-            c_data = prv.get(str(self.id))
-            if c_data['state'] == 'Deploying':
+            cluster = self.provisioner_instance.get()
+            if cluster['state'] == app.config['CLUSTER_PROVISIONING_STATE']:
                 return self.state.value
-            self.state.value = 'OK' if c_data['state'] == 'SUCCESS' else 'Error'
+            self.state.value = cluster['state']
             self.save()
             return self.state.value
         except:
@@ -42,37 +41,25 @@ class Cluster(Model):
 
     def get_provisioner(self):
         try:
-            prv = Provisioner.load(self.provisioner)
+            provisioner = Provisioner.load(self.provisioner)
         except:
-            prv = None
-        return prv
+            provisioner = None
+        return provisioner
 
-    def get_external_id(self):
-        if self.external_id.value:
-            return self.external_id.value
-        try:
-            prv = self.get_provisioner().engine_cls()
-            c_data = prv.get(str(self.id))
-            external_id = c_data['build_number']
-            self.external_id.value = external_id
-            self.save()
-            return external_id
-        except:
-            pass
+    @property
+    def provisioner_instance(self):
+        provisioner = self.get_provisioner()
+        if provisioner:
+            _class = provisioner.get_engine_cls()
+            if _class:
+                parameters = provisioner.parameters.value if provisioner.parameters.value else {}
+                return _class(self, **parameters)
         return None
 
     def get_kubeconfig(self):
         if self.kubeconfig.value:
             return self.kubeconfig.value
-        if self.get_external_id():
-            try:
-                kubeconfig = self.get_provisioner().engine_cls().get_kubeconfig(self.external_id)
-                self.kubeconfig.value = kubeconfig
-                self.save()
-                return kubeconfig
-            except:
-                pass
-        return {}
+        return self.provisioner_instance.get_kubeconfig()
 
     def status(self):
         """Return information about Kubernetes cluster"""
@@ -99,14 +86,9 @@ class Provisioner(Model):
     name = StringField()
     engine = StringField()
     state = StringField()
-    # TODO: Do not hardcode AWS specific params, just create JSONField with
-    # params then pass params field as argument to class saved in type field
-    access_id = StringField()
-    access_key = SecretField()
-    location = StringField()
+    parameters = JSONField()
 
-    @property
-    def engine_cls(self):
+    def get_engine_cls(self):
         """Return engine class"""
         try:
             module_path = '.'.join(self.engine.value.split('.')[:-1])
@@ -119,8 +101,11 @@ class Provisioner(Model):
 
     @property
     def engine_name(self):
-        return self.engine_cls.__name__ if self.engine_cls else self.engine.value
+        return self.get_engine_cls().__name__ if self.get_engine_cls() else self.engine.value
 
     def alive(self):
-        """Test availability of provisioner and return bool"""
-        return True
+        _class = self.get_engine_cls()
+        if _class:
+            return _class.check_backend()
+        return None
+
