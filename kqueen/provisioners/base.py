@@ -2,100 +2,156 @@ from typing import List, Dict, Any
 
 
 class Provisioner:
-    def __init__(self, *args, **kwargs):
-        raise NotImplementedError
+    def __init__(self, cluster, **kwargs):
+        """Initialize Provisioner object.
+        
+        When you initialize the provisioner through the prepared property of 
+        `kqueen.models.Cluster` object ``cluster.provisioner_instance``, all keys in 
+        provisioner object parameters attribute (JSONField) on Provisioner object are
+        passed as kwargs.
+
+        For example::
+            >>> print my_provisioner.parameters.value
+            {'username': 'foo', 'password': 'bar'}
+            >>> print my_cluster.provisioner_instance.conn_kw
+            {'username': 'foo', 'password': 'bar'}
+
+        Credentials passed from parameters attribute to kwargs of MyProvisioner class
+        used in conn_kw dict for client initialization.
+
+        Args:
+            cluster (:obj:`kqueen.models.Cluster`): Cluster model object related to
+                this provisioner instance.
+            **kwargs: Keyword arguments specific to Provisioner implementation.
+    
+        Attributes:
+            cluster (:obj:`kqueen.models.Cluster`): Cluster model object related to
+                this provisioner instance.
+        """
+        self.cluster = cluster
 
     def list(self):
-        """This is an example of a module level function.
-    
-        Function parameters should be documented in the ``Args`` section. The name
-        of each parameter is required. The type and description of each parameter
-        is optional, but should be included if not obvious.
-    
-        If \*args or \*\*kwargs are accepted,
-        they should be listed as ``*args`` and ``**kwargs``.
-    
-        The format for a parameter is::
-    
-            name (type): description
-                The description may span multiple lines. Following
-                lines should be indented. The "(type)" is optional.
-    
-                Multiple paragraphs are supported in parameter
-                descriptions.
-    
-        Args:
-            param1 (int): The first parameter.
-            param2 (:obj:`str`, optional): The second parameter. Defaults to None.
-                Second line of description should be indented.
-            *args: Variable length argument list.
-            **kwargs: Arbitrary keyword arguments.
-    
+        """Get all clusters available on backend.
+
         Returns:
-            bool: True if successful, False otherwise.
-    
-            The return type is optional and may be specified at the beginning of
-            the ``Returns`` section followed by a colon.
-    
-            The ``Returns`` section may span multiple lines and paragraphs.
-            Following lines should be indented to match the first line.
-    
-            The ``Returns`` section supports any reStructuredText formatting,
-            including literal blocks::
-    
+            list: list of dictionaries. Dictionary format should be::
                 {
-                    'param1': param1,
-                    'param2': param2
+                    'key': key,     # this record should be cached under this key if you choose to cache
+                    'name': name,   # name of the cluster in its respective backend
+                    'id': id,       # id of `kqueen.models.Cluster` object in KQueen database
+                    'state': state, # cluster.state
+                    'metadata': {
+                        'foo': bar  # any keys specific for the Provisioner implementation
+                    }
                 }
-    
-        Raises:
-            AttributeError: The ``Raises`` section is a list of all exceptions
-                that are relevant to the interface.
-            ValueError: If `param2` is equal to `param1`.
-    
         """
         raise NotImplementedError
 
     def get(self):
-        """
-        Get single cluster from backend
+        """Get single cluster from backend related to this provisioner instance.
+
+        Although this function doesn't take any arguments, it is expected that
+        the implementation of the Provisioner gets `self.cluster` to provide the
+        relevant object for which we want to get data from backend.
+
+        Returns:
+            dict: Dictionary format should be::
+
+                {
+                    'key': key,     # (str) this record should be cached under this key if you choose to cache
+                    'name': name,   # (str) name of the cluster in its respective backend
+                    'id': id,       # (str or UUID) id of `kqueen.models.Cluster` object in KQueen database
+                    'state': state, # (str) cluster.state
+                    'metadata': {
+                        'foo': bar  # any keys specific for the Provisioner implementation
+                    }
+                }
         """
         raise NotImplementedError
 
-    def provision(self, cluster_id):
-        """
-        Provision cluster to backend
+    def provision(self):
+        """Provision the cluster related to this provisioner instance to backend.
+
+        Although this function doesn't take any arguments, it is expected that
+        the implementation of the Provisioner gets `self.cluster` to provide the
+        relevant object which we want to provision to backend. 
+
+        Returns:
+            tuple: First item is bool representing success/failure of the action,
+                second item is error in case of failure, can be None::
+
+                    (True, None)                            # successful provisioning
+                    (False, 'Could not connect to backend') # failed provisioning
         """
         raise NotImplementedError
 
-    def deprovision(self, cluster_id):
-        """
-        Deprovision cluster from backend
+    def deprovision(self):
+        """Deprovision the cluster related to this provisioner instance from backend.
+
+        Although this function doesn't take any arguments, it is expected that
+        the implementation of the Provisioner gets `self.cluster` to provide the
+        relevant object which we want to remove from backend. 
+
+        Returns:
+            tuple: First item is bool representing success/failure of the action,
+                second item is error in case of failure, can be None::
+
+                    (True, None)                            # successful deprovisioning
+                    (False, 'Could not connect to backend') # failed provisioning
         """
         raise NotImplementedError
 
-    def get_kubeconfig(self, cluster_external_id):
-        """
-        Return kubeconfig for specified cluster from backend
+    def get_kubeconfig(self):
+        """Get kubeconfig of the cluster related to this provisioner from backend.
+
+        Although this function doesn't take any arguments, it is expected that
+        the implementation of the Provisioner gets `self.cluster` to provide the
+        relevant object which we want to get kubeconfig for.
+
+        Returns:
+            dict: Dictionary form of kubeconfig (`yaml.load`)
         """
         raise NotImplementedError
 
     def get_parameters(self):
-        """
-        Return parameters this provisioner requires
+        """Return parameters specific for this Provisioner implementation.
+
+        This method should return parameters specific to the Provisioner implementation,
+        these are used to generate form for creation of Provisioner object and are stored
+        in parameters attribute (JSONField) of the `kqueen.models.Provisioner` object.
+
+        Returns:
+            dict: Dictionary representation of the parameters with type hints.::
+                {
+                    'username': 'text',
+                    'password': 'password'
+                }
         """
         raise NotImplementedError
 
     def get_progress(self):
-        """
-        Return progress of provisioning
+        """Get progress of provisioning if its possible to determine.
+
+        Although this function doesn't take any arguments, it is expected that
+        the implementation of the Provisioner gets `self.cluster` to provide the
+        relevant object which we want to get provisioning progress for.
+
+        Returns:
+            dict: Dictionary representation of the provisioning provress.::
+                {
+                    'response': response, # (int) any number other than 0 means failure to determine progress
+                    'progress': progress, # (int) provisioning progress in percents
+                    'result': result      # (str) current state of the cluster, i.e. 'Deploying'
+                }
         """
         raise NotImplementedError
 
     @staticmethod
     def check_backend():
-        """
-        Check if we can reach the backend this provisioner implements
+        """Check if backend this Provisioner implements is reachable and/or working.
+
+        Returns:
+            bool: True if reachable/working, False otherwise.
         """
         raise NotImplementedError
 
