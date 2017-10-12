@@ -1,8 +1,10 @@
 
 function topology_data_transform(clusterData) {
 
+  var relations;
+
   // Basic Transformation Array > Object with UID as Keys
-  const transformedData = clusterData.items.reduce(function(acc, cur) {
+  const transformedData = clusterData.reduce(function(acc, cur) {
     acc[cur.metadata.uid] = cur
     return acc
   }, {})
@@ -26,22 +28,22 @@ function topology_data_transform(clusterData) {
 
   let item, kind
 
-  for (item of clusterData.items) {
+  for (item of clusterData) {
     kind = item.kind
     if (kind === 'Pod') {
       let pod = item
       // define relationship between pods and nodes
-      let podsNode = clusterData.items.find(i => i.metadata.name === pod.spec.nodeName)
+      let podsNode = clusterData.find(i => i.metadata.name === pod.spec.nodeName)
       relations.push({source: pod.metadata.uid, target: podsNode.metadata.uid})
 
       // define relationships between pods and rep sets and replication controllers
       let ownerReferences = pod.metadata.ownerReferences[0].uid
-      let podsRepController = clusterData.items.find(i => i.metadata.uid === ownerReferences)
+      let podsRepController = clusterData.find(i => i.metadata.uid === ownerReferences)
       relations.push({target: pod.metadata.uid, source: podsRepController.metadata.uid})
 
 
       // rel'n between pods and services
-      let podsService = clusterData.items.find(i => {
+      let podsService = clusterData.find(i => {
         if (i.kind === 'Service' && i.spec.selector) {
           return i.spec.selector.run === pod.metadata.labels.run
         }

@@ -19,6 +19,7 @@ document.addEventListener("DOMContentLoaded", function(e) {
     }
 
     data = topology_data_transform(rawData);
+
     data['kinds'] = {
       Pod: '#vertex-Pod',
       ReplicationController: '#vertex-ReplicationController',
@@ -27,6 +28,8 @@ document.addEventListener("DOMContentLoaded", function(e) {
       ReplicaSet: '#vertex-ReplicaSet',
       Container: '#vertex-Container'
     };
+
+    console.log(data);
 
     topology_graph(selector, data, options);
 
