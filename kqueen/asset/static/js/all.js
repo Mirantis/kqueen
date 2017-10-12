@@ -222,8 +222,10 @@ function topology_graph(selector, data, options) {
 
 function topology_data_transform(clusterData) {
 
+  var relations;
+
   // Basic Transformation Array > Object with UID as Keys
-  var transformedData = clusterData.items.reduce(function (acc, cur) {
+  var transformedData = clusterData.reduce(function (acc, cur) {
     acc[cur.metadata.uid] = cur;
     return acc;
   }, {});
@@ -274,7 +276,7 @@ function topology_data_transform(clusterData) {
   var _iteratorError2 = undefined;
 
   try {
-    for (var _iterator2 = clusterData.items[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+    for (var _iterator2 = clusterData[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
       item = _step2.value;
 
       kind = item.kind;
@@ -282,20 +284,20 @@ function topology_data_transform(clusterData) {
         (function () {
           var pod = item;
           // define relationship between pods and nodes
-          var podsNode = clusterData.items.find(function (i) {
+          var podsNode = clusterData.find(function (i) {
             return i.metadata.name === pod.spec.nodeName;
           });
           relations.push({ source: pod.metadata.uid, target: podsNode.metadata.uid });
 
           // define relationships between pods and rep sets and replication controllers
           var ownerReferences = pod.metadata.ownerReferences[0].uid;
-          var podsRepController = clusterData.items.find(function (i) {
+          var podsRepController = clusterData.find(function (i) {
             return i.metadata.uid === ownerReferences;
           });
           relations.push({ target: pod.metadata.uid, source: podsRepController.metadata.uid });
 
           // rel'n between pods and services
-          var podsService = clusterData.items.find(function (i) {
+          var podsService = clusterData.find(function (i) {
             if (i.kind === 'Service' && i.spec.selector) {
               return i.spec.selector.run === pod.metadata.labels.run;
             }
