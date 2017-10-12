@@ -21,7 +21,15 @@ class Field:
     is_field = True
 
     def __init__(self, *args, **kwargs):
+        """Initialize Field object
+
+        Attributes:
+            required (bool): Set field to be required before saving the model. Defaults to False.
+
+        """
+
         self.value = None
+        self.required = kwargs.get('required', False)
 
     # waiting for @profesor to bring bright new idea
     # def __get__(self, obj, objtype):
@@ -123,12 +131,10 @@ class Model:
         logger.debug('Model __init__')
 
         self._db = db
-        print(kwargs)
 
         # loop fields and set it
         for a in self.__class__.get_field_names():
             field_class = getattr(self, '_{}'.format(a)).__class__
-            print('Argument', a)
             if hasattr(field_class, 'is_field') and kwargs.get(a):
                 setattr(self, a, kwargs.get(a))
                 logger.debug('Setting {} to {}'.format(a, kwargs.get(a)))
@@ -246,10 +252,8 @@ class Model:
 
     def verify_id(self):
         if hasattr(self, 'id') and self.id is not None:
-            print('HAS')
             return self.id
         else:
-            print('NEW')
             newid = uuid.uuid4()
 
             # TODO check id doesn't exists
@@ -278,7 +282,24 @@ class Model:
 
         self._db.client.delete(self.get_db_key())
 
-    def validate(self):
+    def validate(self) -> bool:
+        """Validate the model object pass all requirements
+
+        Checks:
+            * Required fields
+
+        Returns:
+            Validation result. `True` for passed, `False` for failed.
+        """
+
+        fields = self.__class__.get_field_names()
+        for field in fields:
+            hidden_field = '_{}'.format(field)
+            field_object = getattr(self, hidden_field)
+
+            if field_object.required and field_object.value is None:
+                return False
+
         return True
 
     def get_dict(self):

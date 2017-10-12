@@ -18,8 +18,9 @@ def create_model(required=False):
     return TestModel
 
 
-model_kwargs = {'string': 'abc123', 'json': {'a': 1, 'b': 2, 'c': 'tři'}, 'secret': 'pass'}
+model_kwargs = {'string': 'abc123', 'json': {'a': 1, 'b': 2, 'c': 'tri'}, 'secret': 'pass'}
 model_fields = ['id', 'string', 'json', 'secret']
+model_serialized = '{"string": "abc123", "json": {"a": 1, "b": 2, "c": "tri"}, "secret": "pass"}'
 
 
 @pytest.fixture
@@ -29,12 +30,12 @@ def create_object():
 
 
 class TestRequiredFields:
-    @pytest.mark.skip('not implemented')
-    def test_required(self):
-        model = create_model(required=True)
-        obj = model()
+    @pytest.mark.parametrize('required', [True, False])
+    def test_required(self, required):
+        model = create_model(required=required)
+        obj = model(**model_kwargs)
 
-        assert not obj.validate()
+        assert obj.validate() != required
 
 
 class TestModelInit:
@@ -106,8 +107,14 @@ class TestModelAddId:
 class TestSerialization:
     """Serialization and deserialization create same objects"""
 
-    @pytest.mark.skip('Finish serialization')
     def test_serizalization(self, create_object):
-        print(create_object)
-        print(create_object)
-        # TODO: finish serialization test
+        serialized = create_object.serialize()
+
+        assert serialized == model_serialized
+
+    def test_deserialization(self, create_object):
+        object_class = create_object.__class__
+        create_object.save()
+        new_object = object_class.deserialize(create_object.serialize())
+
+        assert new_object == create_object
