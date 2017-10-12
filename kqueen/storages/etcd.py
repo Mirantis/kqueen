@@ -21,7 +21,15 @@ class Field:
     is_field = True
 
     def __init__(self, *args, **kwargs):
+        """Initialize Field object
+
+        Attributes:
+            required (bool): Set field to be required before saving the model. Defaults to False.
+
+        """
+
         self.value = None
+        self.required = kwargs.get('required', False)
 
     # waiting for @profesor to bring bright new idea
     # def __get__(self, obj, objtype):
@@ -274,7 +282,24 @@ class Model:
 
         self._db.client.delete(self.get_db_key())
 
-    def validate(self):
+    def validate(self) -> bool:
+        """Validate the model object pass all requirements
+
+        Checks:
+            * Required fields
+
+        Returns:
+            Validation result. `True` for passed, `False` for failed.
+        """
+
+        fields = self.__class__.get_field_names()
+        for field in fields:
+            hidden_field = '_{}'.format(field)
+            field_object = getattr(self, hidden_field)
+
+            if field_object.required and field_object.value is None:
+                return False
+
         return True
 
     def get_dict(self):

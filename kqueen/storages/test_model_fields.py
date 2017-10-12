@@ -30,12 +30,12 @@ def create_object():
 
 
 class TestRequiredFields:
-    @pytest.mark.skip('not implemented')
-    def test_required(self):
-        model = create_model(required=True)
-        obj = model()
+    @pytest.mark.parametrize('required', [True, False])
+    def test_required(self, required):
+        model = create_model(required=required)
+        obj = model(**model_kwargs)
 
-        assert not obj.validate()
+        assert obj.validate() != required
 
 
 class TestModelInit:
