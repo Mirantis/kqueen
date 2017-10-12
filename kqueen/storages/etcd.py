@@ -28,7 +28,9 @@ class Field:
 
         """
 
-        self.value = None
+        # TODO: pass value via args[0]
+
+        self.value = kwargs.get('value', None)
         self.required = kwargs.get('required', False)
 
     # waiting for @profesor to bring bright new idea
@@ -100,13 +102,14 @@ class JSONField(Field):
 class ModelMeta(type):
     def __new__(cls, clsname, superclasses, attributedict):
         newattributes = attributedict.copy()
+        fields = {}
 
         # loop attributes and set getters and setter for Fields
         for attr_name, attr in attributedict.items():
             attr_class = attr.__class__
             if hasattr(attr_class, 'is_field') and attr_class.is_field:
                 name_hidden = '_{}'.format(attr_name)
-                newattributes[name_hidden] = attr
+                fields[attr_name] = attr
 
                 def fget(self, k=attr_name):
                     att = getattr(self, "_{}".format(k))
@@ -118,6 +121,8 @@ class ModelMeta(type):
 
                 newattributes[attr_name] = property(fget, fset)
                 logger.debug('Setting {} to point to {}'.format(attr_name, name_hidden))
+
+        newattributes['_fields'] = fields
 
         return type.__new__(cls, clsname, superclasses, newattributes)
 
@@ -133,11 +138,12 @@ class Model:
         self._db = db
 
         # loop fields and set it
-        for a in self.__class__.get_field_names():
-            field_class = getattr(self, '_{}'.format(a)).__class__
-            if hasattr(field_class, 'is_field') and kwargs.get(a):
-                setattr(self, a, kwargs.get(a))
-                logger.debug('Setting {} to {}'.format(a, kwargs.get(a)))
+        for field_name, field in self.__class__.get_fields().items():
+            field_class = field.__class__
+            if hasattr(field_class, 'is_field'):
+                field_object = field_class(**field.__dict__)
+                field_object.set_value(kwargs.get(field_name))
+                setattr(self, '_{}'.format(field_name), field_object)
 
     @classmethod
     def get_model_name(cls):
@@ -231,18 +237,16 @@ class Model:
         return o
 
     @classmethod
+    def get_fields(cls):
+        """Return dict of fields and it classes"""
+
+        return cls._fields
+
+    @classmethod
     def get_field_names(cls):
         """Return list of field names"""
-        fields = []
 
-        for a in cls.__dict__.keys():
-            field = getattr(cls, a).__class__
-            if hasattr(field, 'is_field'):
-                if a.startswith('_'):
-                    a = a[1:]
-                fields.append(a)
-
-        return fields
+        return list(cls._fields.keys())
 
     def get_db_key(self):
         if not self.id:
