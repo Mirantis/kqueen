@@ -3,7 +3,7 @@ from kqueen.models import Provisioner
 from wtforms import PasswordField, SelectField, StringField
 from wtforms.validators import DataRequired
 
-PROVISIONER_ENGINES = [('kqueen.provisioners.jenkins.JenkinsProvisioner', 'JenkinsProvisioner')]
+PROVISIONER_ENGINES = [('kqueen.engines.JenkinsEngine', 'Jenkins')]
 
 
 class LoginForm(FlaskForm):

@@ -1,14 +1,14 @@
-class Provisioner:
-    """Base Provisioner object.
+class BaseEngine:
+    """Base Engine object.
 
-    When you initialize the provisioner through the prepared property :func:`~kqueen.models.Cluster.provisioner_instance`
-    on :obj:`kqueen.models.Cluster` model object, all keys in provisioner object parameters attribute (JSONField) on
+    When you initialize the engine through the prepared property :func:`~kqueen.models.Cluster.engine`
+    on :obj:`kqueen.models.Cluster` model object, all keys in engine object parameters attribute (JSONField) on
     :obj:`kqueen.models.Provisioner` object are passed as kwargs.
 
     Example::
         >>> print my_provisioner.parameters
         {'username': 'foo', 'password': 'bar'}
-        >>> print my_cluster.provisioner_instance.conn_kw
+        >>> print my_cluster.engine.conn_kw
         {'username': 'foo', 'password': 'bar'}
 
     Credentials passed from parameters attribute to kwargs of MyProvisioner class
@@ -16,13 +16,17 @@ class Provisioner:
 
     Args:
         cluster (:obj:`kqueen.models.Cluster`): Cluster model object related to
-            this provisioner instance.
+            this engine instance.
         **kwargs: Keyword arguments specific to Provisioner implementation.
 
     Attributes:
         cluster (:obj:`kqueen.models.Cluster`): Cluster model object related to
-            this provisioner instance.
+            this engine instance.
+        name (str): Name of the engine usable by program.
+        verbose_name (str): Human readable name of the engine.
     """
+    name = 'base_engine'
+    verbose_name = 'Base Engine'
 
     def __init__(self, cluster, **kwargs):
         self.cluster = cluster
@@ -46,7 +50,7 @@ class Provisioner:
         raise NotImplementedError
 
     def cluster_get(self):
-        """Get single cluster from backend related to this provisioner instance.
+        """Get single cluster from backend related to this engine instance.
 
         Although this function doesn't take any arguments, it is expected that
         the implementation of the Provisioner gets ``self.cluster`` to provide the
@@ -68,7 +72,7 @@ class Provisioner:
         raise NotImplementedError
 
     def provision(self):
-        """Provision the cluster related to this provisioner instance to backend.
+        """Provision the cluster related to this engine instance to backend.
 
         Although this function doesn't take any arguments, it is expected that
         the implementation of the Provisioner gets ``self.cluster`` to provide the
@@ -83,7 +87,7 @@ class Provisioner:
         raise NotImplementedError
 
     def deprovision(self):
-        """Deprovision the cluster related to this provisioner instance from backend.
+        """Deprovision the cluster related to this engine instance from backend.
 
         Although this function doesn't take any arguments, it is expected that
         the implementation of the Provisioner gets ``self.cluster`` to provide the
@@ -98,7 +102,7 @@ class Provisioner:
         raise NotImplementedError
 
     def get_kubeconfig(self):
-        """Get kubeconfig of the cluster related to this provisioner from backend.
+        """Get kubeconfig of the cluster related to this engine from backend.
 
         Although this function doesn't take any arguments, it is expected that
         the implementation of the Provisioner gets ``self.cluster`` to provide the
@@ -153,11 +157,11 @@ class Provisioner:
         raise NotImplementedError
 
     @staticmethod
-    def provisioner_status():
+    def engine_status():
         """Check if backend this Provisioner implements is reachable and/or working.
 
         Returns:
-            str: Return status of provisioner, should use statuses from ``app.config``
+            str: Return status of engine, should use statuses from ``app.config``
         """
         raise NotImplementedError
 

@@ -31,7 +31,7 @@ class Cluster(Model, metaclass=ModelMeta):
         if self.state != app.config['CLUSTER_PROVISIONING_STATE']:
             return self.state
         try:
-            cluster = self.provisioner_instance.cluster_get()
+            cluster = self.engine.cluster_get()
             if cluster['state'] == app.config['CLUSTER_PROVISIONING_STATE']:
                 return self.state
             self.state = cluster['state']
@@ -48,19 +48,19 @@ class Cluster(Model, metaclass=ModelMeta):
         return provisioner
 
     @property
-    def provisioner_instance(self):
+    def engine(self):
         provisioner = self.get_provisioner()
         if provisioner:
             _class = provisioner.get_engine_cls()
             if _class:
-                parameters = provisioner.parameters if provisioner.parameters else {}
+                parameters = provisioner.parameters or {}
                 return _class(self, **parameters)
         return None
 
     def get_kubeconfig(self):
         if self.kubeconfig:
             return self.kubeconfig
-        kubeconfig = self.provisioner_instance.get_kubeconfig()
+        kubeconfig = self.engine.get_kubeconfig()
         self.kubeconfig = kubeconfig
         self.save()
         return kubeconfig
@@ -105,7 +105,7 @@ class Provisioner(Model, metaclass=ModelMeta):
 
     @property
     def engine_name(self):
-        return self.get_engine_cls().__name__ if self.get_engine_cls() else self.engine
+        return getattr(self.get_engine_cls(), 'verbose_name', self.engine)
 
     def status(self, save=True):
         state = app.config['PROVISIONER_UNKNOWN_STATE']

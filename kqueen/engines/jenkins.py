@@ -1,5 +1,5 @@
 from flask import current_app as app
-from kqueen.provisioners.base import Provisioner
+from kqueen.engines.base import BaseEngine
 from kqueen.server import cache
 
 import jenkins
@@ -29,8 +29,9 @@ STATE_MAP = {
     'UNSTABLE': app.config['CLUSTER_UNKNOWN_STATE']
 }
 
-class JenkinsProvisioner(Provisioner):
-    provisioner = 'jenkins'
+class JenkinsEngine(BaseEngine):
+    name = 'jenkins'
+    verbose_name = 'Jenkins'
     jenkins_url = app.config['JENKINS_API_URL']
     username = app.config['JENKINS_USERNAME']
     password = app.config['JENKINS_PASSWORD']
@@ -51,10 +52,10 @@ class JenkinsProvisioner(Provisioner):
 
     def __init__(self, cluster, **kwargs):
         """
-        Implementation of :func:`~kqueen.provisioners.base.Provisioner.__init__`
+        Implementation of :func:`~kqueen.engines.base.BaseEngine.__init__`
         """
         # Call parent init to save cluster on self
-        super(JenkinsProvisioner, self).__init__(cluster, **kwargs)
+        super(JenkinsEngine, self).__init__(cluster, **kwargs)
         # Client initialization
         self.username = kwargs.get('username', self.username)
         self.password = kwargs.get('password', self.password)
@@ -72,9 +73,9 @@ class JenkinsProvisioner(Provisioner):
         return self.client.get_job_info(self.provision_job_name, depth=1)
 
     @classmethod
-    def provisioner_status(cls):
+    def engine_status(cls):
         """
-        Implementation of :func:`~kqueen.provisioners.base.Provisioner.provisioner_status`
+        Implementation of :func:`~kqueen.engines.base.BaseEngine.engine_status`
         """
         conn_kw = {
             'username': app.config['JENKINS_USERNAME'],
@@ -87,7 +88,7 @@ class JenkinsProvisioner(Provisioner):
             if version:
                 status = app.config['PROVISIONER_OK_STATE']
         except Exception as e:
-            logger.error('Could not contact JenkinsProvisioner backend: %s' % repr(e))
+            logger.error('Could not contact JenkinsEngine backend: %s' % repr(e))
             status = app.config['PROVISIONER_ERROR_STATE']
         return status
 
@@ -105,7 +106,7 @@ class JenkinsProvisioner(Provisioner):
 
     def provision(self, **kwargs):
         """
-        Implementation of :func:`~kqueen.provisioners.base.Provisioner.provision`
+        Implementation of :func:`~kqueen.engines.base.BaseEngine.provision`
         """
         cluster_id = self.cluster.id
         ctx = app.config['JENKINS_PROVISION_JOB_CTX']
@@ -122,7 +123,7 @@ class JenkinsProvisioner(Provisioner):
 
     def get_kubeconfig(self):
         """
-        Implementation of :func:`~kqueen.provisioners.base.Provisioner.get_kubeconfig`
+        Implementation of :func:`~kqueen.engines.base.BaseEngine.get_kubeconfig`
         """
         cluster_external_id = self._get_external_id()
         if not cluster_external_id:
@@ -175,7 +176,7 @@ class JenkinsProvisioner(Provisioner):
         if not cluster_external_id:
             return {}
         # Try to get the data from cache
-        cluster_cache_key = 'cluster-{}-{}'.format(self.provisioner, cluster_external_id)
+        cluster_cache_key = 'cluster-{}-{}'.format(self.name, cluster_external_id)
         cluster = cache.get(cluster_cache_key)
         if cluster:
             return cluster
@@ -186,7 +187,7 @@ class JenkinsProvisioner(Provisioner):
 
     def cluster_get(self):
         """
-        Implementation of :func:`~kqueen.provisioners.base.Provisioner.cluster_get`
+        Implementation of :func:`~kqueen.engines.base.BaseEngine.cluster_get`
 
         First we try to get cluster by external_id, because its much more efficient in this
         implementation. If its not possible yet, we return from the slower method
@@ -197,7 +198,7 @@ class JenkinsProvisioner(Provisioner):
         return self._get_by_id()
 
     def _get_cluster_from_build(self, build):
-        cluster_cache_key = 'cluster-{}-{}'.format(self.provisioner, build['number'])
+        cluster_cache_key = 'cluster-{}-{}'.format(self.name, build['number'])
         cluster = cache.get(cluster_cache_key)
 
         if cluster is None:
@@ -246,7 +247,7 @@ class JenkinsProvisioner(Provisioner):
 
     def cluster_list(self):
         """
-        Implementation of :func:`~kqueen.provisioners.base.Provisioner.cluster_list`
+        Implementation of :func:`~kqueen.engines.base.BaseEngine.cluster_list`
         """
         job = self._get_provision_job_builds()
         clusters = []
@@ -260,7 +261,7 @@ class JenkinsProvisioner(Provisioner):
 
     def get_progress(self):
         """
-        Implementation of :func:`~kqueen.provisioners.base.Provisioner.get_progress`
+        Implementation of :func:`~kqueen.engines.base.BaseEngine.get_progress`
         """
         response = 0
         progress = 1
@@ -286,7 +287,7 @@ class JenkinsProvisioner(Provisioner):
 
     def get_parameter_schema(self):
         """
-        Implementation of :func:`~kqueen.provisioners.base.Provisioner.get_parameter_schema`
+        Implementation of :func:`~kqueen.engines.base.BaseEngine.get_parameter_schema`
         """
         return self.parameter_schema
 

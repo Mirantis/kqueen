@@ -172,7 +172,7 @@ def cluster_deploy():
         # Actually provision cluster
         result = False
         try:
-            result, err = cluster.provisioner_instance.provision()
+            result, err = cluster.engine.provision()
         except Exception as e:
             flash('Could not create cluster %s.' % form.name.data, 'danger')
             logger.error('Creating cluster %s failed with following reason: %s' % (form.name.data, repr(e)))
@@ -246,7 +246,7 @@ def cluster_deployment_status(cluster_id):
         abort(404)
 
     try:
-        status = cluster.provisioner_instance.get_progress()
+        status = cluster.engine.get_progress()
     except Exception as e:
         logger.error('Error occured while getting provisioning status for cluster %s: %s' % (cluster_id, repr(e)))
         abort(500)
