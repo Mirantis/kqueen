@@ -246,17 +246,9 @@ def cluster_topology(cluster_id):
         cluster = None
         flash('Unable to load cluster', 'danger')
 
-    status = {}
-    if obj.get_state() == 'OK':
-        try:
-            status = obj.status()
-        except:
-            flash('Unable to get information about cluster', 'danger')
-
     return render_template(
-        'ui/cluster_detail.html',
+        'ui/cluster_topology.html',
         cluster=cluster,
-        status=status,
     )
 
 

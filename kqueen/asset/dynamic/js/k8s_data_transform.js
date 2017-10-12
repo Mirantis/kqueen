@@ -46,7 +46,7 @@ function topology_data_transform(clusterData) {
           return i.spec.selector.run === pod.metadata.labels.run
         }
       })
-      relations.push({target: pod.metadata.uid, source: podsService.metadata.uid})    
+      relations.push({target: pod.metadata.uid, source: podsService.metadata.uid})
     }
 
     if (kind === 'Service') {
@@ -55,7 +55,7 @@ function topology_data_transform(clusterData) {
       // console.log(item.spec.selector)
     }
 
-    if (kind ==='Deployment') {
+    if (kind === 'Deployment') {
       // console.log('item deployment', item)
     }
   }

@@ -11,8 +11,8 @@ var graph;
 
 document.addEventListener("DOMContentLoaded", function(e) {
 
-  d3.json("{{ url_for('api.cluster_topology_data', cluster.id) }}", function(rawData) {
-    console.log(data);
+  d3.json("{{ url_for('api.cluster_topology_data', cluster_id=cluster.id) }}", function(rawData) {
+    console.log(rawData);
 
     var selector = "#topology-graph";
     var options = {
