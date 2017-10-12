@@ -12,6 +12,7 @@
     "gulp-minify": "0.0.13",
     "gulp-real-favicon": "^0.2.1",
     "gulp-sass": "^2.3.2",
+    "d3": "^3.5.17",
     "gulp-sync": "^0.1.4",
     "gulp-util": "^3.0.8",
     "gulp-watch": "^4.3.11",

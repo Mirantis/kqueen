@@ -93,6 +93,22 @@ class Cluster(Model, metaclass=ModelMeta):
 
         return out
 
+    def topology_data(self):
+        """
+        Return information about Kubernetes cluster in format used in
+        visual processing.
+        """
+        try:
+            out = []
+            kubernetes = KubernetesAPI(cluster=self)
+            out.append(kubernetes.list_nodes())
+            out.append(kubernetes.list_pods())
+            out.append(kubernetes.list_services())
+        except:
+            out = []
+
+        return out
+
 
 class Provisioner(Model, metaclass=ModelMeta):
     id = IdField()

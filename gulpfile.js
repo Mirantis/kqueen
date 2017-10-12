@@ -59,6 +59,11 @@ gulp.task('jquery', function() {
 		.pipe(gulp.dest(folderAsset + '/static/js/'));
 });
 
+// D3 Task
+gulp.task('d3', function() {
+	return gulp.src('node_modules/d3/d3.min.js')
+		.pipe(gulp.dest(folderAsset + '/static/js/'));
+});
 
 // bootstrapjs Task
 gulp.task('bootstrapjs', function() {
@@ -82,7 +87,7 @@ gulp.task('particles', function() {
 });
 
 // All JS
-gulp.task('javascript-all', ['javascript', 'jquery', 'bootstrapjs', 'particles']);
+gulp.task('javascript-all', ['javascript', 'jquery', 'bootstrapjs', 'particles', 'd3']);
 
 // Fonts Task
 gulp.task('fonts', function() {

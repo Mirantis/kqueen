@@ -1,0 +1,38 @@
+{% extends "ui/base.html" %}
+
+{% block page_header %}
+Cluster {{ cluster.name }} Topology
+{% endblock %}
+
+{% block content %}
+<div id="topology-graph"></div>
+<script>
+var graph;
+
+document.addEventListener("DOMContentLoaded", function(e) {
+
+  d3.json("{{ url_for('api.cluster_topology_data', cluster.id) }}", function(rawData) {
+    console.log(data);
+
+    var selector = "#topology-graph";
+    var options = {
+    }
+
+    data = topology_data_transform(rawData);
+    data['kinds'] = {
+      Pod: '#vertex-Pod',
+      ReplicationController: '#vertex-ReplicationController',
+      Node: '#vertex-Node',
+      Service: '#vertex-Service',
+      ReplicaSet: '#vertex-ReplicaSet',
+      Container: '#vertex-Container'
+    };
+
+    topology_graph(selector, data, options);
+
+  });
+
+});
+</script>
+
+{% endblock %}
