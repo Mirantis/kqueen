@@ -261,10 +261,24 @@ class Model:
             self.id = newid
             return self.id
 
-    def save(self):
-        """Save object"""
+    def save(self, validate=True, assign_id=True):
+        """Save object to database
 
-        self.verify_id()
+
+        Attributes:
+            validate (bool): Validate model before saving. Defaults to `True`.
+            assign_id (bool): Assing id (if missing) before saving model. Defaults to `True`
+
+        Return:
+            bool: `True` if model was saved without errors, `False` otherwise.
+
+        """
+
+        if assign_id:
+            self.verify_id()
+
+        if validate and not self.validate():
+            raise ValueError('Validation for model failed')
 
         key = self.get_db_key()
         logger.debug('Writing {} to {}'.format(self, key))
