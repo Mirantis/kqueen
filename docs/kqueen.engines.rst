@@ -1,22 +1,22 @@
-kqueen\.provisioners package
+kqueen\.engines package
 ============================
 
 Submodules
 ----------
 
-kqueen\.provisioners\.jenkins module
+kqueen\.engines\.jenkins module
 ------------------------------------
 
-.. automodule:: kqueen.provisioners.jenkins
+.. automodule:: kqueen.engines.jenkins
     :members:
     :undoc-members:
     :show-inheritance:
+    :exclude-members: app
 
 
 Module contents
 ---------------
 
-.. automodule:: kqueen.provisioners
+.. automodule:: kqueen.engines.base
     :members:
     :undoc-members:
-    :show-inheritance:

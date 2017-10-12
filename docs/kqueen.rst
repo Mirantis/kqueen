@@ -7,7 +7,7 @@ Subpackages
 .. toctree::
 
     kqueen.blueprints
-    kqueen.provisioners
+    kqueen.engines
     kqueen.storages
 
 Submodules
