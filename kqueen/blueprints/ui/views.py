@@ -46,7 +46,6 @@ def index():
             except:
                 pass
             clusters.append(data)
-    import pdb; pdb.set_trace()
     clustertable = ClusterTable(clusters)
     provisioners = []
     for provisioner in list(Provisioner.list(return_objects=True).values()):
