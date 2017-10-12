@@ -137,19 +137,23 @@ class TestSerialization:
 
 
 class TestDuplicateId:
-    def test_write(self):
-        model = create_model()
+    def setup(self):
+        self.model = create_model()
 
-        obj1_kwargs = {'string': 'object 1', 'json': {'a': 1, 'b': 2, 'c': 'tri'}, 'secret': 'pass'}
-        obj2_kwargs = {'string': 'object2', 'json': {'a': 1, 'b': 2, 'c': 'tri'}, 'secret': 'pass'}
+        self.obj1_kwargs = {'string': 'object 1', 'json': {'a': 1, 'b': 2, 'c': 'tri'}, 'secret': 'pass'}
+        self.obj2_kwargs = {'string': 'object 2', 'json': {'a': 1, 'b': 2, 'c': 'tri'}, 'secret': 'pass'}
 
-        obj1 = model(obj1_kwargs)
+    def test_with_save(self):
+        """"Save object are not same"""
+        obj1 = self.model(**self.obj1_kwargs)
+        obj2 = self.model(**self.obj2_kwargs)
+
+        assert obj1 != obj2
+
         obj1.save()
-        obj2 = model(obj2_kwargs)
         obj2.save()
 
         print(obj1.get_dict())
         print(obj2.get_dict())
 
-        assert obj1 != obj2
         assert obj1.id != obj2.id
