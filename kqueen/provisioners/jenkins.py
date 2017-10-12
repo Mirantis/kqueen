@@ -8,8 +8,18 @@ import requests
 import time
 import yaml
 
+# Ugly patch to make this module importable outside app context to generate docs
+if not app:
+    from kqueen import config_dev
+    app = type(
+        'app',
+        (object,),
+        {'config': {k: v for (k, v) in config_dev.__dict__.items() if not k.startswith("__")}}
+    )
+
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
+
 
 STATE_MAP = {
     'ABORTED': app.config['CLUSTER_ERROR_STATE'],
@@ -18,7 +28,6 @@ STATE_MAP = {
     'SUCCESS': app.config['CLUSTER_OK_STATE'],
     'UNSTABLE': app.config['CLUSTER_UNKNOWN_STATE']
 }
-
 
 class JenkinsProvisioner(Provisioner):
     provisioner = 'jenkins'

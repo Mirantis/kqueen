@@ -1,30 +1,30 @@
 class Provisioner:
-    def __init__(self, cluster, **kwargs):
-        """Initialize Provisioner object.
-        
-        When you initialize the provisioner through the prepared property of 
-        `kqueen.models.Cluster` object ``cluster.provisioner_instance``, all keys in 
-        provisioner object parameters attribute (JSONField) on Provisioner object are
-        passed as kwargs.
-
-        For example::
-            >>> print my_provisioner.parameters.value
-            {'username': 'foo', 'password': 'bar'}
-            >>> print my_cluster.provisioner_instance.conn_kw
-            {'username': 'foo', 'password': 'bar'}
-
-        Credentials passed from parameters attribute to kwargs of MyProvisioner class
-        used in conn_kw dict for client initialization.
-
-        Args:
-            cluster (:obj:`kqueen.models.Cluster`): Cluster model object related to
-                this provisioner instance.
-            **kwargs: Keyword arguments specific to Provisioner implementation.
+    """Base Provisioner object.
     
-        Attributes:
-            cluster (:obj:`kqueen.models.Cluster`): Cluster model object related to
-                this provisioner instance.
-        """
+    When you initialize the provisioner through the prepared property :func:`~kqueen.models.Cluster.provisioner_instance`
+    on :obj:`kqueen.models.Cluster` model object, all keys in provisioner object parameters attribute (JSONField) on 
+    :obj:`kqueen.models.Provisioner` object are passed as kwargs.
+
+    Example::
+        >>> print my_provisioner.parameters.value
+        {'username': 'foo', 'password': 'bar'}
+        >>> print my_cluster.provisioner_instance.conn_kw
+        {'username': 'foo', 'password': 'bar'}
+
+    Credentials passed from parameters attribute to kwargs of MyProvisioner class
+    used in conn_kw dict for client initialization.
+
+    Args:
+        cluster (:obj:`kqueen.models.Cluster`): Cluster model object related to
+            this provisioner instance.
+        **kwargs: Keyword arguments specific to Provisioner implementation.
+    
+    Attributes:
+        cluster (:obj:`kqueen.models.Cluster`): Cluster model object related to
+            this provisioner instance.
+    """
+
+    def __init__(self, cluster, **kwargs):
         self.cluster = cluster
 
     def cluster_list(self):
@@ -32,6 +32,7 @@ class Provisioner:
 
         Returns:
             list: list of dictionaries. Dictionary format should be::
+
                 {
                     'key': key,     # this record should be cached under this key if you choose to cache
                     'name': name,   # name of the cluster in its respective backend
@@ -48,7 +49,7 @@ class Provisioner:
         """Get single cluster from backend related to this provisioner instance.
 
         Although this function doesn't take any arguments, it is expected that
-        the implementation of the Provisioner gets `self.cluster` to provide the
+        the implementation of the Provisioner gets ``self.cluster`` to provide the
         relevant object for which we want to get data from backend.
 
         Returns:
@@ -70,15 +71,14 @@ class Provisioner:
         """Provision the cluster related to this provisioner instance to backend.
 
         Although this function doesn't take any arguments, it is expected that
-        the implementation of the Provisioner gets `self.cluster` to provide the
+        the implementation of the Provisioner gets ``self.cluster`` to provide the
         relevant object which we want to provision to backend. 
 
         Returns:
-            tuple: First item is bool representing success/failure of the action,
-                second item is error in case of failure, can be None::
+            tuple: First item is bool (success/failure), second item is error, can be None::
 
-                    (True, None)                            # successful provisioning
-                    (False, 'Could not connect to backend') # failed provisioning
+                (True, None)                            # successful provisioning
+                (False, 'Could not connect to backend') # failed provisioning
         """
         raise NotImplementedError
 
@@ -86,15 +86,14 @@ class Provisioner:
         """Deprovision the cluster related to this provisioner instance from backend.
 
         Although this function doesn't take any arguments, it is expected that
-        the implementation of the Provisioner gets `self.cluster` to provide the
+        the implementation of the Provisioner gets ``self.cluster`` to provide the
         relevant object which we want to remove from backend. 
 
         Returns:
-            tuple: First item is bool representing success/failure of the action,
-                second item is error in case of failure, can be None::
+            tuple: First item is bool (success/failure), second item is error, can be None::
 
-                    (True, None)                            # successful deprovisioning
-                    (False, 'Could not connect to backend') # failed deprovisioning
+                (True, None)                            # successful provisioning
+                (False, 'Could not connect to backend') # failed provisioning
         """
         raise NotImplementedError
 
@@ -102,7 +101,7 @@ class Provisioner:
         """Get kubeconfig of the cluster related to this provisioner from backend.
 
         Although this function doesn't take any arguments, it is expected that
-        the implementation of the Provisioner gets `self.cluster` to provide the
+        the implementation of the Provisioner gets ``self.cluster`` to provide the
         relevant object which we want to get kubeconfig for.
 
         Returns:
@@ -119,6 +118,7 @@ class Provisioner:
 
         Returns:
             dict: Dictionary representation of the parameters with hints for form rendering.::
+
                 {
                     'username': {
                         'type': 'text',
@@ -138,11 +138,12 @@ class Provisioner:
         """Get progress of provisioning if its possible to determine.
 
         Although this function doesn't take any arguments, it is expected that
-        the implementation of the Provisioner gets `self.cluster` to provide the
+        the implementation of the Provisioner gets ``self.cluster`` to provide the
         relevant object which we want to get provisioning progress for.
 
         Returns:
             dict: Dictionary representation of the provisioning provress.::
+
                 {
                     'response': response, # (int) any number other than 0 means failure to determine progress
                     'progress': progress, # (int) provisioning progress in percents
@@ -156,7 +157,7 @@ class Provisioner:
         """Check if backend this Provisioner implements is reachable and/or working.
 
         Returns:
-            str: Return status of provisioner, should use statuses from `app.config`
+            str: Return status of provisioner, should use statuses from ``app.config``
         """
         raise NotImplementedError
 

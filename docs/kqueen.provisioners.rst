@@ -11,12 +11,12 @@ kqueen\.provisioners\.jenkins module
     :members:
     :undoc-members:
     :show-inheritance:
+    :exclude-members: app
 
 
 Module contents
 ---------------
 
-.. automodule:: kqueen.provisioners
+.. automodule:: kqueen.provisioners.base
     :members:
     :undoc-members:
-    :show-inheritance:
