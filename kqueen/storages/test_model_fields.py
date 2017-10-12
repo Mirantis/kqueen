@@ -57,6 +57,7 @@ class TestRequiredFields:
 class TestModelInit:
     def setup(self):
         self.model = create_model()
+        self.obj = self.model(**model_kwargs)
 
     @pytest.mark.parametrize('field_name,field_value', model_kwargs.items())
     def test_init_string(self, field_name, field_value):
@@ -72,7 +73,7 @@ class TestModelInit:
     def test_field_property_getters(self, attr, group):
         attr_name = '{}{}'.format(group, attr)
 
-        assert hasattr(self.model, attr_name)
+        assert hasattr(self.obj, attr_name)
 
 
 class TestGetFieldNames:
