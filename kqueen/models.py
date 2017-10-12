@@ -1,11 +1,15 @@
 from importlib import import_module
+<<<<<<< HEAD
 from flask import current_app as app
+=======
+>>>>>>> master
 from kqueen.kubeapi import KubernetesAPI
 from kqueen.storages.etcd import IdField
 from kqueen.storages.etcd import JSONField
 from kqueen.storages.etcd import Model
-from kqueen.storages.etcd import StringField
+from kqueen.storages.etcd import ModelMeta
 from kqueen.storages.etcd import SecretField
+from kqueen.storages.etcd import StringField
 
 import logging
 
@@ -17,7 +21,7 @@ logger = logging.getLogger(__name__)
 #
 
 
-class Cluster(Model):
+class Cluster(Model, metaclass=ModelMeta):
     id = IdField()
     name = StringField()
     provisioner = StringField()
@@ -26,17 +30,17 @@ class Cluster(Model):
     metadata = JSONField()
 
     def get_state(self):
-        if self.state.value != app.config['CLUSTER_PROVISIONING_STATE']:
-            return self.state.value
+        if self.state != app.config['CLUSTER_PROVISIONING_STATE']:
+            return self.state
         try:
             cluster = self.provisioner_instance.cluster_get()
             if cluster['state'] == app.config['CLUSTER_PROVISIONING_STATE']:
-                return self.state.value
-            self.state.value = cluster['state']
+                return self.state
+            self.state = cluster['state']
             self.save()
         except:
             pass
-        return self.state.value
+        return self.state
 
     def get_provisioner(self):
         try:
@@ -51,15 +55,15 @@ class Cluster(Model):
         if provisioner:
             _class = provisioner.get_engine_cls()
             if _class:
-                parameters = provisioner.parameters.value if provisioner.parameters.value else {}
+                parameters = provisioner.parameters if provisioner.parameters else {}
                 return _class(self, **parameters)
         return None
 
     def get_kubeconfig(self):
-        if self.kubeconfig.value:
-            return self.kubeconfig.value
+        if self.kubeconfig:
+            return self.kubeconfig
         kubeconfig = self.provisioner_instance.get_kubeconfig()
-        self.kubeconfig.value = kubeconfig
+        self.kubeconfig = kubeconfig
         self.save()
         return kubeconfig
 
@@ -83,7 +87,7 @@ class Cluster(Model):
         return out
 
 
-class Provisioner(Model):
+class Provisioner(Model, metaclass=ModelMeta):
     id = IdField()
     name = StringField()
     engine = StringField()
@@ -93,8 +97,8 @@ class Provisioner(Model):
     def get_engine_cls(self):
         """Return engine class"""
         try:
-            module_path = '.'.join(self.engine.value.split('.')[:-1])
-            class_name = self.engine.value.split('.')[-1]
+            module_path = '.'.join(self.engine.split('.')[:-1])
+            class_name = self.engine.split('.')[-1]
             module = import_module(module_path)
             _class = getattr(module, class_name)
         except:
@@ -103,7 +107,7 @@ class Provisioner(Model):
 
     @property
     def engine_name(self):
-        return self.get_engine_cls().__name__ if self.get_engine_cls() else self.engine.value
+        return self.get_engine_cls().__name__ if self.get_engine_cls() else self.engine
 
     def status(self, save=True):
         state = app.config['PROVISIONER_UNKNOWN_STATE']
@@ -111,12 +115,12 @@ class Provisioner(Model):
         if _class:
             state = _class.provisioner_status()
         if save:
-            self.state.value = state
+            self.state = state
             self.save()
         return state
 
     def save(self, check_status=True):
-        if check_status:
-            self.state.value = self.status(save=False)
+        if check_status
+            self.state = self.status(save=False)
         return super(Provisioner, self).save()
 

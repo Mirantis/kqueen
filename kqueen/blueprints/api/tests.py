@@ -74,4 +74,4 @@ class TestClusterKubeconfig:
 
         url = url_for('api.cluster_kubeconfig', cluster_id=cluster.id)
         response = client.get(url)
-        assert response.json == cluster.kubeconfig.value
+        assert response.json == cluster.kubeconfig

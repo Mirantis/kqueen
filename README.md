@@ -19,10 +19,7 @@ We load configuration from file `config_dev.py` by default and this can be confi
 
 | Configuration option | Type | Default value | Description |
 | --- | --- | --- | --- |
-
 | `KQUEEN_CONFIG_FILE` | Environment variable | `config_dev.py` | Configuration file to load |
-
-
 
 
 ## Rationale

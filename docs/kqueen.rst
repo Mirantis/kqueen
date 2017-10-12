@@ -37,6 +37,15 @@ kqueen\.models module
     :undoc-members:
     :show-inheritance:
 
+kqueen\.helpers module
+-----------------------
+
+.. automodule:: kqueen.helpers
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
 kqueen\.serializers module
 --------------------------
 
@@ -49,30 +58,6 @@ kqueen\.server module
 ---------------------
 
 .. automodule:: kqueen.server
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-kqueen\.test\_kubeapi module
-----------------------------
-
-.. automodule:: kqueen.test_kubeapi
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-kqueen\.test\_models module
----------------------------
-
-.. automodule:: kqueen.test_models
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-kqueen\.tests module
---------------------
-
-.. automodule:: kqueen.tests
     :members:
     :undoc-members:
     :show-inheritance:
