@@ -1,13 +1,13 @@
-kqueen\.provisioners package
+kqueen\.engines package
 ============================
 
 Submodules
 ----------
 
-kqueen\.provisioners\.jenkins module
+kqueen\.engines\.jenkins module
 ------------------------------------
 
-.. automodule:: kqueen.provisioners.jenkins
+.. automodule:: kqueen.engines.jenkins
     :members:
     :undoc-members:
     :show-inheritance:
@@ -17,6 +17,6 @@ kqueen\.provisioners\.jenkins module
 Module contents
 ---------------
 
-.. automodule:: kqueen.provisioners.base
+.. automodule:: kqueen.engines.base
     :members:
     :undoc-members:

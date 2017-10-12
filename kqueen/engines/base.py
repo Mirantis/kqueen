@@ -16,12 +16,12 @@ class BaseEngine:
 
     Args:
         cluster (:obj:`kqueen.models.Cluster`): Cluster model object related to
-            this engine instance.
+        this engine instance.
         **kwargs: Keyword arguments specific to Provisioner implementation.
 
     Attributes:
         cluster (:obj:`kqueen.models.Cluster`): Cluster model object related to
-            this engine instance.
+        this engine instance.
         name (str): Name of the engine usable by program.
         verbose_name (str): Human readable name of the engine.
     """
