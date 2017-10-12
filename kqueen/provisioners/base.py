@@ -6,7 +6,7 @@ class Provisioner:
     :obj:`kqueen.models.Provisioner` object are passed as kwargs.
 
     Example::
-        >>> print my_provisioner.parameters.value
+        >>> print my_provisioner.parameters
         {'username': 'foo', 'password': 'bar'}
         >>> print my_cluster.provisioner_instance.conn_kw
         {'username': 'foo', 'password': 'bar'}

@@ -1,8 +1,6 @@
 from importlib import import_module
-<<<<<<< HEAD
 from flask import current_app as app
-=======
->>>>>>> master
+
 from kqueen.kubeapi import KubernetesAPI
 from kqueen.storages.etcd import IdField
 from kqueen.storages.etcd import JSONField
@@ -120,7 +118,7 @@ class Provisioner(Model, metaclass=ModelMeta):
         return state
 
     def save(self, check_status=True):
-        if check_status
+        if check_status:
             self.state = self.status(save=False)
         return super(Provisioner, self).save()
 

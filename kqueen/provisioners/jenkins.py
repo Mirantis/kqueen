@@ -107,7 +107,7 @@ class JenkinsProvisioner(Provisioner):
         """
         Implementation of :func:`~kqueen.provisioners.base.Provisioner.provision`
         """
-        cluster_id = self.cluster.id.value
+        cluster_id = self.cluster.id
         ctx = app.config['JENKINS_PROVISION_JOB_CTX']
         # PATCH THE CTX TO CONTAIN ANCHOR WITH OBJ UUID
         ctx['STACK_NAME'] = 'KQUEEN__%s' % str(cluster_id)
@@ -146,7 +146,7 @@ class JenkinsProvisioner(Provisioner):
         Returns:
             int: Jenkins job ID 
         """
-        metadata = self.cluster.metadata.value or {}
+        metadata = self.cluster.metadata or {}
         external_id = metadata.get('external_id', None)
         if external_id:
             return external_id
@@ -154,9 +154,9 @@ class JenkinsProvisioner(Provisioner):
             cluster = self._get_by_id()
             external_id = cluster['metadata']['external_id']
             # Get fresh data just in case to avoid conflict
-            metadata = self.cluster.metadata.value or {}
+            metadata = self.cluster.metadata or {}
             metadata['external_id'] = external_id
-            self.cluster.metadata.value = metadata
+            self.cluster.metadata = metadata
             self.cluster.save()
             return external_id
         except:
@@ -164,7 +164,7 @@ class JenkinsProvisioner(Provisioner):
         return external_id
 
     def _get_by_id(self):
-        cluster_id = self.cluster.id.value
+        cluster_id = self.cluster.id
         _list = self.cluster_list()
         cluster = [c for c in _list if c['id'] == cluster_id]
         return cluster[0] if cluster else {}
