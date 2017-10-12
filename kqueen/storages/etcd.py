@@ -123,12 +123,10 @@ class Model:
         logger.debug('Model __init__')
 
         self._db = db
-        print(kwargs)
 
         # loop fields and set it
         for a in self.__class__.get_field_names():
             field_class = getattr(self, '_{}'.format(a)).__class__
-            print('Argument', a)
             if hasattr(field_class, 'is_field') and kwargs.get(a):
                 setattr(self, a, kwargs.get(a))
                 logger.debug('Setting {} to {}'.format(a, kwargs.get(a)))
@@ -246,10 +244,8 @@ class Model:
 
     def verify_id(self):
         if hasattr(self, 'id') and self.id is not None:
-            print('HAS')
             return self.id
         else:
-            print('NEW')
             newid = uuid.uuid4()
 
             # TODO check id doesn't exists
