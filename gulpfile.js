@@ -41,11 +41,7 @@ gulp.task('sass', function() {
 gulp.task('javascript', function() {
 	var concat = require('gulp-concat');
 	var minify = require('gulp-minify');
-	var babel = require('gulp-babel');
 	return gulp.src(folderAsset + '/dynamic/js/*.js')
-		.pipe(babel({
-			presets: ['es2015']
-		}))
 		.pipe(concat('all.js'))
 		.pipe(minify({
 			ext:{
@@ -72,6 +68,8 @@ gulp.task('bootstrapjs', function() {
 
 // Particles Task
 gulp.task('particles', function() {
+        gulp.src(folderAsset + '/dynamic/js/particles.json')
+         .pipe(gulp.dest(folderAsset + '/static/js/'));
         var minify = require('gulp-minify');
         return gulp.src('node_modules/particles.js/particles.js')
                 .pipe(minify({
