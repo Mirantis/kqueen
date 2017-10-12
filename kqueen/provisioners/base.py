@@ -1,8 +1,8 @@
 class Provisioner:
     """Base Provisioner object.
-    
+
     When you initialize the provisioner through the prepared property :func:`~kqueen.models.Cluster.provisioner_instance`
-    on :obj:`kqueen.models.Cluster` model object, all keys in provisioner object parameters attribute (JSONField) on 
+    on :obj:`kqueen.models.Cluster` model object, all keys in provisioner object parameters attribute (JSONField) on
     :obj:`kqueen.models.Provisioner` object are passed as kwargs.
 
     Example::
@@ -18,7 +18,7 @@ class Provisioner:
         cluster (:obj:`kqueen.models.Cluster`): Cluster model object related to
             this provisioner instance.
         **kwargs: Keyword arguments specific to Provisioner implementation.
-    
+
     Attributes:
         cluster (:obj:`kqueen.models.Cluster`): Cluster model object related to
             this provisioner instance.
@@ -72,7 +72,7 @@ class Provisioner:
 
         Although this function doesn't take any arguments, it is expected that
         the implementation of the Provisioner gets ``self.cluster`` to provide the
-        relevant object which we want to provision to backend. 
+        relevant object which we want to provision to backend.
 
         Returns:
             tuple: First item is bool (success/failure), second item is error, can be None::
@@ -87,7 +87,7 @@ class Provisioner:
 
         Although this function doesn't take any arguments, it is expected that
         the implementation of the Provisioner gets ``self.cluster`` to provide the
-        relevant object which we want to remove from backend. 
+        relevant object which we want to remove from backend.
 
         Returns:
             tuple: First item is bool (success/failure), second item is error, can be None::
