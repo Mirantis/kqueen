@@ -29,6 +29,22 @@ def create_object():
     return model(**model_kwargs)
 
 
+class TestSave:
+    def setup(self):
+        model = create_model(required=True)
+        self.obj = model()
+
+    def test_model_invalid(self):
+        assert not self.obj.validate()
+
+    def test_save_raises(self):
+        with pytest.raises(ValueError, match='Validation for model failed'):
+            self.obj.save()
+
+    def test_save_skip_validation(self):
+        assert self.obj.save(validate=False)
+
+
 class TestRequiredFields:
     @pytest.mark.parametrize('required', [True, False])
     def test_required(self, required):
