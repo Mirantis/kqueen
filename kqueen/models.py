@@ -1,11 +1,11 @@
 from importlib import import_module
-
 from kqueen.kubeapi import KubernetesAPI
 from kqueen.storages.etcd import IdField
 from kqueen.storages.etcd import JSONField
 from kqueen.storages.etcd import Model
-from kqueen.storages.etcd import StringField
+from kqueen.storages.etcd import ModelMeta
 from kqueen.storages.etcd import SecretField
+from kqueen.storages.etcd import StringField
 
 import logging
 
@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 #
 
 
-class Cluster(Model):
+class Cluster(Model, metaclass=ModelMeta):
     id = IdField()
     external_id = StringField()
     name = StringField()
@@ -26,19 +26,19 @@ class Cluster(Model):
     kubeconfig = JSONField()
 
     def get_state(self):
-        if self.state.value != 'Deploying':
-            return self.state.value
+        if self.state != 'Deploying':
+            return self.state
         try:
             prv = self.get_provisioner().engine_cls()
             c_data = prv.get(str(self.id))
             if c_data['state'] == 'Deploying':
-                return self.state.value
-            self.state.value = 'OK' if c_data['state'] == 'SUCCESS' else 'Error'
+                return self.state
+            self.state = 'OK' if c_data['state'] == 'SUCCESS' else 'Error'
             self.save()
-            return self.state.value
+            return self.state
         except:
             pass
-        return self.state.value
+        return self.state
 
     def get_provisioner(self):
         try:
@@ -48,13 +48,13 @@ class Cluster(Model):
         return prv
 
     def get_external_id(self):
-        if self.external_id.value:
-            return self.external_id.value
+        if self.external_id:
+            return self.external_id
         try:
             prv = self.get_provisioner().engine_cls()
             c_data = prv.get(str(self.id))
             external_id = c_data['build_number']
-            self.external_id.value = external_id
+            self.external_id = external_id
             self.save()
             return external_id
         except:
@@ -62,12 +62,12 @@ class Cluster(Model):
         return None
 
     def get_kubeconfig(self):
-        if self.kubeconfig.value:
-            return self.kubeconfig.value
+        if self.kubeconfig:
+            return self.kubeconfig
         if self.get_external_id():
             try:
                 kubeconfig = self.get_provisioner().engine_cls().get_kubeconfig(self.external_id)
-                self.kubeconfig.value = kubeconfig
+                self.kubeconfig = kubeconfig
                 self.save()
                 return kubeconfig
             except:
@@ -94,7 +94,7 @@ class Cluster(Model):
         return out
 
 
-class Provisioner(Model):
+class Provisioner(Model, metaclass=ModelMeta):
     id = IdField()
     name = StringField()
     engine = StringField()
@@ -109,8 +109,8 @@ class Provisioner(Model):
     def engine_cls(self):
         """Return engine class"""
         try:
-            module_path = '.'.join(self.engine.value.split('.')[:-1])
-            class_name = self.engine.value.split('.')[-1]
+            module_path = '.'.join(self.engine.split('.')[:-1])
+            class_name = self.engine.split('.')[-1]
             module = import_module(module_path)
             _class = getattr(module, class_name)
         except:
@@ -119,7 +119,7 @@ class Provisioner(Model):
 
     @property
     def engine_name(self):
-        return self.engine_cls.__name__ if self.engine_cls else self.engine.value
+        return self.engine_cls.__name__ if self.engine_cls else self.engine
 
     def alive(self):
         """Test availability of provisioner and return bool"""

@@ -64,5 +64,5 @@ cluster = Cluster(
     kubeconfig=yaml.load(open('kubeconfig_localhost', 'r').read()),
 )
 
-print(cluster.kubeconfig.value)
+print(cluster.kubeconfig)
 cluster.save()

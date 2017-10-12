@@ -91,4 +91,4 @@ def cluster_kubeconfig(cluster_id):
     except NameError:
         abort(404)
 
-    return jsonify(obj.kubeconfig.value)
+    return jsonify(obj.kubeconfig)

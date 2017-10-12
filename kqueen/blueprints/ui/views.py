@@ -42,7 +42,7 @@ def index():
             # TODO: teach ORM to get related objects for us
             try:
                 prv = Provisioner.load(data['provisioner'])
-                data['provisioner'] = prv.name.value
+                data['provisioner'] = prv.name
             except:
                 pass
             clusters.append(data)
@@ -114,7 +114,7 @@ def provisioner_create():
             )
             # Check if provisioner lives
             if provisioner.alive():
-                provisioner.state.value = 'OK'
+                provisioner.state = 'OK'
             provisioner.save()
             flash('Provisioner %s successfully created.' % provisioner.name, 'success')
         except Exception as e:
@@ -134,7 +134,7 @@ def provisioner_delete(provisioner_id):
 
     # load object
     try:
-        used_provisioners = [c.provisioner.value for c in list(Cluster.list(return_objects=True).values())]
+        used_provisioners = [c.provisioner for c in list(Cluster.list(return_objects=True).values())]
         obj = Provisioner.load(object_id)
         if str(object_id) not in used_provisioners:
             obj.delete()
