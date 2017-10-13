@@ -89,7 +89,7 @@ class JenkinsEngine(BaseEngine):
             if version:
                 status = app.config['PROVISIONER_OK_STATE']
         except Exception as e:
-            logger.error('Could not contact JenkinsEngine backend: %s' % repr(e))
+            logger.error('Could not contact JenkinsEngine backend: {}'.format(repr(e)))
             status = app.config['PROVISIONER_ERROR_STATE']
         return status
 
@@ -112,12 +112,12 @@ class JenkinsEngine(BaseEngine):
         cluster_id = self.cluster.id
         ctx = app.config['JENKINS_PROVISION_JOB_CTX']
         # PATCH THE CTX TO CONTAIN ANCHOR WITH OBJ UUID
-        ctx['STACK_NAME'] = 'KQUEEN__%s' % str(cluster_id)
+        ctx['STACK_NAME'] = 'KQUEEN__{}'.format(cluster_id)
         try:
             self.client.build_job(self.provision_job_name, ctx)
             return (True, None)
         except Exception as e:
-            msg = 'Creating cluster %s failed with following reason: %s' % (str(cluster_id), repr(e))
+            msg = 'Creating cluster {} failed with following reason: {}'.format(cluster_id, repr(e))
             logger.error(msg)
             return (False, msg)
         return (None, None)
@@ -129,8 +129,11 @@ class JenkinsEngine(BaseEngine):
         cluster_external_id = self._get_external_id()
         if not cluster_external_id:
             return {}
-        kubeconfig_url = '%s/job/%s/%s/artifact/kubeconfig' % (
-            self.jenkins_url, self.provision_job_name, str(cluster_external_id))
+        kubeconfig_url = '{jenkins_url}/job/{job_name}/{build_id}/artifact/kubeconfig'.format(
+            jenkins_url=self.jenkins_url,
+            job_name=self.provision_job_name,
+            build_id=str(cluster_external_id),
+        )
         kubeconfig = {}
         try:
             kubeconfig = yaml.load(requests.get(kubeconfig_url).text)
@@ -224,7 +227,7 @@ class JenkinsEngine(BaseEngine):
                 try:
                     state = STATE_MAP[build['result']]
                 except KeyError:
-                    logger.warning('%s is not valid cluster state' % str(build['result']))
+                    logger.warning('{} is not valid cluster state'.format(build['result']))
                     state = app.config['CLUSTER_UNKNOWN_STATE']
             else:
                 state = app.config['CLUSTER_PROVISIONING_STATE']
