@@ -199,6 +199,9 @@ gulp.task('watch', function () {
         gulp.start('javascript-all');
         gulp.start('run-server');
     });
+    watch('./kqueen/**/**/*.py', function() {
+        gulp.start('run-server');
+    });
 });
 
 gulp.task('dev', ['run-server', 'watch']);

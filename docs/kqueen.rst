@@ -1,27 +1,16 @@
 kqueen package
 ==============
 
-Subpackages
------------
+Models
+-------
 
-.. toctree::
-
-    kqueen.blueprints
-    kqueen.provisioners
-    kqueen.storages
-
-Submodules
-----------
-
-kqueen\.config\_dev module
---------------------------
-
-.. automodule:: kqueen.config_dev
+.. automodule:: kqueen.models
     :members:
     :undoc-members:
     :show-inheritance:
 
-kqueen\.kubeapi module
+
+Kubernetes API
 ----------------------
 
 .. automodule:: kqueen.kubeapi
@@ -29,32 +18,7 @@ kqueen\.kubeapi module
     :undoc-members:
     :show-inheritance:
 
-kqueen\.models module
----------------------
-
-.. automodule:: kqueen.models
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-kqueen\.helpers module
------------------------
-
-.. automodule:: kqueen.helpers
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-
-kqueen\.serializers module
---------------------------
-
-.. automodule:: kqueen.serializers
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-kqueen\.server module
+Server
 ---------------------
 
 .. automodule:: kqueen.server
@@ -62,13 +26,40 @@ kqueen\.server module
     :undoc-members:
     :show-inheritance:
 
-kqueen\.wrappers module
+Helpers
+-----------------------
+
+.. automodule:: kqueen.helpers
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+Serializers
+--------------------------
+
+.. automodule:: kqueen.serializers
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+Wrappers
 -----------------------
 
 .. automodule:: kqueen.wrappers
     :members:
     :undoc-members:
     :show-inheritance:
+
+Subpackages
+-----------
+
+.. toctree::
+
+    kqueen.blueprints
+    kqueen.engines
+    kqueen.storages
+
 
 
 Module contents
