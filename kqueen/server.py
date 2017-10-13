@@ -38,4 +38,4 @@ def run():
     def root():
         return redirect(url_for('ui.index'), code=302)
 
-    app.run()
+    app.run(host='0.0.0.0')

@@ -40,8 +40,12 @@ gulp.task('sass', function() {
 // JavaScript Task
 gulp.task('javascript', function() {
 	var concat = require('gulp-concat');
-	var minify = require('gulp-minify');
+    var minify = require('gulp-minify');
+	var babel = require('gulp-babel');
 	return gulp.src(folderAsset + '/dynamic/js/*.js')
+        .pipe(babel({
+            presets: ['env']
+        }))
 		.pipe(concat('all.js'))
 		.pipe(minify({
 			ext:{
@@ -59,6 +63,11 @@ gulp.task('jquery', function() {
 		.pipe(gulp.dest(folderAsset + '/static/js/'));
 });
 
+// D3 Task
+gulp.task('d3', function() {
+	return gulp.src('node_modules/d3/d3.min.js')
+		.pipe(gulp.dest(folderAsset + '/static/js/'));
+});
 
 // bootstrapjs Task
 gulp.task('bootstrapjs', function() {
@@ -82,7 +91,7 @@ gulp.task('particles', function() {
 });
 
 // All JS
-gulp.task('javascript-all', ['javascript', 'jquery', 'bootstrapjs', 'particles']);
+gulp.task('javascript-all', ['javascript', 'jquery', 'bootstrapjs', 'particles', 'd3']);
 
 // Fonts Task
 gulp.task('fonts', function() {
