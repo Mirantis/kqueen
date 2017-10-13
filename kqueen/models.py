@@ -6,7 +6,6 @@ from kqueen.storages.etcd import IdField
 from kqueen.storages.etcd import JSONField
 from kqueen.storages.etcd import Model
 from kqueen.storages.etcd import ModelMeta
-from kqueen.storages.etcd import SecretField
 from kqueen.storages.etcd import StringField
 
 import logging
@@ -121,4 +120,3 @@ class Provisioner(Model, metaclass=ModelMeta):
         if check_status:
             self.state = self.engine_status(save=False)
         return super(Provisioner, self).save()
-

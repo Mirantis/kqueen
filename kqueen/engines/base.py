@@ -164,4 +164,3 @@ class BaseEngine:
             str: Return status of engine, should use statuses from ``app.config``
         """
         raise NotImplementedError
-

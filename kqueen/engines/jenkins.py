@@ -29,6 +29,7 @@ STATE_MAP = {
     'UNSTABLE': app.config['CLUSTER_UNKNOWN_STATE']
 }
 
+
 class JenkinsEngine(BaseEngine):
     name = 'jenkins'
     verbose_name = 'Jenkins'
@@ -69,7 +70,7 @@ class JenkinsEngine(BaseEngine):
 
         Returns:
             dict: More information at :func:`~jenkins.Jenkins.get_job_info`
-        """ 
+        """
         return self.client.get_job_info(self.provision_job_name, depth=1)
 
     @classmethod
@@ -145,7 +146,7 @@ class JenkinsEngine(BaseEngine):
         yet, we need to look it up in build history of our configured provisioning Jenkins job
 
         Returns:
-            int: Jenkins job ID 
+            int: Jenkins job ID
         """
         metadata = self.cluster.metadata or {}
         external_id = metadata.get('external_id', None)
@@ -223,7 +224,7 @@ class JenkinsEngine(BaseEngine):
                 try:
                     state = STATE_MAP[build['result']]
                 except KeyError:
-                    log.warning('%s is not valid cluster state' % str(build['result']))
+                    logger.warning('%s is not valid cluster state' % str(build['result']))
                     state = app.config['CLUSTER_UNKNOWN_STATE']
             else:
                 state = app.config['CLUSTER_PROVISIONING_STATE']
@@ -290,4 +291,3 @@ class JenkinsEngine(BaseEngine):
         Implementation of :func:`~kqueen.engines.base.BaseEngine.get_parameter_schema`
         """
         return self.parameter_schema
-

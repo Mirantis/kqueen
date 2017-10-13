@@ -18,7 +18,6 @@ from kqueen.wrappers import login_required
 from uuid import UUID, uuid4
 
 import logging
-import time
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -252,4 +251,3 @@ def cluster_deployment_status(cluster_id):
         abort(500)
 
     return jsonify(status)
-
