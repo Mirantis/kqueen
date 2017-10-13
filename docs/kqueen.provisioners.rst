@@ -1,10 +1,10 @@
-kqueen\.provisioners package
-============================
+Provisioners
+=============
 
 Submodules
 ----------
 
-kqueen\.provisioners\.jenkins module
+JenkinsProvisioner
 ------------------------------------
 
 .. automodule:: kqueen.provisioners.jenkins

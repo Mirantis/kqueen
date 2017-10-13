@@ -1,4 +1,4 @@
-kqueen\.blueprints package
+Flask blueprints
 ==========================
 
 Subpackages
