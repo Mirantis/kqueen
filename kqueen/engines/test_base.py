@@ -35,6 +35,7 @@ class TestBaseEngine:
         with pytest.raises(NotImplementedError):
             attr()
 
+
 class TestAllEngines:
     @pytest.mark.parametrize('engine_class', engines)
     def test_engines_equal_all(self, engine_class):

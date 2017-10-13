@@ -14,8 +14,10 @@ logger = logging.getLogger(__name__)
 
 cache = SimpleCache()
 
+config_file = os.environ.get('KQUEEN_CONFIG_FILE', 'config/dev.py')
 
-def create_app():
+
+def create_app(config_file=config_file):
     app = Flask(__name__, static_folder='./asset/static')
     app.json_encoder = CustomJSONEncoder
 
@@ -23,8 +25,9 @@ def create_app():
     app.register_blueprint(api, url_prefix='/api/v1')
 
     # load configuration
-    config_file = os.environ.get('KQUEEN_CONFIG_FILE', 'config_dev.py')
-    if not app.config.from_pyfile(config_file):
+    if app.config.from_pyfile(config_file):
+        logging.info('Loading configuration from {}'.format(config_file))
+    else:
         logging.warning('Config file {} could not be loaded.'.format(config_file))
 
     return app

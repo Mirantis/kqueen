@@ -5,6 +5,7 @@ from pprint import pprint as print
 import pytest
 import yaml
 
+
 def fake_raise(exc):
     def fn(self, *args, **kwargs):
         raise exc
