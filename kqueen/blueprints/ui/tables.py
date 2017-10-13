@@ -39,7 +39,6 @@ class ProvisionerTable(Table):
     # Table fields
     name = Col('Name')
     engine_name = Col('Engine')
-    location = Col('Location')
     state = StatusCol('Status')
     delete = DeleteCol(
         'Delete',

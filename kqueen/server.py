@@ -4,12 +4,15 @@ from flask import url_for
 from kqueen.blueprints.api.views import api
 from kqueen.blueprints.ui.views import ui
 from kqueen.serializers import CustomJSONEncoder
+from werkzeug.contrib.cache import SimpleCache
 
 import logging
 import os
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
+
+cache = SimpleCache()
 
 
 def create_app():
