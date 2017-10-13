@@ -96,7 +96,7 @@ function topology_graph(selector, notify, options) {
         });
 
     function select(item) {
-    selection = item;
+        selection = item;
         svg.selectAll("g")
             .classed("selected", function(d) { return d.item === item; });
     }
@@ -194,7 +194,7 @@ function topology_graph(selector, notify, options) {
       timeout = window.setTimeout(adjust, 150);
     }
 
-    window.addEventListener('resize', resized);
+    //window.addEventListener('resize', resized);
 
     adjust();
     resized();
@@ -213,7 +213,7 @@ function topology_graph(selector, notify, options) {
             return [vertices, added];
         },
         close: function() {
-        window.removeEventListener('resize', resized);
+            window.removeEventListener('resize', resized);
             window.clearTimeout(timeout);
 
             /*

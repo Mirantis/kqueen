@@ -179,7 +179,7 @@ function topology_graph(selector, notify, options) {
         timeout = window.setTimeout(adjust, 150);
     }
 
-    window.addEventListener('resize', resized);
+    //window.addEventListener('resize', resized);
 
     adjust();
     resized();

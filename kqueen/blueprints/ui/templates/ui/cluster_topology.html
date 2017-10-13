@@ -7,9 +7,17 @@ Cluster {{ cluster.name }} Topology
 {% block content %}
 <div id="topology-graph"></div>
 <style>
+@font-face {
+  font-family: 'PatternFlyIcons-webfont';
+  src: url('/static/fonts/PatternFlyIcons-webfont.woff') format('woff');
+}
+@font-face {
+  font-family: 'FontAwesome';
+  src: url('/static/fonts/fontawesome-webfont.woff') format('woff');
+}
 .kube-topology {
   border: 1px black solid;
-  height: 400px;
+  height: 600px;
 }
 .kube-topology g {
     font-family: PatternFlyIcons-webfont;
@@ -69,33 +77,59 @@ Cluster {{ cluster.name }} Topology
     stroke-linecap: round;
     stroke-dasharray: 5, 2;
 }
-
-kubernetes-topology-icon {
-    display: inline-block;
-    vertical-align: middle;
-    cursor: pointer;
-    padding: 10px;
-    user-select: none;
-}
-
-kubernetes-topology-icon svg {
-    width: 32px;
-    height: 32px;
-    display: block;
-}
-
-kubernetes-topology-icon use {
-    opacity: 0.4;
-}
-
-kubernetes-topology-icon.active use {
-    opacity: 1;
-}
-
-kubernetes-topology-icon:hover use {
-    opacity: 0.7;
+.kindInfo{
+  width: 35px;
+  height: 35px;
 }
 </style>
+<div>
+   <svg class="kindInfo">
+     <use xlink:href="#vertex-Pod" x="15" y="15"></use>
+   </svg>
+   Pods
+</div>
+<br>
+<div>
+   <svg class="kindInfo">
+     <use xlink:href="#vertex-Service" x="15" y="15"></use>
+   </svg>
+   Services
+</div>
+<br>
+<div>
+   <svg class="kindInfo">
+     <use xlink:href="#vertex-Node" x="15" y="15"></use>
+   </svg>
+   Nodes
+</div>
+<br>
+<div>
+   <svg class="kindInfo">
+     <use xlink:href="#vertex-ReplicationController" x="15" y="15"></use>
+   </svg>
+   Replication Controllers
+</div>
+
+<svg class="kube-topology" hidden>
+      <defs>
+        <g class="Node" id="vertex-Node">
+          <circle r="15"></circle>
+          <text y="7">&#xe621;</text>
+        </g>
+        <g class="Pod" id="vertex-Pod">
+          <circle r="15"></circle>
+          <text y="5" x="0.5">&#xf1b3;</text>
+        </g>
+        <g class="Service" id="vertex-Service">
+          <circle r="15"></circle>
+          <text y="8" x="-2">&#xe61e;</text>
+        </g>
+        <g class="ReplicationController" id="vertex-ReplicationController">
+          <circle r="15"></circle>
+          <text y="7.5" x="-1">&#xe624;</text>
+        </g>
+      </defs>
+    </svg>
 <script>
 document.addEventListener("DOMContentLoaded", function(e) {
   d3.json("{{ url_for('api.cluster_topology_data', cluster_id=cluster.id) }}", function(data) {
