@@ -26,8 +26,6 @@ function topology_graph(selector, data, options) {
     var selection = null;
     var force = options["force"];
 
-    console.log(force);
-
     /* Allow the force to be passed in, default if not */
     if (!force) {
         force = d3.layout.force().charge(-800).gravity(0.2).linkDistance(80);
@@ -225,12 +223,6 @@ function topology_graph(selector, data, options) {
 function topology_data_transform(clusterData) {
 
   var relations = [];
-<<<<<<< 08be0225796434402faa0581d68872f57a77c469
-=======
-
-
-//  var relations;
->>>>>>> Topology function
 
   // Basic Transformation Array > Object with UID as Keys
   var transformedData = clusterData.reduce(function (acc, cur) {
@@ -242,7 +234,6 @@ function topology_data_transform(clusterData) {
   var resource = void 0;
   for (resource in transformedData) {
     resource = transformedData[resource];
-        console.log(resource);
     if (resource.kind === 'Pod') {
       var _iteratorNormalCompletion = true;
       var _didIteratorError = false;
