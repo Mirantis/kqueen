@@ -40,8 +40,12 @@ gulp.task('sass', function() {
 // JavaScript Task
 gulp.task('javascript', function() {
 	var concat = require('gulp-concat');
-	var minify = require('gulp-minify');
+    var minify = require('gulp-minify');
+	var babel = require('gulp-babel');
 	return gulp.src(folderAsset + '/dynamic/js/*.js')
+        .pipe(babel({
+            presets: ['env']
+        }))
 		.pipe(concat('all.js'))
 		.pipe(minify({
 			ext:{

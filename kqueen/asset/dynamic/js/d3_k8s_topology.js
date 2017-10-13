@@ -206,7 +206,7 @@ function topology_graph(selector, data, options) {
             var added = digest();
             return [vertices, added];
         },
-    data: function(new_items, new_relations) {
+        data: function(new_items, new_relations) {
             items = new_items || { };
             relations = new_relations || [];
             var added = digest();

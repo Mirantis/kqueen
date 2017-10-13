@@ -101,9 +101,15 @@ class Cluster(Model, metaclass=ModelMeta):
         try:
             out = []
             kubernetes = KubernetesAPI(cluster=self)
-            out += kubernetes.list_nodes()
-            out += kubernetes.list_pods()
-            out += kubernetes.list_services()
+            for n in kubernetes.list_nodes():
+                n['kind'] = 'Node'
+                out.append(n)
+            for p in kubernetes.list_pods():
+                p['kind'] = 'Pod'
+                out.append(p)
+            for s in kubernetes.list_services():
+                s['kind'] = 'Service'
+                out.append(s)
         except:
             out = []
 

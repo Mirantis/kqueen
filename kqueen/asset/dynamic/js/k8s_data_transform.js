@@ -1,7 +1,7 @@
 
 function topology_data_transform(clusterData) {
 
-  var relations;
+  var relations = [];
 
   // Basic Transformation Array > Object with UID as Keys
   const transformedData = clusterData.reduce(function(acc, cur) {

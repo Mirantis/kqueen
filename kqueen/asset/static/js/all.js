@@ -222,7 +222,7 @@ function topology_graph(selector, data, options) {
 
 function topology_data_transform(clusterData) {
 
-  var relations;
+  var relations = [];
 
   // Basic Transformation Array > Object with UID as Keys
   var transformedData = clusterData.reduce(function (acc, cur) {
@@ -234,6 +234,7 @@ function topology_data_transform(clusterData) {
   var resource = void 0;
   for (resource in transformedData) {
     resource = transformedData[resource];
+    console.log(resource);
     if (resource.kind === 'Pod') {
       var _iteratorNormalCompletion = true;
       var _didIteratorError = false;
