@@ -18,7 +18,7 @@ try:
         id=uuid_provisioner_jenkins,
         name='My AWS',
         state='OK',
-        engine='kqueen.provisioners.jenkins.JenkinsProvisioner',
+        engine='kqueen.engines.jenkins.JenkinsEngine',
         parameters={
             'username': 'demo',
             'password': 'Demo123'

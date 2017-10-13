@@ -107,11 +107,11 @@ class Provisioner(Model, metaclass=ModelMeta):
     def engine_name(self):
         return getattr(self.get_engine_cls(), 'verbose_name', self.engine)
 
-    def status(self, save=True):
+    def engine_status(self, save=True):
         state = app.config['PROVISIONER_UNKNOWN_STATE']
-        _class = self.get_engine_cls()
-        if _class:
-            state = _class.provisioner_status()
+        klass = self.get_engine_cls()
+        if klass:
+            state = klass.engine_status()
         if save:
             self.state = state
             self.save()
@@ -119,6 +119,6 @@ class Provisioner(Model, metaclass=ModelMeta):
 
     def save(self, check_status=True):
         if check_status:
-            self.state = self.status(save=False)
+            self.state = self.engine_status(save=False)
         return super(Provisioner, self).save()
 
