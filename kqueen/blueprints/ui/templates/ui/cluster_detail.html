@@ -7,7 +7,7 @@ Cluster {{ cluster.name }} detail
 
 {% block content %}
 
-<div class="well overview">
+<div class="box overview">
   <div class="col-sm-4">
     <a href="{{ url_for('api.cluster_kubeconfig', cluster_id=cluster.id) }}" class="btn btn-primary btn-xs">Download kubeconfig</a>
   </div>
@@ -48,58 +48,62 @@ Cluster {{ cluster.name }} detail
 {% if 'nodes' in status %}
 <h3>Nodes</h3>
 <div class="table-container">
-  <table class="table" id="table-nodes">
-    <tr>
-      <th>Name</th>
-      <th>Version</th>
-      <th>IP</th>
-      <th>OS</th>
-      <th>Kernel</th>
-      <th class="status_column">Status</th>
-      <th>Size</th>
-      <th colspan=2 class="action_column">Pods</th>
-    </tr>
+  <table class="table table-hover no-actions" id="table-nodes">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Version</th>
+        <th>IP</th>
+        <th>OS</th>
+        <th>Kernel</th>
+        <th class="status_column">Status</th>
+        <th>Size</th>
+        <th colspan=2 class="action_column">Pods</th>
+      </tr>
+    </thead>
+    <tbody>
     {% for node in status.nodes %}
-    <tr>
-      <td>{{ node['metadata']['name'] }}</td>
-      <td>{{ node['status']['node_info']['kubelet_version'] }}</td>
-      <td>
-        <ul>
-          {% for a in node['status']['addresses'] %}
-            {% if a['type'] not in ['LegacyHostIP', 'InternalDNS', 'ExternalDNS', 'Hostname'] %}
-              <li>{{ a['type'] }}: {{ a['address'] }}</li>
+      <tr>
+        <td>{{ node['metadata']['name'] }}</td>
+        <td>{{ node['status']['node_info']['kubelet_version'] }}</td>
+        <td>
+          <ul>
+            {% for a in node['status']['addresses'] %}
+              {% if a['type'] not in ['LegacyHostIP', 'InternalDNS', 'ExternalDNS', 'Hostname'] %}
+                <li>{{ a['type'] }}: {{ a['address'] }}</li>
+              {% endif %}
+            {% endfor %}
+          </ul>
+        </td>
+        <td>{{ node['status']['node_info']['os_image'] }}</td>
+        <td>{{ node['status']['node_info']['kernel_version'] }}</td>
+        <td class="status_column">
+          {% for s in node['status']['conditions'] %}
+            {% if s['type'] != 'Ready' %}
+              {% if s['status'] == 'False' %}
+                {% set icon = 'ok' %}
+              {% else %}
+                {% set icon = 'remove' %}
+              {% endif %}
+            <abbr title="{{ s['type'] }}"><span class="glyphicon glyphicon-{{ icon }}" aria-hidden="true"></span></abbr>
             {% endif %}
           {% endfor %}
-        </ul>
-      </td>
-      <td>{{ node['status']['node_info']['os_image'] }}</td>
-      <td>{{ node['status']['node_info']['kernel_version'] }}</td>
-      <td class="status_column">
-        {% for s in node['status']['conditions'] %}
-          {% if s['type'] != 'Ready' %}
-            {% if s['status'] == 'False' %}
-              {% set icon = 'ok' %}
-            {% else %}
-              {% set icon = 'remove' %}
-            {% endif %}
-          <abbr title="{{ s['type'] }}"><span class="glyphicon glyphicon-{{ icon }}" aria-hidden="true"></span></abbr>
-          {% endif %}
-        {% endfor %}
-      </td>
-      <td>
-      {{ node['status']['allocatable']['cpu'] }} / {{ '%.02f GB' % (node['status']['allocatable']['memory'].replace('Ki', '')|int/1000000)  }}
-      </td>
-      {% set maxpods = node['status']['allocatable']['pods']|int %}
-      {% set pods = status.nodes_pods.get(node['metadata']['name'])|int %}
-      {% set percentage = (pods/maxpods*100)|int %}
-      <td class="action_column">
-        <div class="progress-bar-background">
-          <span>{{ pods }}/{{ maxpods }}</span>
-          <div class="progress-bar" style="width: {{ percentage }}%;"></div>
-        </div>
-      </td>
-    </tr>
-    {% endfor %}
+        </td>
+        <td>
+        {{ node['status']['allocatable']['cpu'] }} / {{ '%.02f GB' % (node['status']['allocatable']['memory'].replace('Ki', '')|int/1000000)  }}
+        </td>
+        {% set maxpods = node['status']['allocatable']['pods']|int %}
+        {% set pods = status.nodes_pods.get(node['metadata']['name'])|int %}
+        {% set percentage = (pods/maxpods*100)|int %}
+        <td class="action_column">
+          <div class="progress-bar-background">
+            <span>{{ pods }}/{{ maxpods }}</span>
+            <div class="progress-bar" style="width: {{ percentage }}%;"></div>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
   </table>
 </div>
 {% endif %}
@@ -107,40 +111,44 @@ Cluster {{ cluster.name }} detail
 {% if 'deployments' in status %}
 <h3>Workload</h3>
 <div class="table-container">
-  <table class="table" id="table-nodes">
-    <tr>
-      <th>Name</th>
-      <th>Namespace</th>
-      <th>Replicas</th>
-      <th>Containers</th>
-    </tr>
+  <table class="table table-hover no-actions" id="table-nodes">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Namespace</th>
+        <th>Replicas</th>
+        <th>Containers</th>
+      </tr>
+    </thead>
+    <tbody>
     {% for deployment in status.deployments %}
-    <tr>
-    <td>{{ deployment['metadata']['name'] }}</td>
-    <td>{{ deployment['metadata']['namespace'] }}</td>
-    <td>
-      {% set ready = deployment.get('status', {}).get('ready_replicas', 'N')|int %}
-      {% set desired = deployment.get('spec', {}).get('replicas', 'N')|int %}
-      {% if desired > 0 %}
-        {% set percentage = (ready/desired*100)|int %}
-      {% else %}
-        {% set percentage = 0|int %}
-      {% endif %}
-      <div class="progress-bar-background">
-        <span>{{ ready  }}/{{ desired }}</span>
-        <div class="progress-bar" style="width: {{ percentage }}%;"></div>
-      </div>
-    </td>
-    <td>
-    {% set containers = deployment.get('spec', {}).get('template', {}).get('spec', {}).get('containers') %}
-    <ul>
-    {% for container in containers %}
-      <li><b>{{ container['name'] }}</b> {{ container['image'] }}</li>
-    {% endfor %}
-    </ul>
-    </td>
-    </tr>
-    {% endfor %}
+      <tr>
+      <td>{{ deployment['metadata']['name'] }}</td>
+      <td>{{ deployment['metadata']['namespace'] }}</td>
+      <td>
+        {% set ready = deployment.get('status', {}).get('ready_replicas', 'N')|int %}
+        {% set desired = deployment.get('spec', {}).get('replicas', 'N')|int %}
+        {% if desired > 0 %}
+          {% set percentage = (ready/desired*100)|int %}
+        {% else %}
+          {% set percentage = 0|int %}
+        {% endif %}
+        <div class="progress-bar-background">
+          <span>{{ ready  }}/{{ desired }}</span>
+          <div class="progress-bar" style="width: {{ percentage }}%;"></div>
+        </div>
+      </td>
+      <td>
+      {% set containers = deployment.get('spec', {}).get('template', {}).get('spec', {}).get('containers') %}
+      <ul>
+      {% for container in containers %}
+        <li><b>{{ container['name'] }}</b> {{ container['image'] }}</li>
+      {% endfor %}
+      </ul>
+      </td>
+      </tr>
+      {% endfor %}
+    </tbody>
   </table>
 </div>
 {% endif %}
@@ -149,39 +157,43 @@ Cluster {{ cluster.name }} detail
 {% if 'services' in status %}
 <h3>Services</h3>
 <div class="table-container">
-  <table class="table" id="table-nodes">
-    <tr>
-      <th>Name</th>
-      <th>Namespace</th>
-      <th>Cluster IP</th>
-      <th>Ports</th>
-      <th>External IP</th>
-    </tr>
-    {% for service in status.services %}
-    <tr>
-    <td>{{ service['metadata']['name'] }}</td>
-    <td>{{ service['metadata']['namespace'] }}</td>
-    <td><a href="http://{{ service['spec']['cluster_ip'] }}">{{ service['spec']['cluster_ip'] }}</a></td>
-    <td>
-      <ul>
-      {% for port in service['spec']['ports'] %}
-        <li>{{ port['port'] }}/{{ port['protocol'] }} {{ port.get('name', '') }}</li>
-      {% endfor %}
-      </ul>
-    </td>
-    <td>
-    {% if service.get('status', {}).get('load_balancer', {}).get('ingress') %}
-      {% for endpoint in service['status']['load_balancer'].get('ingress', []) %}
-        {% if endpoint.get('hostname') %}
+  <table class="table table-hover no-actions" id="table-nodes">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Namespace</th>
+        <th>Cluster IP</th>
+        <th>Ports</th>
+        <th>External IP</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for service in status.services %}
+      <tr>
+        <td>{{ service['metadata']['name'] }}</td>
+        <td>{{ service['metadata']['namespace'] }}</td>
+        <td><a href="http://{{ service['spec']['cluster_ip'] }}">{{ service['spec']['cluster_ip'] }}</a></td>
+        <td>
+          <ul>
           {% for port in service['spec']['ports'] %}
-            <a href="{{ port.get('name', 'http') }}://{{ endpoint['hostname'] }}:{{ port['port'] }}">{{ endpoint['hostname'] }}:{{ port['port'] }} {{ port['name']|upper }}</a>
+            <li>{{ port['port'] }}/{{ port['protocol'] }} {{ port.get('name', '') }}</li>
+          {% endfor %}
+          </ul>
+        </td>
+        <td>
+        {% if service.get('status', {}).get('load_balancer', {}).get('ingress') %}
+          {% for endpoint in service['status']['load_balancer'].get('ingress', []) %}
+            {% if endpoint.get('hostname') %}
+              {% for port in service['spec']['ports'] %}
+                <a href="{{ port['name'] }}://{{ endpoint['hostname'] }}:{{ port['port'] }}">{{ endpoint['hostname']|truncate(20, True) }}:{{ port['port'] }} {{ port['name']|upper }}</a>
+              {% endfor %}
+            {% endif %}
           {% endfor %}
         {% endif %}
+        </td>
+      </tr>
       {% endfor %}
-    {% endif %}
-    </td>
-    </tr>
-    {% endfor %}
+    </tbody>
   </table>
 </div>
 {% endif %}

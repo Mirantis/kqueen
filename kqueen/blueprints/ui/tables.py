@@ -15,7 +15,7 @@ class StatusCol(Col):
 
 class ClusterTable(Table):
     # Table meta
-    classes = ['table']
+    classes = ['table', 'table-hover']
     # Table fields
     name = LinkCol(
         'Name',
@@ -35,7 +35,7 @@ class ClusterTable(Table):
 
 class ProvisionerTable(Table):
     # Table meta
-    classes = ['table']
+    classes = ['table', 'table-hover']
     # Table fields
     name = Col('Name')
     engine_name = Col('Engine')
