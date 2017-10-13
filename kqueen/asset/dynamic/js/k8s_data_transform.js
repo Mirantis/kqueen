@@ -10,11 +10,11 @@ function topology_data_transform(clusterData) {
   }, {})
 
   // Add Containers as top-level resource
-  let resource
+  let resource;
   for (resource in transformedData) {
     resource = transformedData[resource]
     if (resource.kind === 'Pod') {
-      for (container of resource.spec.containers) {
+      for (let container of resource.spec.containers) {
         let containerId = `${resource.metadata.uid}-${container.name}`
         transformedData[containerId] = { }
         transformedData[containerId].metadata = container
@@ -34,12 +34,19 @@ function topology_data_transform(clusterData) {
       let pod = item
       // define relationship between pods and nodes
       let podsNode = clusterData.find(i => i.metadata.name === pod.spec.nodeName)
-      relations.push({source: pod.metadata.uid, target: podsNode.metadata.uid})
-
+      if(podsNode){
+         relations.push({source: pod.metadata.uid, target: podsNode.metadata.uid})
+      }else{
+         console.log("Cannot found pods node!")
+      }
       // define relationships between pods and rep sets and replication controllers
-      let ownerReferences = pod.metadata.ownerReferences[0].uid
-      let podsRepController = clusterData.find(i => i.metadata.uid === ownerReferences)
-      relations.push({target: pod.metadata.uid, source: podsRepController.metadata.uid})
+      if(pod.metadata.ownerReferences){
+        let ownerReferences = pod.metadata.ownerReferences[0].uid
+        let podsRepController = clusterData.find(i => i.metadata.uid === ownerReferences)
+        relations.push({target: pod.metadata.uid, source: podsRepController.metadata.uid})
+      }else{
+         console.log("Cannot found owner references!")
+      }
 
 
       // rel'n between pods and services

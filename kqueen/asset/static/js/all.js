@@ -234,7 +234,6 @@ function topology_data_transform(clusterData) {
   var resource = void 0;
   for (resource in transformedData) {
     resource = transformedData[resource];
-    console.log(resource);
     if (resource.kind === 'Pod') {
       var _iteratorNormalCompletion = true;
       var _didIteratorError = false;
@@ -242,7 +241,7 @@ function topology_data_transform(clusterData) {
 
       try {
         for (var _iterator = resource.spec.containers[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-          container = _step.value;
+          var container = _step.value;
 
           var containerId = resource.metadata.uid + '-' + container.name;
           transformedData[containerId] = {};
@@ -288,14 +287,21 @@ function topology_data_transform(clusterData) {
           var podsNode = clusterData.find(function (i) {
             return i.metadata.name === pod.spec.nodeName;
           });
-          relations.push({ source: pod.metadata.uid, target: podsNode.metadata.uid });
-
+          if (podsNode) {
+            relations.push({ source: pod.metadata.uid, target: podsNode.metadata.uid });
+          } else {
+            console.log("Cannot found pods node!");
+          }
           // define relationships between pods and rep sets and replication controllers
-          var ownerReferences = pod.metadata.ownerReferences[0].uid;
-          var podsRepController = clusterData.find(function (i) {
-            return i.metadata.uid === ownerReferences;
-          });
-          relations.push({ target: pod.metadata.uid, source: podsRepController.metadata.uid });
+          if (pod.metadata.ownerReferences) {
+            var ownerReferences = pod.metadata.ownerReferences[0].uid;
+            var podsRepController = clusterData.find(function (i) {
+              return i.metadata.uid === ownerReferences;
+            });
+            relations.push({ target: pod.metadata.uid, source: podsRepController.metadata.uid });
+          } else {
+            console.log("Cannot found owner references!");
+          }
 
           // rel'n between pods and services
           var podsService = clusterData.find(function (i) {
