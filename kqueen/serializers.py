@@ -5,7 +5,6 @@ class CustomJSONEncoder(JSONEncoder):
     def default(self, obj):
 
         try:
-
             return JSONEncoder.default(self, obj)
         except TypeError:
             print('Unserialized')

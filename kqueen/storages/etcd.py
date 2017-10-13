@@ -33,13 +33,6 @@ class Field:
         self.value = kwargs.get('value', None)
         self.required = kwargs.get('required', False)
 
-    # waiting for @profesor to bring bright new idea
-    # def __get__(self, obj, objtype):
-    #     return self.value
-
-    # def __set__(self, obj, val):
-    #     self.value = val
-
     def set_value(self, value):
         self.value = value
 
@@ -51,6 +44,20 @@ class Field:
             return str(self.value)
         else:
             return None
+
+    def deserialize(self, serialized):
+        """
+        This method is used for value deserialization. It is necessary to create instance first
+        (with empty value) and then use `deserialize` method to fill the value.
+
+        Default implementation in `Field` class is only passing value. It should be extended in
+        specific field classes.
+
+        Attributes:
+            serialized (string): Serialized value of the field.
+        """
+
+        self.set_value(serialized)
 
     def empty(self):
         return self.value is None
@@ -99,6 +106,23 @@ class JSONField(Field):
             return None
 
 
+class RelationField(Field):
+    """Store relations between models.
+
+    Serialization format is `ModelName:object_id`.
+
+    """
+
+    def serialize(self):
+        if self.value and self.__class__.is_field:
+            return '{model_name}:{object_id}'.format(
+                model_name=self.value.__class__.__name__,
+                object_id=self.value.id,
+            )
+        else:
+            return None
+
+
 class ModelMeta(type):
     def __new__(cls, clsname, superclasses, attributedict):
         newattributes = attributedict.copy()
@@ -132,9 +156,7 @@ class Model:
     # id field is required for all models
     id = IdField()
 
-    def __init__(self, *arfg, **kwargs):
-        logger.debug('Model __init__')
-
+    def __init__(self, *args, **kwargs):
         self._db = db
 
         # loop fields and set it
@@ -228,8 +250,20 @@ class Model:
 
     @classmethod
     def deserialize(cls, serialized, **kwargs):
-        deser = json.loads(serialized)
-        o = cls(**deser)
+        object_kwargs = {}
+
+        # deserialize toplevel dict and loop fields and deserialize them
+        toplevel = json.loads(serialized)
+
+        for field_name, field in cls.get_fields().items():
+            field_class = field.__class__
+            if hasattr(field_class, 'is_field') and toplevel.get(field_name):
+                field_object = field_class(**field.__dict__)
+                field_object.deserialize(toplevel[field_name])
+
+                object_kwargs[field_name] = field_object.get_value()
+
+        o = cls(**object_kwargs)
 
         if kwargs.get('key'):
             o._key = kwargs.get('key')
@@ -300,7 +334,7 @@ class Model:
 
         self._db.client.delete(self.get_db_key())
 
-    def validate(self) -> bool:
+    def validate(self):
         """Validate the model object pass all requirements
 
         Checks:
@@ -331,8 +365,11 @@ class Model:
         return output
 
     def serialize(self):
+        serdict = {}
+        for attr_name, attr in self.get_dict().items():
+            serdict[attr_name] = getattr(self, '_{}'.format(attr_name)).serialize()
 
-        return json.dumps(self.get_dict())
+        return json.dumps(serdict)
 
     def __str__(self):
         return '{} <{}>'.format(self.__class__.get_model_name(), self.id)
