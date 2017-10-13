@@ -7,7 +7,7 @@ Welcome to kqueen's documentation!
 ==================================
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
    :caption: Contents:
 
    kqueen

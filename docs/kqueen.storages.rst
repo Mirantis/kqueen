@@ -1,10 +1,10 @@
-kqueen\.storages package
+Model storages
 ========================
 
 Submodules
 ----------
 
-kqueen\.storages\.etcd module
+Etcd
 -----------------------------
 
 .. automodule:: kqueen.storages.etcd

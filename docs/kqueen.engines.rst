@@ -1,11 +1,11 @@
-kqueen\.engines package
-============================
+Engines
+=======
 
 Submodules
 ----------
 
-kqueen\.engines\.jenkins module
-------------------------------------
+JenkinsEngine
+-------------
 
 .. automodule:: kqueen.engines.jenkins
     :members:
