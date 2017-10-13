@@ -103,6 +103,7 @@ class TestFieldCompare:
 
     def test_compare(self):
         assert self.first != self.second
+        assert self.first != 'abc123'
 
     def test_compare_empty(self):
         empty = Field()
