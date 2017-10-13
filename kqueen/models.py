@@ -98,20 +98,93 @@ class Cluster(Model, metaclass=ModelMeta):
         Return information about Kubernetes cluster in format used in
         visual processing.
         """
-        try:
-            out = []
-            kubernetes = KubernetesAPI(cluster=self)
-            for n in kubernetes.list_nodes():
-                n['kind'] = 'Node'
-                out.append(n)
-            for p in kubernetes.list_pods():
-                p['kind'] = 'Pod'
-                out.append(p)
-            for s in kubernetes.list_services():
-                s['kind'] = 'Service'
-                out.append(s)
-        except:
-            out = []
+        raw_data = []
+        kubernetes = KubernetesAPI(cluster=self)
+
+        nodes = kubernetes.list_nodes()
+        for node in nodes:
+            node['kind'] = 'Node'
+
+        pods = kubernetes.list_pods()
+        for pod in pods:
+            pod['kind'] = 'Pod'
+
+        services = kubernetes.list_services()
+        for service in services:
+            service['kind'] = 'Service'
+
+        raw_data = nodes + pods + services
+
+        resources = {datum['metadata']['uid']: datum for datum in raw_data}
+        relations = []
+
+        node_name_2_uid = {}
+        service_run_2_uid = {}
+
+        for resource_id, resource in resources.items():
+            # Add node name to uid mapping
+            if resource['kind'] == 'Node':
+                node_name_2_uid[resource['metadata']['name']] = resource_id
+
+            # Add service run selector to uid_mapping
+            if resource['kind'] == 'Service' and resource['spec'].get('selector', {}) is not None:
+                if resource['spec'].get('selector', {}).get('run', False):
+                    service_run_2_uid[resource['spec']['selector']['run']] = resource_id
+
+            # Add Containers as top-level resource
+            """
+            if resource['kind'] == 'Pod':
+                for container in resource['spec']['containers']:
+                    container_id = "{1}-{2}".format(
+                        resource['metadata']['uid'], container['name'])
+                    resources[container_id] = {
+                        'metadata': container,
+                        'kind': 'Container'
+                    }
+                    relations.append({
+                        'source': resource_id,
+                        'target': container_id,
+                    })
+            """
+
+        for resource_id, resource in resources.items():
+            if resource['kind'] == 'Pod':
+
+#                logger.info(resource['spec'])
+                # define relationship between pods and nodes
+                if resource['spec']['node_name'] is not None:
+                    relations.append({
+                        'source': resource_id,
+                        'target': node_name_2_uid[resource['spec']['node_name']]
+                    })
+
+                # define relationships between pods and rep sets and
+                # replication controllers
+                if resource['metadata'].get('ownerReferences', False):
+                    relations.append({
+                        'source': resource['metadata']['ownerReferences'][0]['uid'],
+                        'target': resource_id
+                    })
+
+                # rel'n between pods and services
+                if resource['spec'].get('selector', {}).get('run', False):
+                    relations.append({
+                        'source': resource_id,
+                        'target': service_run_2_uid(resource['metadata']['labels']['run'])
+                    })
+
+        out = {
+            'items': resources,
+            'relations': relations,
+            'kinds': {
+                'Pod': '',
+            }
+        }
+#        except:
+#            out = {
+#                'items': [],
+#                'relations': []
+#            }
 
         return out
 
@@ -146,3 +219,4 @@ class Provisioner(Model, metaclass=ModelMeta):
     def alive(self):
         """Test availability of provisioner and return bool"""
         return True
+

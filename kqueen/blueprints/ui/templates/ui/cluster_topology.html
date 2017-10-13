@@ -6,19 +6,293 @@ Cluster {{ cluster.name }} Topology
 
 {% block content %}
 <div id="topology-graph"></div>
+<style>
+.kube-topology {
+  border: 1px black solid;
+  height: 400px;
+}
+.kube-topology g {
+    font-family: PatternFlyIcons-webfont;
+    font-size: 18px;
+    text-anchor: middle;
+    cursor: pointer;
+}
+
+.kube-topology g text {
+    stroke: none;
+    stroke-width: 0px;
+}
+
+.kube-topology g.weak use {
+    opacity: .6;
+}
+
+.kube-topology g.Pod text {
+    font-family: FontAwesome;
+    font-size: 16px;
+    fill: #1186C1;
+}
+
+.kube-topology g.Node text {
+    fill: #636363;
+}
+
+.kube-topology g.Service text {
+    fill: #ff7f0e;
+}
+
+.kube-topology g.ReplicationController text {
+    fill: #9467bd;
+    font-size: 20px;
+}
+
+.kube-topology g circle {
+    stroke: #aaa;
+    fill: #fff;
+}
+
+.kube-topology g.fixed use {
+    stroke-width: 2px;
+}
+
+.kube-topology g.selected use,
+.kube-topology g.selected circle {
+    stroke-width: 4px;
+}
+
+.kube-topology line {
+    stroke: #aaa;
+    stroke-width: 1;
+}
+
+.kube-topology line.ReplicationControllerPod {
+    stroke-linecap: round;
+    stroke-dasharray: 5, 2;
+}
+
+kubernetes-topology-icon {
+    display: inline-block;
+    vertical-align: middle;
+    cursor: pointer;
+    padding: 10px;
+    user-select: none;
+}
+
+kubernetes-topology-icon svg {
+    width: 32px;
+    height: 32px;
+    display: block;
+}
+
+kubernetes-topology-icon use {
+    opacity: 0.4;
+}
+
+kubernetes-topology-icon.active use {
+    opacity: 1;
+}
+
+kubernetes-topology-icon:hover use {
+    opacity: 0.7;
+}
+</style>
 <script>
 var graph;
 
-document.addEventListener("DOMContentLoaded", function(e) {
+var cache = {};
 
-  d3.json("{{ url_for('api.cluster_topology_data', cluster_id=cluster.id) }}", function(rawData) {
-    console.log(rawData);
+function view_force_directed_graph(selector, data, options) {
+    var outer = d3.select(selector);
 
-    var selector = "#topology-graph";
-    var options = {
+    /* Kinds of objects to show */
+    var _kinds = data["kinds"];
+
+    /* Data we've been fed */
+    var items = data["items"];
+    var relations = data["relations"];
+
+    /* Graph information */
+    var width;
+    var height;
+    var radius = 20;
+    if (options["radius"]) {
+        radius = options["radius"];
+    }
+    var timeout;
+    var nodes = [];
+    var links = [];
+    var lookup = {};
+    var selection = null;
+
+    force = d3.layout.force().charge(-800).gravity(0.2).linkDistance(80);
+
+    var drag = force.drag();
+
+    var svg = outer.append("svg").attr("viewBox", "0 0 1600 1200").attr("preserveAspectRatio", "xMidYMid meet").attr("class", "kube-topology");
+
+    var vertices = d3.select();
+    var edges = d3.select();
+
+    force.on("tick", function () {
+        edges.attr("x1", function (d) {
+            return d.source.x;
+        }).attr("y1", function (d) {
+            return d.source.y;
+        }).attr("x2", function (d) {
+            return d.target.x;
+        }).attr("y2", function (d) {
+            return d.target.y;
+        });
+
+        vertices.attr("cx", function (d) {
+            d.x = d.fixed ? d.x : Math.max(radius, Math.min(width - radius, d.x));
+            return d.x;
+        }).attr("cy", function (d) {
+            d.y = d.fixed ? d.y : Math.max(radius, Math.min(height - radius, d.y));
+            return d.y;
+        }).attr("transform", function (d) {
+            return "translate(" + d.x + "," + d.y + ")";
+        });
+    });
+
+    drag.on("dragstart", function (d) {
+        //notify(d.item);
+
+        if (d.fixed !== true) d.floatpoint = [d.x, d.y];
+        d.fixed = true;
+        d3.select(this).classed("fixed", true);
+    }).on("dragend", function (d) {
+        var moved = true;
+        if (d.floatpoint) {
+            moved = d.x < d.floatpoint[0] - 5 || d.x > d.floatpoint[0] + 5 || d.y < d.floatpoint[1] - 5 || d.y > d.floatpoint[1] + 5;
+            delete d.floatpoint;
+        }
+        d.fixed = moved && d.x > 3 && d.x < width - 3 && d.y >= 3 && d.y < height - 3;
+        d3.select(this).classed("fixed", d.fixed);
+    });
+
+    svg.on("dblclick", function () {
+        svg.selectAll("g").classed("fixed", false).each(function (d) {
+            d.fixed = false;
+        });
+        force.start();
+    }).on("click", function (ev) {
+        if (!d3.select(d3.event.target).datum()) {
+            //notify(null);
+        }
+    });
+
+    function select(item) {
+        selection = item;
+        svg.selectAll("g").classed("selected", function (d) {
+            return d.item === item;
+        });
     }
 
-    data = topology_data_transform(rawData);
+    function adjust() {
+        timeout = null;
+        width = outer.node().clientWidth;
+        height = outer.node().clientHeight;
+
+        force.size([width, height]);
+        svg.attr("viewBox", "0 0 " + width + " " + height);
+        update();
+    }
+
+    function update() {
+        edges = svg.selectAll("line").data(links);
+
+        edges.exit().remove();
+        edges.enter().insert("line", ":first-child");
+
+        edges.attr("class", function (d) {
+            return d.kinds;
+        });
+
+        vertices = svg.selectAll("g").data(nodes, function (d) {
+            return d.id;
+        });
+
+        vertices.exit().remove();
+
+        var added = vertices.enter().append("g").call(drag);
+
+        select(selection);
+
+        force.nodes(nodes).links(links).start();
+
+        return added;
+    }
+
+    function digest() {
+        var pnodes = nodes;
+        var plookup = lookup;
+
+        /* The actual data for the graph */
+        nodes = [];
+        links = [];
+        lookup = {};
+
+        var item, id, kind, node;
+        for (id in items) {
+            item = items[id];
+            kind = item.kind;
+
+            if (_kinds && !_kinds[kind]) continue;
+
+            /* Prevents flicker */
+            node = pnodes[plookup[id]];
+            if (!node) {
+                node = cache[id];
+                delete cache[id];
+                if (!node) node = {};
+            }
+
+            node.id = id;
+            node.item = item;
+
+            lookup[id] = nodes.length;
+            nodes.push(node);
+        }
+
+        var i, len, relation, s, t;
+        for (i = 0, len = relations.length; i < len; i++) {
+            relation = relations[i];
+
+            s = lookup[relation.source];
+            t = lookup[relation.target];
+            if (s === undefined || t === undefined) continue;
+
+            links.push({ source: s, target: t, kinds: nodes[s].item.kind + nodes[t].item.kind });
+        }
+
+        if (width && height) return update();
+        else return d3.select();
+    }
+
+    function resized() {
+        window.clearTimeout(timeout);
+        timeout = window.setTimeout(adjust, 150);
+    }
+
+    window.addEventListener('resize', resized);
+
+    console.log(nodes);
+
+    digest();
+    console.log(nodes);
+    console.log(links);
+    adjust();
+    resized();
+
+}
+
+document.addEventListener("DOMContentLoaded", function(e) {
+
+  console.log('document loaded');
+
+
+  d3.json("{{ url_for('api.cluster_topology_data', cluster_id=cluster.id) }}", function(data) {
 
     data['kinds'] = {
       Pod: '#vertex-Pod',
@@ -29,9 +303,12 @@ document.addEventListener("DOMContentLoaded", function(e) {
       Container: '#vertex-Container'
     };
 
-    console.log(data);
+    console.log('data loaded');
 
-    topology_graph(selector, data, options);
+    var selector = "#topology-graph";
+    var options = {}
+
+    view_force_directed_graph(selector, data, options);
 
   });
 
