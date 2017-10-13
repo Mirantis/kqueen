@@ -113,9 +113,9 @@ def provisioner_create():
                 }
             )
             provisioner.save()
-            flash('Provisioner %s successfully created.' % provisioner.name, 'success')
+            flash('Provisioner {} successfully created.'.format(provisioner.name), 'success')
         except Exception as e:
-            logger.error('Could not create provisioner: %s' % repr(e))
+            logger.error('Could not create provisioner: {}'.format(repr(e)))
             flash('Could not create provisioner.', 'danger')
         return redirect('/')
     return render_template('ui/provisioner_create.html', form=form)
@@ -135,9 +135,9 @@ def provisioner_delete(provisioner_id):
         obj = Provisioner.load(object_id)
         if str(object_id) not in used_provisioners:
             obj.delete()
-            flash('Provisioner %s successfully deleted.' % obj.name, 'success')
+            flash('Provisioner {} successfully deleted.'.format(obj.name), 'success')
         else:
-            flash('Provisioner %s is used by deployed cluster, cannot delete.' % obj.name, 'warning')
+            flash('Provisioner {} is used by deployed cluster, cannot delete.'.format(obj.name), 'warning')
         return redirect('/')
     except NameError:
         abort(404)
@@ -164,8 +164,8 @@ def cluster_deploy():
             )
             cluster.save()
         except Exception as e:
-            flash('Could not create cluster %s.' % form.name.data, 'danger')
-            logger.error('Creating cluster %s failed with following reason: %s' % (form.name.data, repr(e)))
+            flash('Could not create cluster {}.'.format(form.name.data), 'danger')
+            logger.error('Creating cluster {} failed with following reason: {}'.format(form.name.data, repr(e)))
             return redirect('/')
 
         # Actually provision cluster
@@ -173,14 +173,14 @@ def cluster_deploy():
         try:
             result, err = cluster.engine.provision()
         except Exception as e:
-            flash('Could not create cluster %s.' % form.name.data, 'danger')
-            logger.error('Creating cluster %s failed with following reason: %s' % (form.name.data, repr(e)))
+            flash('Could not create cluster {}.'.format(form.name.data), 'danger')
+            logger.error('Creating cluster {} failed with following reason: {}'.format(form.name.data, repr(e)))
             return redirect('/')
         if result:
-            flash('Provisioning of cluster %s is in progress.' % form.name.data, 'success')
+            flash('Provisioning of cluster {} is in progress.'.format(form.name.data), 'success')
         else:
-            logger.error('Creating cluster %s failed with following reason: %s' % (form.name.data, str(err)))
-            flash('Could not create cluster %s.' % form.name.data, 'danger')
+            logger.error('Creating cluster {} failed with following reason: {]'.format(form.name.data, str(err)))
+            flash('Could not create cluster {}.'.format(form.name.data), 'danger')
         return redirect('/')
     return render_template('ui/cluster_deploy.html', form=form)
 
@@ -234,20 +234,20 @@ def cluster_deployment_status(cluster_id):
     try:
         object_id = UUID(cluster_id, version=4)
     except ValueError:
-        logger.debug('%s not valid UUID' % cluster_id)
+        logger.debug('{] not valid UUID'.format(cluster_id))
         abort(404)
 
     # load object
     try:
         cluster = Cluster.load(object_id)
     except NameError:
-        logger.debug('Cluster with UUID %s not found' % cluster_id)
+        logger.debug('Cluster with UUID {} not found'.format(cluster_id))
         abort(404)
 
     try:
         status = cluster.engine.get_progress()
     except Exception as e:
-        logger.error('Error occured while getting provisioning status for cluster %s: %s' % (cluster_id, repr(e)))
+        logger.error('Error occured while getting provisioning status for cluster {}: {}'.format(cluster_id, repr(e)))
         abort(500)
 
     return jsonify(status)
