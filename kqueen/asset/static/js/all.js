@@ -2,15 +2,15 @@
 
 var cache = {};
 
-function topology_graph(selector, data, options) {
+function topology_graph(selector, notify, options) {
     var outer = d3.select(selector);
 
     /* Kinds of objects to show */
-    var _kinds = data["kinds"];
+    var _kinds = options["kinds"];
 
     /* Data we've been fed */
-    var items = data["items"];
-    var relations = data["relations"];
+    var items = [];
+    var relations = [];
 
     /* Graph information */
     var width;
@@ -61,7 +61,7 @@ function topology_graph(selector, data, options) {
     });
 
     drag.on("dragstart", function (d) {
-        //notify(d.item);
+        notify(d.item);
 
         if (d.fixed !== true) d.floatpoint = [d.x, d.y];
         d.fixed = true;
@@ -83,7 +83,7 @@ function topology_graph(selector, data, options) {
         force.start();
     }).on("click", function (ev) {
         if (!d3.select(d3.event.target).datum()) {
-            //notify(null);
+            notify(null);
         }
     });
 
