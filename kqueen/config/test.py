@@ -20,7 +20,7 @@ PROVISIONER_OK_STATE = 'OK'
 PROVISIONER_UNKNOWN_STATE = 'Not Reachable'
 
 # Jenkins engine settings
-JENKINS_API_URL = 'http://jenkins.dev'
+JENKINS_API_URL = 'http://localhost'
 JENKINS_PROVISION_JOB_NAME = 'job_name'
 JENKINS_PROVISION_JOB_CTX = {}
 JENKINS_ANCHOR_PARAMETER = 'STACK_NAME'

@@ -26,9 +26,9 @@ def create_app(config_file=config_file):
 
     # load configuration
     if app.config.from_pyfile(config_file):
-        logging.info('Loading configuration from {}'.format(config_file))
+        logger.info('Loading configuration from {}'.format(config_file))
     else:
-        logging.warning('Config file {} could not be loaded.'.format(config_file))
+        raise Exception('Config file {} could not be loaded.'.format(config_file))
 
     return app
 
