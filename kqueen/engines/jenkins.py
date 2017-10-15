@@ -122,6 +122,13 @@ class JenkinsEngine(BaseEngine):
             return (False, msg)
         return (None, None)
 
+    def deprovision(self, **kwargs):
+        """
+        Implementation of :func:`~kqueen.engines.base.BaseEngine.deprovision`
+        """
+
+        pass
+
     def get_kubeconfig(self):
         """
         Implementation of :func:`~kqueen.engines.base.BaseEngine.get_kubeconfig`
