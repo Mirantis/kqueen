@@ -314,7 +314,6 @@ class Model:
 
         if assign_id:
             self.verify_id()
-
         if validate and not self.validate():
             raise ValueError('Validation for model failed')
 

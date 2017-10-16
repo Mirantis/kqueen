@@ -37,7 +37,7 @@ class TestClusterModel:
         assert hasattr(loaded, '_key'), 'Loaded object is missing _key'
 
     def test_id_generation(self):
-        empty = Cluster()
+        empty = Cluster(name='test')
         empty.save()
 
     def test_added_key(self, cluster):
