@@ -75,3 +75,19 @@ class TestClusterKubeconfig:
         url = url_for('api.cluster_kubeconfig', cluster_id=cluster.id)
         response = client.get(url)
         assert response.json == cluster.kubeconfig
+
+
+class TestTopologyData:
+    def test_topology_data_format(self, cluster, client):
+        cluster.save()
+
+        url = url_for('api.cluster_topology_data', cluster_id=cluster.id)
+        response = client.get(url)
+
+        assert isinstance(response.json, dict)
+
+        assert 'items' in response.json
+        assert 'kinds' in response.json
+        assert 'relations' in response.json
+
+
