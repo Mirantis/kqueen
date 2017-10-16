@@ -1,6 +1,6 @@
 Flask
-Flask-WTF
 Flask-Table
+Flask-WTF
 kubernetes
 python-etcd
 python-jenkins

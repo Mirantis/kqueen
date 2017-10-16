@@ -18,12 +18,14 @@ setup(
     packages=find_packages(),
     zip_safe=False,
     install_requires=[
-        'python-jenkins',
-        'requests',
+        'Flask',
+        'Flask-Table',
+        'Flask-WTF',
         'kubernetes',
-        'flask',
-        'pyyaml',
         'python-etcd',
+        'python-jenkins',
+        'pyyaml',
+        'requests',
     ],
     classifiers=[
         'Operating System :: POSIX :: Linux',
