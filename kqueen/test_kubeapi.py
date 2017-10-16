@@ -1,8 +1,17 @@
 from kqueen.kubeapi import KubernetesAPI
+from kubernetes.client.rest import ApiException
 from pprint import pprint as print
 
 import pytest
 import yaml
+import kubernetes
+
+
+def fake_raise(exc):
+    def fn(self, *args, **kwargs):
+        raise exc
+
+    return fn
 
 
 class TestKubeApi:
@@ -34,11 +43,33 @@ class TestKubeApi:
         assert 'git_version' in version
         assert 'platform' in version
 
-    def test_nodes(self, cluster):
+    def test_list_nodes(self, cluster):
         api = KubernetesAPI(cluster=cluster)
         nodes = api.list_nodes()
 
         assert isinstance(nodes, list)
+
+    @pytest.mark.parametrize('method_name', [
+        'list_nodes',
+        'list_pods',
+        'list_pods_by_node',
+        'count_pods_by_node',
+        'resources_by_node',
+        'list_services',
+        'list_deployments',
+    ])
+    def test_raise_apiexception(self, cluster, monkeypatch, method_name):
+        # monkeypatch all kubernetes-client resources used
+        monkeypatch.setattr(kubernetes.client.CoreV1Api, 'list_node', fake_raise(ApiException))
+        monkeypatch.setattr(kubernetes.client.CoreV1Api, 'list_pod_for_all_namespaces', fake_raise(ApiException))
+        monkeypatch.setattr(kubernetes.client.CoreV1Api, 'list_service_for_all_namespaces', fake_raise(ApiException))
+        monkeypatch.setattr(kubernetes.client.ExtensionsV1beta1Api, 'list_deployment_for_all_namespaces', fake_raise(ApiException))
+
+        api = KubernetesAPI(cluster=cluster)
+        method = getattr(api, method_name)
+
+        with pytest.raises(ApiException):
+            method()
 
     def test_pod_list(self, cluster):
         api = KubernetesAPI(cluster=cluster)

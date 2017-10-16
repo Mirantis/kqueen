@@ -71,7 +71,10 @@ class KubernetesAPI:
 
     def list_pods_by_node(self):
         out = {}
-        pods = self.list_pods()
+        try:
+            pods = self.list_pods()
+        except ApiException:
+            raise
 
         for pod in pods:
             node = pod['spec'].get('node_name', 'Unknown')
@@ -86,7 +89,10 @@ class KubernetesAPI:
     def count_pods_by_node(self):
         out = {}
 
-        pods = self.list_pods_by_node()
+        try:
+            pods = self.list_pods_by_node()
+        except ApiException:
+            raise
 
         for node_name, pods in pods.items():
             out[node_name] = len(pods)
@@ -112,7 +118,10 @@ class KubernetesAPI:
         """
         out = {}
 
-        pods = self.list_pods_by_node()
+        try:
+            pods = self.list_pods_by_node()
+        except ApiException:
+            raise
 
         for node_name, pods in pods.items():
             if node_name not in out:

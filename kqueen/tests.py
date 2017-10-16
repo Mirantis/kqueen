@@ -1,3 +1,8 @@
+from .server import create_app
+
+import pytest
+
+
 def test_dummy():
     assert True
 
@@ -29,3 +34,8 @@ def test_setup(monkeypatch):
 
     from setup import long_description
     assert open(filename, 'r').read() == long_description
+
+
+def test_app_config():
+    with pytest.raises(Exception):
+        create_app(config_file='nonexistent_file.py')

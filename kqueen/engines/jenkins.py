@@ -10,7 +10,7 @@ import yaml
 
 # Ugly patch to make this module importable outside app context to generate docs
 if not app:
-    from kqueen import config_dev
+    import kqueen.config.dev as config_dev
     app = type(
         'app',
         (object,),
@@ -121,6 +121,13 @@ class JenkinsEngine(BaseEngine):
             logger.error(msg)
             return (False, msg)
         return (None, None)
+
+    def deprovision(self, **kwargs):
+        """
+        Implementation of :func:`~kqueen.engines.base.BaseEngine.deprovision`
+        """
+
+        pass
 
     def get_kubeconfig(self):
         """

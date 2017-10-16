@@ -16,11 +16,11 @@ kqueen
 
 ## Configuration
 
-We load configuration from file `config_dev.py` by default and this can be configured by `KQUEEN_CONFIG_FILE` environment varialbe.
+We load configuration from file `config/dev.py` by default and this can be configured by `KQUEEN_CONFIG_FILE` environment varialbe.
 
 | Configuration option | Type | Default value | Description |
 | --- | --- | --- | --- |
-| `KQUEEN_CONFIG_FILE` | Environment variable | `config_dev.py` | Configuration file to load |
+| `KQUEEN_CONFIG_FILE` | Environment variable | `config/dev.py` | Configuration file to load |
 
 ## Documentation
 

@@ -7,10 +7,12 @@ import pytest
 import uuid
 import yaml
 
+config_file = 'config/test.py'
+
 
 @pytest.fixture
 def app():
-    app = create_app()
+    app = create_app(config_file=config_file)
     return app
 
 
