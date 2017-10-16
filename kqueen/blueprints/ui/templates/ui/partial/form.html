@@ -1,6 +1,6 @@
 
 {% macro render_form(form) %}
-<form method="post">
+<form method="post" enctype="multipart/form-data">
     {{ form.hidden_tag() }}
     {% for field in form %}
       {% if not field.flags.hidden %}

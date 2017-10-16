@@ -174,7 +174,7 @@ Cluster {{ cluster.name }} detail
       {% for endpoint in service['status']['load_balancer'].get('ingress', []) %}
         {% if endpoint.get('hostname') %}
           {% for port in service['spec']['ports'] %}
-            <a href="{{ port['name'] }}://{{ endpoint['hostname'] }}:{{ port['port'] }}">{{ endpoint['hostname'] }}:{{ port['port'] }} {{ port['name']|upper }}</a>
+            <a href="{{ port.get('name', 'http') }}://{{ endpoint['hostname'] }}:{{ port['port'] }}">{{ endpoint['hostname'] }}:{{ port['port'] }} {{ port['name']|upper }}</a>
           {% endfor %}
         {% endif %}
       {% endfor %}
