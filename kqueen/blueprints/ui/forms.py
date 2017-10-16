@@ -19,10 +19,15 @@ class ProvisionerCreateForm(FlaskForm):
 
 
 def _get_provisioners():
-    prvs = [p.get_dict() for p in list(Provisioner.list(return_objects=True).values())]
-    return [(v.get('id', ''), v.get('name', '')) for v in prvs]
+    provisioners = list(Provisioner.list(return_objects=True).values())
+    choices = []
+
+    for provisioner in provisioners:
+        choices.append((provisioner.id, provisioner.name))
+
+    return choices
 
 
 class ClusterCreateForm(FlaskForm):
     name = StringField('Name', validators=[DataRequired()])
-    provisioner = SelectField('Provisioner', choices=_get_provisioners())
+    provisioner = SelectField('Provisioner', choices=[])
