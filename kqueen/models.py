@@ -19,8 +19,8 @@ logger = logging.getLogger(__name__)
 
 
 class Cluster(Model, metaclass=ModelMeta):
-    id = IdField()
-    name = StringField()
+    id = IdField(required=True)
+    name = StringField(required=True)
     provisioner = StringField()
     state = StringField()
     kubeconfig = JSONField()
@@ -179,9 +179,9 @@ class Cluster(Model, metaclass=ModelMeta):
 
 
 class Provisioner(Model, metaclass=ModelMeta):
-    id = IdField()
-    name = StringField()
-    engine = StringField()
+    id = IdField(required=True)
+    name = StringField(required=True)
+    engine = StringField(required=True)
     state = StringField()
     parameters = JSONField()
 
