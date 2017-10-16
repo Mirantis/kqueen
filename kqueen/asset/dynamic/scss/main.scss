@@ -40,6 +40,12 @@ ul.link-list {
 
 .box.overview {
   @extend .text-center;
+  .btn {
+    width: 100%;
+    border-radius: 0px;
+    border: none;
+    @include prefix(box-shadow, inset 0 -1px 0 rgba(0,0,0,0.15), webkit moz);
+  }
 }
 
 
@@ -314,6 +320,20 @@ footer {
   left: 0px;
   top: 0px;
   z-index: 2;
+}
+
+// Radial progress bar
+
+.pie_progress {
+  width: 160px;
+  margin: 10px auto;
+}
+
+@media all and (max-width: 768px) {
+  .pie_progress {
+    width: 80%;
+    max-width: 300px;
+  }
 }
 
 // *****************************************************************************

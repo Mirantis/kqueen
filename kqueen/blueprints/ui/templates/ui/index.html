@@ -4,16 +4,16 @@
 
 {% block content %}
 <div class="box overview">
-  <div class="col-sm-4">
-    <span>User: {{ overview.username }}</span>
+  <div class="col-sm-6 clearfix">
+    <div class="pie_progress" role="progressbar" data-goal="{{ overview.cluster_health }}"{% if overview.cluster_health < 100 %} data-barcolor="#e02d3a"{% endif %}> 
+      <div class="pie_progress__number">100%</div>
+      <div class="pie_progress__label">Clusters</div>
+    </div>
   </div>
-  <div class="col-sm-4">
-    <span>Running clusters: {{ overview.clusters }}</span>
-  </div>
-  <div class="col-sm-4">
-    <div class="progress-bar-background">
-      <span>Health {{ overview.health }}%</span>
-      <div class="progress-bar" style="width: {{ overview.health }}%;"></div>
+  <div class="col-sm-6 clearfix">
+    <div class="pie_progress" role="progressbar" data-goal="{{ overview.provisioner_health }}"{% if overview.provisioner_health < 100 %} data-barcolor="#e02d3a"{% endif %}> 
+      <div class="pie_progress__number">100%</div>
+      <div class="pie_progress__label">Provisioners</div>
     </div>
   </div>
 </div>
@@ -38,3 +38,17 @@
 
 {% endblock %}
 
+{% block extrajs %}
+<script>
+jQuery(document).ready(function($){
+  $('.pie_progress').asPieProgress({
+    namespace: 'pieProgress',
+    barsize: '1',
+    size: '160',
+    trackcolor: '#ececea',
+    barcolor: '#83d3c8',
+  });
+  $('.pie_progress').asPieProgress('start');
+});
+</script>
+{% endblock %}

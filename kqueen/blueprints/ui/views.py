@@ -34,12 +34,12 @@ ui = Blueprint('ui', __name__, template_folder='templates')
 def index():
     username = app.config['USERNAME']
     clusters = []
-    healthy = 0
+    healthy_clusters = 0
     for cluster in list(Cluster.list(return_objects=True).values()):
         data = cluster.get_dict()
         if data and 'state' in data:
             if app.config['CLUSTER_ERROR_STATE'] not in data['state']:
-                healthy = healthy + 1
+                healthy_clusters = healthy_clusters + 1
 
             # TODO: teach ORM to get related objects for us
             try:
@@ -52,17 +52,21 @@ def index():
 
     clustertable = ClusterTable(clusters)
     provisioners = []
+    healthy_provisioners = 0
     for provisioner in list(Provisioner.list(return_objects=True).values()):
         data = provisioner.get_dict()
+        if data and 'state' in data:
+            if app.config['PROVISIONER_ERROR_STATE'] not in data['state']:
+                healthy_provisioners = healthy_provisioners + 1
+
         # TODO: teach get_dict to return properties as well?
         data['engine_name'] = Provisioner.load(data['id']).engine_name
         provisioners.append(data)
     provisionertable = ProvisionerTable(provisioners)
 
     overview = {
-        'clusters': len(clusters),
-        'health': int((healthy / len(clusters)) * 100) if (healthy and clusters) else 100,
-        'username': username
+        'cluster_health': int((healthy_clusters / len(clusters)) * 100) if (healthy_clusters and clusters) else 100,
+        'provisioner_health': int((healthy_provisioners / len(provisioners)) * 100) if (healthy_provisioners and provisioners) else 100,
     }
     return render_template('ui/index.html', overview=overview, clustertable=clustertable, provisionertable=provisionertable)
 
@@ -230,16 +234,22 @@ def cluster_detail(cluster_id):
         flash('Unable to load cluster', 'danger')
 
     status = {}
-    if obj.get_state() == app.config['CLUSTER_OK_STATE']:
+    state_class = 'info'
+    state = obj.get_state()
+    if state == app.config['CLUSTER_OK_STATE']:
+        state_class = 'success'
         try:
             status = obj.status()
         except:
             flash('Unable to get information about cluster', 'danger')
+    elif state == app.config['CLUSTER_ERROR_STATE']:
+        state_class = 'danger'
 
     return render_template(
         'ui/cluster_detail.html',
         cluster=cluster_dict,
         status=status,
+        state_class = state_class
     )
 
 

@@ -6,12 +6,12 @@ Cluster {{ cluster.name }} detail
 
 
 {% block content %}
-<div class="box overview">
+<div class="box overview" style="margin-bottom: 20px;">
   <div class="col-sm-4">
     <a href="{{ url_for('api.cluster_kubeconfig', cluster_id=cluster.id) }}" class="btn btn-primary btn-xs">Download kubeconfig</a>
   </div>
   <div class="col-sm-4" id="state">
-    State: {{ cluster.state }}
+    <a class="btn btn-{{ state_class }} btn-xs" style="pointer-events: none;">State: {{ cluster.state }}</a>
   </div>
   <div class="col-sm-4" id="progress">
     {% if cluster.state == 'Deploying' %}
@@ -26,30 +26,48 @@ Cluster {{ cluster.name }} detail
   </div>
 </div>
 
-{% if cluster.state == 'Deploying' %}
-<script>
-(function(){
-  var progressRefreshFn = function(){
-    $.get("{{ url_for('ui.cluster_deployment_status', cluster_id=cluster.id) }}", function(res){
-      console.log(JSON.stringify(res));
-      $('#progress .progress-bar').css('width', res.progress + '%')
-      $('#progress .progress-bar-background > span').html(res.progress + '%');
-      if(res.result != 'Deploying'){
-        clearInterval(interval);
-      }
-    });
-  };
-  var interval = setInterval(progressRefreshFn, 10000);
-})();
-</script>
-{% endif %}
+<div class="box overview" style="min-height: 200px;">
+  {% if 'nodes' in status %}
+    {% set nodecount = status.nodes|length %}
+  {% else %}
+    {% set nodecount = 0 %}
+  {% endif %}
+  <div class="col-sm-4 clearfix">
+    <div class="pie_progress" role="progressbar" data-goal="{{ nodecount }}" aria-valuemax="{{ nodecount }}"> 
+      <div class="pie_progress__number">0</div>
+      <div class="pie_progress__label">Nodes</div>
+    </div>
+  </div>
+  {% if 'deployments' in status %}
+    {% set deploymentcount = status.deployments|length %}
+  {% else %}
+    {% set deploymentcount = 0 %}
+  {% endif %}
+  <div class="col-sm-4 clearfix">
+    <div class="pie_progress" role="progressbar" data-goal="{{ deploymentcount }}" aria-valuemax="{{ deploymentcount }}"> 
+      <div class="pie_progress__number">0</div>
+      <div class="pie_progress__label">Workload</div>
+    </div>
+  </div>
+  {% if 'services' in status %}
+    {% set servicecount = status.services|length %}
+  {% else %}
+    {% set servicecount = 0 %}
+  {% endif %}
+  <div class="col-sm-4 clearfix">
+    <div class="pie_progress" role="progressbar" data-goal="{{ servicecount }}" aria-valuemax="{{ servicecount }}"> 
+      <div class="pie_progress__number">0</div>
+      <div class="pie_progress__label">Services</div>
+    </div>
+  </div>
+</div>
 
-<ul class="nav nav-tabs">
+<ul class="nav nav-tabs{% if cluster.state != 'OK' %} hidden{% endif %}">
   <li role="presentation" class="active"><a data-toggle="tab" href="#status">Status</a></li>
   <li role="presentation"><a data-toggle="tab" href="#topology">Topology</a></li>
 </ul>
 
-<div class="tab-content clearfix">
+<div class="tab-content clearfix{% if cluster.state != 'OK' %} hidden{% endif %}">
   {# STATUS TAB #}
   <div class="tab-pane active" id="status">
     {% if 'nodes' in status %}
@@ -261,6 +279,37 @@ Cluster {{ cluster.name }} detail
 
 {% block extrajs %}
 <script>
+jQuery(document).ready(function($){
+  $('.pie_progress').asPieProgress({
+    namespace: 'pieProgress',
+    barsize: '1',
+    size: '160',
+    min: 0,
+    trackcolor: '#ececea',
+    barcolor: '#4bbfaf',
+    numberCallback(n) {
+      return n;
+    }
+  });
+  $('.pie_progress').asPieProgress('start');
+});
 KubeTopologyVisualization.init("{{ url_for('api.cluster_topology_data', cluster_id=cluster.id) }}");
 </script>
+{% if cluster.state == 'Deploying' %}
+<script>
+(function(){
+  var progressRefreshFn = function(){
+    $.get("{{ url_for('ui.cluster_deployment_status', cluster_id=cluster.id) }}", function(res){
+      console.log(JSON.stringify(res));
+      $('#progress .progress-bar').css('width', res.progress + '%')
+      $('#progress .progress-bar-background > span').html(res.progress + '%');
+      if(res.result != 'Deploying'){
+        clearInterval(interval);
+      }
+    });
+  };
+  var interval = setInterval(progressRefreshFn, 10000);
+})();
+</script>
+{% endif %}
 {% endblock %}
