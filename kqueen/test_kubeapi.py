@@ -4,6 +4,7 @@ from pprint import pprint as print
 
 import pytest
 import yaml
+import kubernetes
 
 
 def fake_raise(exc):
@@ -58,7 +59,11 @@ class TestKubeApi:
         'list_deployments',
     ])
     def test_raise_apiexception(self, cluster, monkeypatch, method_name):
-        monkeypatch.setattr(KubernetesAPI, method_name, fake_raise(ApiException))
+        # monkeypatch all kubernetes-client resources used
+        monkeypatch.setattr(kubernetes.client.CoreV1Api, 'list_node', fake_raise(ApiException))
+        monkeypatch.setattr(kubernetes.client.CoreV1Api, 'list_pod_for_all_namespaces', fake_raise(ApiException))
+        monkeypatch.setattr(kubernetes.client.CoreV1Api, 'list_service_for_all_namespaces', fake_raise(ApiException))
+        monkeypatch.setattr(kubernetes.client.ExtensionsV1beta1Api, 'list_deployment_for_all_namespaces', fake_raise(ApiException))
 
         api = KubernetesAPI(cluster=cluster)
         method = getattr(api, method_name)
