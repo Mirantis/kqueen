@@ -28,11 +28,16 @@ logger = logging.getLogger(__name__)
 ui = Blueprint('ui', __name__, template_folder='templates')
 
 
+# COntext processor
+@ui.context_processor
+def inject_username():
+    return {'username': app.config['USERNAME']}
+
+
 # logins
 @ui.route('/')
 @login_required
 def index():
-    username = app.config['USERNAME']
     clusters = []
     healthy_clusters = 0
     for cluster in list(Cluster.list(return_objects=True).values()):
