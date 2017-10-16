@@ -1,5 +1,6 @@
 from .forms import ClusterCreateForm
 from .forms import ProvisionerCreateForm
+from .forms import _get_provisioners
 from .tables import ClusterTable
 from .tables import ProvisionerTable
 from flask import abort
@@ -151,6 +152,7 @@ def provisioner_delete(provisioner_id):
 @login_required
 def cluster_deploy():
     form = ClusterCreateForm()
+
     if form.validate_on_submit():
         cluster_id = str(uuid4())
         # Create DB object
@@ -182,6 +184,10 @@ def cluster_deploy():
             logger.error('Creating cluster {} failed with following reason: {]'.format(form.name.data, str(err)))
             flash('Could not create cluster {}.'.format(form.name.data), 'danger')
         return redirect('/')
+
+    # set choices for provisioner
+    form.provisioner.choices = _get_provisioners()
+
     return render_template('ui/cluster_deploy.html', form=form)
 
 

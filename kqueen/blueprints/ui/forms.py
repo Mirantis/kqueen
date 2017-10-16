@@ -30,4 +30,4 @@ def _get_provisioners():
 
 class ClusterCreateForm(FlaskForm):
     name = StringField('Name', validators=[DataRequired()])
-    provisioner = SelectField('Provisioner', choices=_get_provisioners())
+    provisioner = SelectField('Provisioner', choices=[])

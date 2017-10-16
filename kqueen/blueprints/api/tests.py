@@ -89,5 +89,3 @@ class TestTopologyData:
         assert 'items' in response.json
         assert 'kinds' in response.json
         assert 'relations' in response.json
-
-
