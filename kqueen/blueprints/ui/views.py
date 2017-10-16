@@ -221,6 +221,34 @@ def cluster_detail(cluster_id):
     )
 
 
+@ui.route('/clusters/<cluster_id>/topology')
+@login_required
+def cluster_topology(cluster_id):
+    try:
+        object_id = UUID(cluster_id, version=4)
+    except ValueError:
+        abort(404)
+
+    # load object
+    try:
+        obj = Cluster.load(object_id)
+        obj.get_state()
+    except NameError:
+        abort(404)
+
+    # load information about clusters
+    try:
+        cluster = obj.get_dict()
+    except:
+        cluster = None
+        flash('Unable to load cluster', 'danger')
+
+    return render_template(
+        'ui/cluster_topology.html',
+        cluster=cluster,
+    )
+
+
 @ui.route('/clusters/<cluster_id>/delete')
 @login_required
 def cluster_delete(cluster_id):

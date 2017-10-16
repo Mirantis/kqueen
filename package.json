@@ -1,10 +1,13 @@
 {
   "private": true,
   "devDependencies": {
+    "babel-preset-env": "^1.6.0",
     "bootstrap-sass": "^3.3.7",
     "cheerio": "^1.0.0-rc.2",
     "child_process": "^1.0.2",
+    "d3": "^3.5.17",
     "gulp": "^3.9.1",
+    "gulp-babel": "^7.0.0",
     "gulp-batch": "^1.0.5",
     "gulp-concat": "^2.6.0",
     "gulp-ext-replace": "^0.3.0",

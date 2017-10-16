@@ -1,0 +1,200 @@
+{% extends "ui/base.html" %}
+
+{% block page_header %}
+Cluster {{ cluster.name }} Topology
+{% endblock %}
+
+{% block content %}
+<div id="topology-graph"></div>
+<style>
+@font-face {
+  font-family: 'PatternFlyIcons-webfont';
+  src: url('/static/fonts/PatternFlyIcons-webfont.woff') format('woff');
+}
+@font-face {
+  font-family: 'FontAwesome';
+  src: url('/static/fonts/fontawesome-webfont.woff') format('woff');
+}
+.kube-topology {
+  border: 1px black solid;
+  height: 600px;
+}
+.kube-topology g {
+    font-family: PatternFlyIcons-webfont;
+    font-size: 18px;
+    text-anchor: middle;
+    cursor: pointer;
+}
+
+.kube-topology g text {
+    stroke: none;
+    stroke-width: 0px;
+}
+
+.kube-topology g.weak use {
+    opacity: .6;
+}
+
+.kube-topology g.Pod text {
+    font-family: FontAwesome;
+    font-size: 16px;
+    fill: #1186C1;
+}
+
+.kube-topology g.Node text {
+    fill: #636363;
+}
+
+.kube-topology g.Service text {
+    fill: #ff7f0e;
+}
+
+.kube-topology g.ReplicationController text {
+    fill: #9467bd;
+    font-size: 20px;
+}
+
+.kube-topology g circle {
+    stroke: #aaa;
+    fill: #fff;
+}
+
+.kube-topology g.fixed use {
+    stroke-width: 2px;
+}
+
+.kube-topology g.selected use,
+.kube-topology g.selected circle {
+    stroke-width: 4px;
+}
+
+.kube-topology line {
+    stroke: #aaa;
+    stroke-width: 1;
+}
+
+.kube-topology line.ReplicationControllerPod {
+    stroke-linecap: round;
+    stroke-dasharray: 5, 2;
+}
+.kindInfo{
+  width: 35px;
+  height: 35px;
+}
+</style>
+<div>
+   <svg class="kindInfo">
+     <use xlink:href="#vertex-Pod" x="15" y="15"></use>
+   </svg>
+   Pods
+</div>
+<br>
+<div>
+   <svg class="kindInfo">
+     <use xlink:href="#vertex-Service" x="15" y="15"></use>
+   </svg>
+   Services
+</div>
+<br>
+<div>
+   <svg class="kindInfo">
+     <use xlink:href="#vertex-Node" x="15" y="15"></use>
+   </svg>
+   Nodes
+</div>
+<br>
+<div>
+   <svg class="kindInfo">
+     <use xlink:href="#vertex-ReplicationController" x="15" y="15"></use>
+   </svg>
+   Replication Controllers
+</div>
+
+<svg class="kube-topology" hidden>
+      <defs>
+        <g class="Node" id="vertex-Node">
+          <circle r="15"></circle>
+          <text y="7">&#xe621;</text>
+        </g>
+        <g class="Pod" id="vertex-Pod">
+          <circle r="15"></circle>
+          <text y="5" x="0.5">&#xf1b3;</text>
+        </g>
+        <g class="Service" id="vertex-Service">
+          <circle r="15"></circle>
+          <text y="8" x="-2">&#xe61e;</text>
+        </g>
+        <g class="ReplicationController" id="vertex-ReplicationController">
+          <circle r="15"></circle>
+          <text y="7.5" x="-1">&#xe624;</text>
+        </g>
+      </defs>
+    </svg>
+<script>
+document.addEventListener("DOMContentLoaded", function(e) {
+  d3.json("{{ url_for('api.cluster_topology_data', cluster_id=cluster.id) }}", function(data) {
+    var selector = "#topology-graph"
+     ,  element = d3.select(selector);
+        kinds = {
+          Pod: '#vertex-Pod',
+          ReplicationController: '#vertex-ReplicationController',
+          Node: '#vertex-Node',
+          Service: '#vertex-Service',
+          ReplicaSet: '#vertex-ReplicaSet',
+          Container: '#vertex-Container'
+        };
+        //element.css("display", "block");
+        function notify(item) {
+          graph.select(item);
+        }
+
+        function icon(d) {
+            return kinds[d.item.kind];
+        }
+
+        function weak(d) {
+            var status = d.item.status;
+            if (status && status.phase && status.phase !== "Running")
+                return true;
+            return false;
+        }
+
+        function title(d) {
+            return d.item.metadata.name;
+        }
+
+        function render(args) {
+            var vertices = args[0];
+            var added = args[1];
+
+            added.attr("class", function(d) { return d.item.kind; });
+            added.append("use").attr("xlink:href", icon);
+            added.append("title");
+            vertices.selectAll("title")
+                 .text(function(d) { return d.item.metadata.name; });
+            vertices.classed("weak", weak);
+            graph.select();
+        }
+        var graph = topology_graph(selector, notify, {kinds:kinds});
+        render(graph.data(data["items"], data["relations"]));
+        /* If there's a kinds in the current scope, watch it for changes
+        $scope.$watchCollection("kinds", function(value) {
+            render(graph.kinds(value));
+        });
+
+        $scope.$watchCollection('[items, relations]', function(values) {
+        });
+
+        /* Watch the selection for changes 
+        $scope.$watch("selection", function(item) {
+            graph.select(item || null);
+        });
+
+        element.on("$destroy", function() {
+            graph.close();
+        });*/
+  });
+});
+</script>
+
+{% endblock %}
