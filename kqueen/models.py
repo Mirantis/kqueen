@@ -218,10 +218,11 @@ class Cluster(Model, metaclass=ModelMeta):
         filehandle, file_path = mkstemp()
         filehandle = open(filehandle, 'w')
         filehandle.write(resource_text)
+        filehandle.close()
 
         # apply resource file
         cmd = ['kubectl', '--kubeconfig', kubeconfig, 'apply', '-f', file_path]
-        print(' '.join(cmd))
+
         run = subprocess.run(
             cmd,
             stdout=subprocess.PIPE,
