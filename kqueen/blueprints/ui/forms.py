@@ -1,7 +1,7 @@
 from flask_wtf import FlaskForm
 from kqueen.models import Provisioner
 from flask_wtf.file import FileField
-from wtforms import PasswordField, SelectField, StringField
+from wtforms import PasswordField, SelectField, StringField, TextAreaField
 from wtforms.validators import DataRequired
 
 PROVISIONER_ENGINES = [
@@ -40,3 +40,6 @@ class ClusterCreateForm(FlaskForm):
     name = StringField('Name', validators=[DataRequired()])
     kubeconfig = FileField()
     provisioner = SelectField('Provisioner', validators=[DataRequired()], choices=[])
+
+class ClusterApplyForm(FlaskForm):
+    name = TextAreaField('Resource (YAML)')
