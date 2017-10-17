@@ -345,7 +345,7 @@ function topology_data_transform(clusterData) {
 
 var KubeTopologyVisualization = {
     init: function init(apiUrl) {
-        $(document).on("shown.bs.tab", "a[href='#topology']", function (e) {
+        $(document).one("shown.bs.tab", "a[href='#topology']", function (e) {
             d3.json(apiUrl, function (data) {
                 var selector = "#topology-graph",
                     element = d3.select(selector),
