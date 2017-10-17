@@ -29,7 +29,7 @@ gulp.task('sass', function() {
 	var ext = require('gulp-ext-replace');
 	return gulp.src(folderAsset + '/dynamic/scss/main.scss')
         .pipe(sass({
-            includePaths: [bootstrapDir + '/assets/stylesheets'],
+            includePaths: [bootstrapDir + '/assets/stylesheets', './node_modules/mdi/scss'],
             outputStyle: 'compressed',
         }))
         .pipe(ext('.min.css'))
@@ -75,6 +75,14 @@ gulp.task('bootstrapjs', function() {
                 .pipe(gulp.dest(folderAsset + '/static/js/'));
 });
 
+// jQuery Task
+gulp.task('pieprogress', function() {
+        gulp.src('node_modules/jquery-asPieProgress/dist/css/asPieProgress.min.*')
+         .pipe(gulp.dest(folderAsset + '/static/css/'));
+	return gulp.src('node_modules/jquery-asPieProgress/dist/jquery-asPieProgress.min.*')
+		.pipe(gulp.dest(folderAsset + '/static/js/'));
+});
+
 // Particles Task
 gulp.task('particles', function() {
         gulp.src(folderAsset + '/dynamic/js/particles.json')
@@ -91,10 +99,14 @@ gulp.task('particles', function() {
 });
 
 // All JS
-gulp.task('javascript-all', ['javascript', 'jquery', 'bootstrapjs', 'particles', 'd3']);
+gulp.task('javascript-all', ['javascript', 'jquery', 'd3', 'bootstrapjs', 'pieprogress', 'particles']);
 
 // Fonts Task
 gulp.task('fonts', function() {
+    gulp.src('node_modules/mdi/fonts/*')
+     .pipe(gulp.dest(folderAsset + '/static/fonts/'));
+    gulp.src('node_modules/mdi/css/materialdesignicons.min.*')
+     .pipe(gulp.dest(folderAsset + '/static/css/'));
     return gulp.src(bootstrapDir + '/assets/fonts/**/*')
         .pipe(gulp.dest(folderAsset + '/static/fonts/'));
 });
