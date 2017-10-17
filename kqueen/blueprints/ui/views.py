@@ -217,7 +217,7 @@ def cluster_deploy():
     return render_template('ui/cluster_deploy.html', form=form)
 
 
-@ui.route('/clusters/<cluster_id>/detail')
+@ui.route('/clusters/<cluster_id>/detail', methods=['GET', 'POST'])
 @login_required
 def cluster_detail(cluster_id):
     try:
@@ -253,7 +253,7 @@ def cluster_detail(cluster_id):
 
     form = ClusterApplyForm()
     if form.validate_on_submit():
-        pass
+        obj.apply(form.apply.data)
  
     return render_template(
         'ui/cluster_detail.html',
