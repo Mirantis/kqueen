@@ -1,14 +1,17 @@
-from importlib import import_module
 from flask import current_app as app
-
+from importlib import import_module
 from kqueen.kubeapi import KubernetesAPI
 from kqueen.storages.etcd import IdField
 from kqueen.storages.etcd import JSONField
 from kqueen.storages.etcd import Model
 from kqueen.storages.etcd import ModelMeta
 from kqueen.storages.etcd import StringField
+from tempfile import mkstemp
 
 import logging
+import os
+import subprocess
+import yaml
 
 logger = logging.getLogger(__name__)
 
@@ -175,6 +178,58 @@ class Cluster(Model, metaclass=ModelMeta):
 #            }
 
         return out
+
+    def get_kubeconfig_file(self):
+        """
+        Create file with kubeconfig and make this file available on filesystem.
+
+        Returns:
+            str: Filename (including path).
+
+        """
+
+        if hasattr(self, 'kubeconfig_path') and os.path.isfile(self.kubeconfig_path):
+            return self.kubeconfig_path
+
+        # create kubeconfig file
+        filehandle, file_path = mkstemp()
+        filehandle = open(filehandle, 'w')
+        filehandle.write(yaml.dump(self.kubeconfig))
+        self.kubeconfig_path = file_path
+
+        return file_path
+
+    def apply(self, resource_text):
+        """
+        Apply YAML file supplied as text
+
+        Args:
+            resource_text (text): Content of file to apply
+
+        Returns:
+            tuple: (return_code, stdout)
+
+
+        """
+        kubeconfig = self.get_kubeconfig_file()
+
+        # create temporary resource file
+        # TODO: create helper for this
+        filehandle, file_path = mkstemp()
+        filehandle = open(filehandle, 'w')
+        filehandle.write(resource_text)
+        filehandle.close()
+
+        # apply resource file
+        cmd = ['kubectl', '--kubeconfig', kubeconfig, 'apply', '-f', file_path]
+
+        run = subprocess.run(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+
+        return run
 
 
 class Provisioner(Model, metaclass=ModelMeta):
