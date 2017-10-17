@@ -10,7 +10,6 @@ from kqueen.storages.etcd import StringField
 
 import logging
 
-logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 #
