@@ -4,6 +4,7 @@ from kqueen.storages.etcd import Model
 from pprint import pprint
 
 import pytest
+import yaml
 
 
 class TestModelMethods:
@@ -110,3 +111,37 @@ class TestFieldCompare:
 
         assert not self.first.empty()
         assert empty.empty()
+
+
+class TestApply:
+    def test_kubeconfig_file(self, cluster):
+        cluster.save()
+
+        kubeconfig = cluster.get_kubeconfig_file()
+        assert open(kubeconfig, 'r').read() == yaml.dump(cluster.kubeconfig)
+
+    def test_kubeconfig_recycled(self, cluster):
+        cluster.save()
+
+        assert not hasattr(cluster, 'kubeconfig_path')
+        kubeconfig = cluster.get_kubeconfig_file()
+
+        assert hasattr(cluster, 'kubeconfig_path')
+        assert kubeconfig == cluster.get_kubeconfig_file()
+
+    @pytest.mark.skip
+    def test_apply(self, cluster):
+        text = """kind: Service
+apiVersion: v1
+metadata:
+  name: my-service
+spec:
+  selector:
+    app: MyApp
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 9376
+    """
+
+        cluster.apply(text)

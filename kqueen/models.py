@@ -1,14 +1,17 @@
-from importlib import import_module
 from flask import current_app as app
-
+from importlib import import_module
 from kqueen.kubeapi import KubernetesAPI
 from kqueen.storages.etcd import IdField
 from kqueen.storages.etcd import JSONField
 from kqueen.storages.etcd import Model
 from kqueen.storages.etcd import ModelMeta
 from kqueen.storages.etcd import StringField
+from tempfile import mkstemp
 
 import logging
+import os
+import subprocess
+import yaml
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -176,6 +179,32 @@ class Cluster(Model, metaclass=ModelMeta):
 #            }
 
         return out
+
+    def get_kubeconfig_file(self):
+        """
+        Create file with kubeconfig and make this file available on filesystem.
+
+        Returns:
+            str: Filename (including path).
+
+        """
+
+        if hasattr(self, 'kubeconfig_path') and os.path.isfile(self.kubeconfig_path):
+            return self.kubeconfig_path
+
+        # create kubeconfig file
+        filehandle, file_path = mkstemp()
+        filehandle = open(filehandle, 'w')
+        filehandle.write(yaml.dump(self.kubeconfig))
+        self.kubeconfig_path = file_path
+
+        return file_path
+
+    def apply(self, resources_text):
+        print(file_kubeconfig.name)
+        # create temporary kubeconfig file
+        # create temporary resource file
+        # apply resource file
 
 
 class Provisioner(Model, metaclass=ModelMeta):
