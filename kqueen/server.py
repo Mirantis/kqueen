@@ -35,6 +35,7 @@ def create_app(config_file=config_file):
 
 application = create_app()
 
+
 @application.route('/')
 def root():
     return redirect(url_for('ui.index'), code=302)
