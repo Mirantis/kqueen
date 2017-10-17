@@ -1,3 +1,6 @@
+sudo: required
+language: python
+
 stages:
 - name: test
 - name: publish
@@ -8,10 +11,8 @@ stages:
 jobs:
   include:
   - stage: test
-    language: python
     python:
     - '3.6'
-    sudo: required
     service:
     - docker
     before_install:
@@ -34,7 +35,6 @@ jobs:
         repo: Mirantis/kqueen
 
   - stage: verify
-    sudo: required
     service:
     - docker
     before_install:
