@@ -253,7 +253,7 @@ def cluster_detail(cluster_id):
     form = ClusterApplyForm()
     if form.validate_on_submit():
         obj.apply(form.apply.data)
- 
+
     return render_template(
         'ui/cluster_detail.html',
         cluster=cluster_dict,

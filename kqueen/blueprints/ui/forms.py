@@ -41,5 +41,6 @@ class ClusterCreateForm(FlaskForm):
     kubeconfig = FileField()
     provisioner = SelectField('Provisioner', validators=[DataRequired()], choices=[])
 
+
 class ClusterApplyForm(FlaskForm):
     apply = TextAreaField('Apply Resource', validators=[DataRequired()])
