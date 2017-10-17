@@ -13,7 +13,6 @@ import os
 import subprocess
 import yaml
 
-logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 #

@@ -7,7 +7,6 @@ from uuid import UUID
 
 import logging
 
-logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 api = Blueprint('api', __name__)

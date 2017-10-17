@@ -23,7 +23,6 @@ import yaml
 import logging
 import sys
 
-logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 ui = Blueprint('ui', __name__, template_folder='templates')

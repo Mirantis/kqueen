@@ -9,7 +9,6 @@ from werkzeug.contrib.cache import SimpleCache
 import logging
 import os
 
-logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 cache = SimpleCache()
