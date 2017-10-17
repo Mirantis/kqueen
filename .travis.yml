@@ -10,9 +10,9 @@ service:
 stages:
 - name: test
 - name: publish
-  if: branch == master AND tag =~ ^v.*
+  if: branch = master AND tag =~ ^v.*
 - name: verify
-  if: branch == master
+  if: branch = master
 
 jobs:
   include:
