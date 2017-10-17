@@ -200,11 +200,36 @@ class Cluster(Model, metaclass=ModelMeta):
 
         return file_path
 
-    def apply(self, resources_text):
-        print(file_kubeconfig.name)
-        # create temporary kubeconfig file
+    def apply(self, resource_text):
+        """
+        Apply YAML file supplied as text
+
+        Args:
+            resource_text (text): Content of file to apply
+
+        Returns:
+            tuple: (return_code, stdout)
+
+
+        """
+        kubeconfig = self.get_kubeconfig_file()
+
         # create temporary resource file
+        # TODO: create helper for this
+        filehandle, file_path = mkstemp()
+        filehandle = open(filehandle, 'w')
+        filehandle.write(resource_text)
+
         # apply resource file
+        cmd = ['kubectl', '--kubeconfig', kubeconfig, 'apply', '-f', file_path]
+        print(' '.join(cmd))
+        run = subprocess.run(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+
+        return run
 
 
 class Provisioner(Model, metaclass=ModelMeta):

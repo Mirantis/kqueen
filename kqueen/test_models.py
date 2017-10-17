@@ -5,6 +5,7 @@ from pprint import pprint
 
 import pytest
 import yaml
+import subprocess
 
 
 class TestModelMethods:
@@ -129,8 +130,22 @@ class TestApply:
         assert hasattr(cluster, 'kubeconfig_path')
         assert kubeconfig == cluster.get_kubeconfig_file()
 
-    @pytest.mark.skip
-    def test_apply(self, cluster):
+    def test_apply(self, cluster, monkeypatch):
+        req_cmd = 'kubectl --kubeconfig {} apply -f'.format(cluster.get_kubeconfig_file())
+
+        class FakeRun:
+            stdout = 'no stdout'
+            returncode = 0
+
+            def __init__(self, cmd, **kwargs):
+                self.cmd = cmd
+                self.kwargs = kwargs
+
+        def fake_run(cmd, **kwargs):
+            return FakeRun(cmd, **kwargs)
+
+        monkeypatch.setattr(subprocess, 'run', fake_run)
+
         text = """kind: Service
 apiVersion: v1
 metadata:
@@ -142,6 +157,8 @@ spec:
   - protocol: TCP
     port: 80
     targetPort: 9376
-    """
+"""
 
-        cluster.apply(text)
+        run = cluster.apply(text)
+        cmd = ' '.join(run.cmd)
+        assert cmd.startswith(req_cmd)
