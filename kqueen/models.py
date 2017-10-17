@@ -184,7 +184,6 @@ class Cluster(Model, metaclass=ModelMeta):
                         'target': service_select_app_2_uid[resource['metadata']['labels']['app']]
                     })
 
-
         out = {
             'items': resources,
             'relations': relations,
