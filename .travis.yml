@@ -44,4 +44,4 @@ jobs:
     script:
     - kqueen &
     - sleep 5
-    - curl http://localhost:5000/api/v1/health
+    - wget -O - http://localhost:5000/api/v1/health
