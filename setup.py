@@ -21,6 +21,7 @@ setup(
         'Flask',
         'Flask-Table',
         'Flask-WTF',
+        'gunicorn',
         'kubernetes',
         'python-etcd',
         'python-jenkins',
