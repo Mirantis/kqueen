@@ -77,10 +77,8 @@ Cluster {{ cluster.name }} detail
         <thead>
           <tr>
             <th>Name</th>
-            <th>Version</th>
             <th>IP</th>
             <th>OS</th>
-            <th>Kernel</th>
             <th class="status_column">Status</th>
             <th>Size</th>
             <th colspan=2 class="action_column">Pods</th>
@@ -90,7 +88,6 @@ Cluster {{ cluster.name }} detail
         {% for node in status.nodes %}
           <tr>
             <td>{{ node['metadata']['name'] }}</td>
-            <td>{{ node['status']['node_info']['kubelet_version'] }}</td>
             <td>
               <ul>
                 {% for a in node['status']['addresses'] %}
@@ -100,8 +97,7 @@ Cluster {{ cluster.name }} detail
                 {% endfor %}
               </ul>
             </td>
-            <td>{{ node['status']['node_info']['os_image'] }}</td>
-            <td>{{ node['status']['node_info']['kernel_version'] }}</td>
+            <td>{{ node['status']['node_info']['os_image'] }}<br>{{ node['status']['node_info']['kernel_version'] }}</td>
             <td class="status_column">
               {% for s in node['status']['conditions'] %}
                 {% if s['type'] != 'Ready' %}
