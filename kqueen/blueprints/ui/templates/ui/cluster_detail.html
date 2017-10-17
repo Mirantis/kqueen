@@ -224,13 +224,21 @@ Cluster {{ cluster.name }} detail
   </div>
   {# TOPOLOGY TAB #}
   <div class="tab-pane" id="topology">
-    <div class="btn-group">
-      <button type="button" class="btn btn-primary active" onclick='$("#ForcedLayoutGraphContainer").show();$("#HiveGraphContainer").hide();'>Force layout</button>
-      <button type="button" class="btn btn-primary" onclick='$("#ForcedLayoutGraphContainer").hide();$("#HiveGraphContainer").show();'>Hivechart</button>
+    <div class="col-xs-9">
+      <div id="ForcedLayoutGraphContainer">
+        <div id="topology-graph"></div>
+      </div>
+      <div id="HiveGraphContainer">
+        <div id="HiveChart"></div>
+      </div>
     </div>
-    <div id="ForcedLayoutGraphContainer">
-      <div class="col-xs-9">
-      <div id="topology-graph"></div>
+    <div class="col-xs-3 topology-tooltip">
+      <h3>Topology Layout</h3>
+      <div class="btn-group">
+        <button type="button" class="btn btn-primary active" onclick='$("#ForcedLayoutGraphContainer").show();$("#HiveGraphContainer").hide();'>Force layout</button>
+        <button type="button" class="btn btn-primary" onclick='$("#ForcedLayoutGraphContainer").hide();$("#HiveGraphContainer").show();'>Hivechart</button>
+      </div>
+      <h3>Topology Resources</h3>
       <div class="topology-legend">
         <div>
           <svg class="kindInfo">
@@ -250,6 +258,7 @@ Cluster {{ cluster.name }} detail
           </svg>
           <div>Nodes</div>
         </div>
+        <br>
         <div>
           <svg class="kindInfo">
             <use xlink:href="#vertex-ReplicationController" x="15" y="15"></use>
@@ -257,12 +266,6 @@ Cluster {{ cluster.name }} detail
           <div>Replication Controllers</div>
         </div>
       </div>
-      </div>
-      <div class="col-xs-3">Detail</div>
-
-    </div>
-    <div id="HiveGraphContainer">
-      <div id="HiveChart"></div>
     </div>
   </div>
   <div class="tab-pane" id="deploy">
@@ -296,7 +299,7 @@ Cluster {{ cluster.name }} detail
 <script>
 function changeDetailBox(node){
   //TODO: show data in detail view
-  alert(JSON.stringify(node));
+  alert(JSON.stringify(node.status));
   //TODO: $("detail").html(rucne vyrobit HTML)...
 }
 

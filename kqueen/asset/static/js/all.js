@@ -105,7 +105,7 @@ function topology_graph(selector, notify, options) {
 
     /* Allow the force to be passed in, default if not */
     if (!force) {
-        force = d3.layout.force().charge(-800).gravity(0.2).linkDistance(80);
+        force = d3.layout.force().charge(-60).linkDistance(100);
     }
 
     var drag = force.drag();
