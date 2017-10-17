@@ -78,6 +78,7 @@ class Cluster(Model, metaclass=ModelMeta):
                 'pods': kubernetes.list_pods(),
                 'services': kubernetes.list_services(),
                 'deployments': kubernetes.list_deployments(),
+                'replica_sets': kubernetes.list_replica_sets(),
             }
 
         except:
@@ -97,21 +98,30 @@ class Cluster(Model, metaclass=ModelMeta):
         for node in nodes:
             node['kind'] = 'Node'
 
-        pods = kubernetes.list_pods()
+        pods = kubernetes.list_pods(False)
         for pod in pods:
             pod['kind'] = 'Pod'
 
-        services = kubernetes.list_services()
+        services = kubernetes.list_services(False)
         for service in services:
             service['kind'] = 'Service'
 
-        raw_data = nodes + pods + services
+        deployments = kubernetes.list_deployments(False)
+        for deployment in deployments:
+            deployment['kind'] = 'Deployment'
+
+        replica_sets = kubernetes.list_replica_sets(False)
+        for replica_set in replica_sets:
+            replica_set['kind'] = 'ReplicaSet'
+
+        raw_data = nodes + pods + services + deployments + replica_sets
 
         resources = {datum['metadata']['uid']: datum for datum in raw_data}
         relations = []
 
         node_name_2_uid = {}
-        service_run_2_uid = {}
+        service_select_run_2_uid = {}
+        service_select_app_2_uid = {}
 
         for resource_id, resource in resources.items():
             # Add node name to uid mapping
@@ -121,7 +131,9 @@ class Cluster(Model, metaclass=ModelMeta):
             # Add service run selector to uid_mapping
             if resource['kind'] == 'Service' and resource['spec'].get('selector', {}) is not None:
                 if resource['spec'].get('selector', {}).get('run', False):
-                    service_run_2_uid[resource['spec']['selector']['run']] = resource_id
+                    service_select_run_2_uid[resource['spec']['selector']['run']] = resource_id
+                if resource['spec'].get('selector', {}).get('app', False):
+                    service_select_app_2_uid[resource['spec']['selector']['app']] = resource_id
 
             # Add Containers as top-level resource
             """
@@ -151,18 +163,27 @@ class Cluster(Model, metaclass=ModelMeta):
 
                 # define relationships between pods and rep sets and
                 # replication controllers
-                if resource['metadata'].get('ownerReferences', False):
+                if resource['metadata'].get('owner_references', False):
+                    rep_set_id = resource['metadata']['owner_references'][0]['uid']
+                    deploy_id = resources[rep_set_id]['metadata']['owner_references'][0]['uid']
                     relations.append({
-                        'source': resource['metadata']['ownerReferences'][0]['uid'],
+                        'source': deploy_id,
                         'target': resource_id
                     })
 
                 # rel'n between pods and services
-                if resource['spec'].get('selector', {}).get('run', False):
+                if resource.get('metadata', {}).get('labels', {}).get('run', False):
                     relations.append({
                         'source': resource_id,
-                        'target': service_run_2_uid(resource['metadata']['labels']['run'])
+                        'target': service_select_run_2_uid[resource['metadata']['labels']['run']]
                     })
+
+                if resource.get('metadata', {}).get('labels', {}).get('app', False):
+                    relations.append({
+                        'source': resource_id,
+                        'target': service_select_app_2_uid[resource['metadata']['labels']['app']]
+                    })
+
 
         out = {
             'items': resources,
