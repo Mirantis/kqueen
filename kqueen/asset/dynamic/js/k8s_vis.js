@@ -10,7 +10,9 @@ $(document).one("shown.bs.tab", "a[href='#topology']", function(e) {
           Node: '#vertex-Node',
           Service: '#vertex-Service',
           ReplicaSet: '#vertex-ReplicaSet',
-          Container: '#vertex-Container'
+          Container: '#vertex-Container',
+          Deployment: '#vertex-Deployment',
+          Namespace: '#vertex-Namespace'
         };
         //element.css("display", "block");
         function notify(item) {

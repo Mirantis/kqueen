@@ -111,10 +111,9 @@ class Cluster(Model, metaclass=ModelMeta):
             deployment['kind'] = 'Deployment'
 
         replica_sets = kubernetes.list_replica_sets(False)
-        for replica_set in replica_sets:
-            replica_set['kind'] = 'ReplicaSet'
+        replica_set_dict = {datum['metadata']['uid']: datum for datum in replica_sets}
 
-        raw_data = nodes + pods + services + deployments + replica_sets
+        raw_data = nodes + pods + services + deployments
 
         resources = {datum['metadata']['uid']: datum for datum in raw_data}
         relations = []
@@ -164,12 +163,13 @@ class Cluster(Model, metaclass=ModelMeta):
                 # define relationships between pods and rep sets and
                 # replication controllers
                 if resource['metadata'].get('owner_references', False):
-                    rep_set_id = resource['metadata']['owner_references'][0]['uid']
-                    deploy_id = resources[rep_set_id]['metadata']['owner_references'][0]['uid']
-                    relations.append({
-                        'source': deploy_id,
-                        'target': resource_id
-                    })
+                    if resource['metadata']['owner_references'][0]['kind'] == 'ReplicaSet':
+                        rep_set_id = resource['metadata']['owner_references'][0]['uid']
+                        deploy_id = replica_set_dict[rep_set_id]['metadata']['owner_references'][0]['uid']
+                        relations.append({
+                            'source': deploy_id,
+                            'target': resource_id
+                        })
 
                 # rel'n between pods and services
                 if resource.get('metadata', {}).get('labels', {}).get('run', False):

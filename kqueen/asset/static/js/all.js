@@ -319,39 +319,48 @@ var K8sHiveChart = {
             height = config.height || 600,
             outerRadius = config.outerRadius || 400,
             innerRadius = config.innerRadius || 40,
-            axes = [{ x: 0, angle: 30, radius: 240, name: "Pods", kind: "Pod" }, { x: 1, angle: 270, radius: 160, name: "Nodes", kind: "Node" }, { x: 2, angle: 150, radius: 160, name: "Services", kind: "Service" }, { x: 3, angle: 210, radius: 120, name: "Miscellaneous", kind: "Other" }],
+            axes = [{ x: 0, angle: 30, radius: 240, name: "Pods", kind: "Pod" }, { x: 1, angle: 270, radius: 160, name: "Nodes", kind: "Node" }, { x: 2, angle: 150, radius: 160, name: "Services", kind: "Service" }, { x: 3, angle: 210, radius: 120, name: "Deployments", kind: "Deployment" }, { x: 4, angle: 90, radius: 120, name: "Namespaces", kind: "Namespace" }],
             icon_mapping = {
           Pod: "\uF1FB", // engine
           Node: "\uF48B", // server
           Service: "\uF59F", // web
-          Other: "\uF59F" // other services
+          Deployment: "\uF59F", // other services
+          Namespace: "\uF48B", // other services
+          Container: "\uF59F" // other services
         },
             color_mapping = {
-          Pod: "red",
-          Node: "green",
-          Service: "orange",
-          Other: "black"
+          Pod: "#1186C1",
+          Node: "#636363",
+          Service: "#ff7f0e",
+          Deployment: "#9467bd",
+          Namespace: "yellow",
+          Container: "gray"
         };
 
         self.itemCounters = {
-          Service: 0,
           Pod: 0,
           Node: 0,
-          Other: 0
+          Service: 0,
+          Deployment: 0,
+          Namespace: 0,
+          Container: 0
         };
 
         self.axisMapping = {
           Pod: 0,
           Node: 1,
           Service: 2,
-          Other: 3
+          Deployment: 3,
+          Namespace: 4,
+          Container: 5
         };
 
         var radius_mapping = {
           Pod: d3.scale.linear().range([innerRadius, 240]),
           Node: d3.scale.linear().range([innerRadius, 160]),
           Service: d3.scale.linear().range([innerRadius, 160]),
-          Other: d3.scale.linear().range([innerRadius, 120])
+          Deployment: d3.scale.linear().range([innerRadius, 120]),
+          Namespace: d3.scale.linear().range([innerRadius, 120])
         };
 
         if (_typeof(data.items) === 'object') {
@@ -364,7 +373,8 @@ var K8sHiveChart = {
           Service: 1 / self.itemCounters.Service,
           Pod: 1 / self.itemCounters.Pod,
           Node: 1 / self.itemCounters.Node,
-          Other: 1 / self.itemCounters.Other
+          Deployment: 1 / self.itemCounters.Deployment,
+          Namespace: 1 / self.itemCounters.Namespace
         };
 
         var links = chart.createLinks(nodes, data.relations);
@@ -643,7 +653,9 @@ var KubeTopologyVisualization = {
                     Node: '#vertex-Node',
                     Service: '#vertex-Service',
                     ReplicaSet: '#vertex-ReplicaSet',
-                    Container: '#vertex-Container'
+                    Container: '#vertex-Container',
+                    Deployment: '#vertex-Deployment',
+                    Namespace: '#vertex-Namespace'
                 };
                 //element.css("display", "block");
                 function notify(item) {
