@@ -1,7 +1,10 @@
 stages:
-  - test
-  - publish
-  - verify
+- name: test
+- name: publish
+  if: branch == master AND tag =~ ^v.*
+- name: verify
+  if: branch == master
+
 jobs:
   include:
   - stage: test
