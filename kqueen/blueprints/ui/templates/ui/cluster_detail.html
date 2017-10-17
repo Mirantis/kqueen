@@ -245,15 +245,15 @@ Cluster {{ cluster.name }} detail
       <div id="ForcedLayoutGraphContainer">
         <div id="topology-graph"></div>
       </div>
-      <div id="HiveGraphContainer">
+      <div id="HiveGraphContainer" class="">
         <div id="HiveChart"></div>
       </div>
     </div>
     <div class="col-xs-3 topology-tooltip">
       <h3>Topology Layout</h3>
       <div class="btn-group">
-        <button type="button" class="btn btn-primary active" onclick='$("#ForcedLayoutGraphContainer").show();$("#HiveGraphContainer").hide();'>Force layout</button>
-        <button type="button" class="btn btn-primary" onclick='$("#ForcedLayoutGraphContainer").hide();$("#HiveGraphContainer").show();'>Hivechart</button>
+        <button id="ForcedLayoutGraphBtn" type="button" class="btn btn-primary active">Force layout</button>
+        <button id="HiveGraphBtn" type="button" class="btn btn-primary">Hivechart</button>
       </div>
       <h3>Topology Resources</h3>
       <div class="topology-legend">
@@ -334,15 +334,6 @@ Cluster {{ cluster.name }} detail
 
 {% block extrajs %}
 <script>
-function changeDetailBox(node){
-  console.log(node);
-  if ('item' in node) {
-    $('#resource-detail').html("<dl><dt>Name</dt><dd>" + node.item.metadata.name + "</dd><dt>Kind</dt><dd>" + node.item.kind + "</dd><dt>Namespace</dt><dd>" + node.item.metadata.namespace + "</dd></dl>");
-  } else {
-    $('#resource-detail').html("<dl><dt>Name</dt><dd>" + node.metadata.name + "</dd><dt>Kind</dt><dd>" + node.kind + "</dd><dt>Namespace</dt><dd>" + node.metadata.namespace + "</dd></dl>");
-  }
-}
-
 jQuery(document).ready(function($){
   $('.pie_progress').asPieProgress({
     namespace: 'pieProgress',
@@ -356,12 +347,36 @@ jQuery(document).ready(function($){
     }
   });
   $('.pie_progress').asPieProgress('start');
+
+  $("#ForcedLayoutGraphBtn").on("click",function (e){
+    $("#ForcedLayoutGraphContainer").show();
+    $("#HiveGraphContainer").hide();
+    $("#HiveGraphBtn").removeClass("active");
+    $("#ForcedLayoutGraphBtn").addClass("active");
+  });
+
+  $("#HiveGraphBtn").on("click",function (e){
+    $("#ForcedLayoutGraphContainer").hide();
+    $("#HiveGraphContainer").show();
+    $("#ForcedLayoutGraphBtn").removeClass("active")
+    $("#HiveGraphBtn").addClass("active");
+  });
 });
 
 $(document).one("shown.bs.tab", "a[href='#topology']", function(e) {
   d3.json("{{ url_for('api.cluster_topology_data', cluster_id=cluster.id) }}", function(data){
-      K8SVisualisations.forcedChart.init("#topology-graph", data);
-      K8SVisualisations.hiveChart.init("#HiveChart", data);
+      var changeDetailBox =function (node){
+        console.log(node);
+        if ('item' in node) {
+          $('#resource-detail').html("<dl><dt>Name</dt><dd>" + node.item.metadata.name + "</dd><dt>Kind</dt><dd>" + node.item.kind + "</dd><dt>Namespace</dt><dd>" + node.item.metadata.namespace + "</dd></dl>");
+        } else {
+          $('#resource-detail').html("<dl><dt>Name</dt><dd>" + node.metadata.name + "</dd><dt>Kind</dt><dd>" + node.kind + "</dd><dt>Namespace</dt><dd>" + node.metadata.namespace + "</dd></dl>");
+        }
+      };
+
+      K8SVisualisations.forcedChart.init("#topology-graph", data, {nodeClickFn: changeDetailBox});
+      K8SVisualisations.hiveChart.init("#HiveChart", data, {nodeClickFn: changeDetailBox});
+      $("#HiveGraphContainer").hide();
   });
 });
 </script>

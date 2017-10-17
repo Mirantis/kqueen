@@ -295,7 +295,7 @@ function topology_graph(selector, notify, options) {
         }
     };
 }
-"use strict";
+'use strict';
 
 /**
  * Module with K8SVisualisations forced chart
@@ -303,8 +303,8 @@ function topology_graph(selector, notify, options) {
 var K8SVisualisations = function (K8SVisualisations) {
     K8SVisualisations.forcedChart = K8SVisualisations.forcedChart || {};
 
-    K8SVisualisations.forcedChart.init = function (selector, data) {
-        selector = selector || "#topology-graph";
+    K8SVisualisations.forcedChart.init = function (selector, data, config) {
+        config = config || {};
         if (!data) {
             throw new Error("Cannot init K8S forced layout chart visualisation, invalid data given " + data);
         }
@@ -347,9 +347,10 @@ var K8SVisualisations = function (K8SVisualisations) {
             });
             added.append("use").attr("xlink:href", icon);
             added.append("title");
-            vertices.on("click", function (d) {
-                changeDetailBox(d);
-            });
+
+            if (config.hasOwnProperty("nodeClickFn") && typeof config.nodeClickFn === 'function') {
+                vertices.on("click", config.nodeClickFn);
+            }
             vertices.selectAll("title").text(function (d) {
                 return d.item.metadata.name;
             });
@@ -600,9 +601,12 @@ var K8SVisualisations = function (K8SVisualisations) {
             var x = radius_mapping[d.kind](d.y * itemStep[d.kind] - 0.1) * Math.cos(Math.radians(angle(d)));
             var y = radius_mapping[d.kind](d.y * itemStep[d.kind] - 0.1) * Math.sin(Math.radians(angle(d)));
             return "translate(" + x + ", " + y + ")";
-        }).on("mouseover", mouseFunctions.nodeOver).on("mouseout", mouseFunctions.out).on("click", function (d) {
-            changeDetailBox(d);
-        });
+        }).on("mouseover", mouseFunctions.nodeOver).on("mouseout", mouseFunctions.out);
+
+        if (config.hasOwnProperty("nodeClickFn") && typeof config.nodeClickFn === 'function') {
+            node.on("click", config.nodeClickFn);
+        }
+
         node.append("circle").attr("r", 15);
 
         node.append("text").attr('font-family', function (d) {

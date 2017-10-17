@@ -273,10 +273,12 @@ var K8SVisualisations = function(K8SVisualisations) {
                 return "translate(" + x + ", " + y + ")";
             })
             .on("mouseover", mouseFunctions.nodeOver)
-            .on("mouseout", mouseFunctions.out)
-            .on("click", function(d) {
-                changeDetailBox(d);
-            });
+            .on("mouseout", mouseFunctions.out);
+
+        if(config.hasOwnProperty("nodeClickFn") && typeof config.nodeClickFn === 'function'){
+          node.on("click", config.nodeClickFn);
+        }
+
         node.append("circle")
             .attr("r", 15);
 

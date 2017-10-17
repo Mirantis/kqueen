@@ -4,8 +4,8 @@
 var K8SVisualisations = function(K8SVisualisations) {
     K8SVisualisations.forcedChart = K8SVisualisations.forcedChart || {};
 
-    K8SVisualisations.forcedChart.init = function(selector, data) {
-        selector = selector || "#topology-graph"
+    K8SVisualisations.forcedChart.init = function(selector, data, config) {
+        config = config || {}
         if (!data) {
             throw new Error("Cannot init K8S forced layout chart visualisation, invalid data given " + data);
         }
@@ -49,13 +49,14 @@ var K8SVisualisations = function(K8SVisualisations) {
             });
             added.append("use").attr("xlink:href", icon);
             added.append("title");
-            vertices.on("click", function(d) {
-                changeDetailBox(d);
-            });
+
+            if(config.hasOwnProperty("nodeClickFn") && typeof config.nodeClickFn === 'function'){
+              vertices.on("click", config.nodeClickFn);
+            }
             vertices.selectAll("title")
                 .text(function(d) {
                     return d.item.metadata.name;
-                });
+            });
 
             vertices.classed("weak", weak);
             graph.select();
