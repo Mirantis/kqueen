@@ -43,4 +43,5 @@ jobs:
     - pip3 install kqueen
     script:
     - kqueen &
-    - curl localhost:5000/api/v1/health
+    - sleep 5
+    - curl http://localhost:5000/api/v1/health
