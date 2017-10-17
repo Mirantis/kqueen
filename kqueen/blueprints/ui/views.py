@@ -17,8 +17,6 @@ from kqueen.models import Cluster
 from kqueen.models import Provisioner
 from kqueen.wrappers import login_required
 from uuid import UUID
-from uuid import uuid4
-from werkzeug.utils import secure_filename
 
 import yaml
 import logging

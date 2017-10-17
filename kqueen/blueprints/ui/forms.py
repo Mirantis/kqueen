@@ -23,10 +23,14 @@ class ProvisionerCreateForm(FlaskForm):
 
 
 def _get_provisioners():
-    provisioners = Provisioner.list(return_objects=True)
+    provisioners = sorted(
+        Provisioner.list(return_objects=True).items(),
+        key=lambda i: '{}{}'.format(i[1].name, i[1].id)
+    )
+
     choices = []
 
-    for provisioner_name, provisioner in sorted(provisioners.items(), key=lambda x: x[1].name):
+    for provisioner_name, provisioner in provisioners:
         choices.append((provisioner.id, provisioner.name))
 
     return choices

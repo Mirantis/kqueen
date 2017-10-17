@@ -11,6 +11,7 @@ if not app:
         {'config': {k: v for (k, v) in config_dev.__dict__.items() if not k.startswith("__")}}
     )
 
+
 class ManualEngine(BaseEngine):
     """
     Manual engine is used for importing existing clusters.

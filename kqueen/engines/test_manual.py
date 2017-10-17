@@ -18,7 +18,6 @@ class TestManualEngine:
         self.cluster = Cluster.create(**create_kwargs)
         self.engine = ManualEngine(cluster=self.cluster)
 
-
     def test_initialization(self):
         assert self.engine.cluster == self.cluster
 

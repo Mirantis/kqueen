@@ -84,4 +84,3 @@ try:
     provisioner.save(check_status=False)
 except:
     raise Exception('Adding manual provisioner failed')
-
