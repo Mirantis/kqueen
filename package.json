@@ -1,6 +1,7 @@
 {
   "private": true,
   "devDependencies": {
+    "babel-core": "^6.26.0",
     "babel-preset-env": "^1.6.0",
     "bootstrap-sass": "^3.3.7",
     "cheerio": "^1.0.0-rc.2",
@@ -19,6 +20,8 @@
     "gulp-util": "^3.0.8",
     "gulp-watch": "^4.3.11",
     "jquery": "1.9.1 - 2",
+    "jquery-asPieProgress": "^0.4.7",
+    "mdi": "^2.0.46",
     "os": "^0.1.1",
     "particles.js": "^2.0.0",
     "path": "^0.12.7",

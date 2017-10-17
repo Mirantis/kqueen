@@ -38,5 +38,5 @@ def _get_provisioners():
 
 class ClusterCreateForm(FlaskForm):
     name = StringField('Name', validators=[DataRequired()])
-    provisioner = SelectField('Provisioner', choices=[])
     kubeconfig = FileField()
+    provisioner = SelectField('Provisioner', validators=[DataRequired()], choices=[])

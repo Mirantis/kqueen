@@ -12,10 +12,9 @@
 
     <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400" rel="stylesheet">
     {% include "ui/partial/favicon.html" %}
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/asPieProgress.min.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/materialdesignicons.min.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/main.min.css') }}">
-    <script type="text/javascript" src="{{ url_for('static', filename='js/d3.min.js') }}"></script>
-    <script type="text/javascript" src="{{ url_for('static', filename='js/all.js') }}"></script>
-
     <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
     <!--[if lt IE 9]>
@@ -62,7 +61,10 @@
 
     <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
-    {# <script src="{{ url_for('static', filename='js/all.min.js') }}"></script> #}
+    <script src="{{ url_for('static', filename='js/jquery-asPieProgress.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/d3.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/all.min.js') }}"></script>
+    {% block extrajs %}{% endblock %}
 
     {# comment this out if you have no swag #}
     {% include "ui/partial/miraload.html" %}
