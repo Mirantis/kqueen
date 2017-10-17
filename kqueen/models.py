@@ -102,6 +102,10 @@ class Cluster(Model, metaclass=ModelMeta):
         for pod in pods:
             pod['kind'] = 'Pod'
 
+        namespaces = kubernetes.list_namespaces()
+        for namespace in namespaces:
+            namespace['kind'] = 'Namespace'
+
         services = kubernetes.list_services(False)
         for service in services:
             service['kind'] = 'Service'
@@ -113,11 +117,12 @@ class Cluster(Model, metaclass=ModelMeta):
         replica_sets = kubernetes.list_replica_sets(False)
         replica_set_dict = {datum['metadata']['uid']: datum for datum in replica_sets}
 
-        raw_data = nodes + pods + services + deployments
+        raw_data = nodes + pods + services + deployments + namespaces
 
         resources = {datum['metadata']['uid']: datum for datum in raw_data}
         relations = []
 
+        namespace_name_2_uid = {}
         node_name_2_uid = {}
         service_select_run_2_uid = {}
         service_select_app_2_uid = {}
@@ -126,6 +131,10 @@ class Cluster(Model, metaclass=ModelMeta):
             # Add node name to uid mapping
             if resource['kind'] == 'Node':
                 node_name_2_uid[resource['metadata']['name']] = resource_id
+
+            # Add node name to uid mapping
+            if resource['kind'] == 'Namespace':
+                namespace_name_2_uid[resource['metadata']['name']] = resource_id
 
             # Add service run selector to uid_mapping
             if resource['kind'] == 'Service' and resource['spec'].get('selector', {}) is not None:
@@ -151,6 +160,12 @@ class Cluster(Model, metaclass=ModelMeta):
             """
 
         for resource_id, resource in resources.items():
+            if resource['kind'] not in ('Node', 'Namespace'):
+                relations.append({
+                    'source': resource_id,
+                    'target': namespace_name_2_uid[resource['metadata']['namespace']]
+                })
+
             if resource['kind'] == 'Pod':
 
                 # define relationship between pods and nodes

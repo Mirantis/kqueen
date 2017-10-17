@@ -341,8 +341,8 @@ var K8sHiveChart = {
           Node: "#636363",
           Service: "#ff7f0e",
           Deployment: "#9467bd",
-          Namespace: "yellow",
-          Container: "gray"
+          Namespace: "gray",
+          Container: "#ff7f0e"
         };
 
         self.itemCounters = {
