@@ -1,11 +1,11 @@
+from .forms import _get_provisioners
 from .forms import ClusterCreateForm
 from .forms import ProvisionerCreateForm
-from .forms import _get_provisioners
 from .tables import ClusterTable
 from .tables import ProvisionerTable
+from flask import current_app as app
 from flask import abort
 from flask import Blueprint
-from flask import current_app as app
 from flask import flash
 from flask import jsonify
 from flask import redirect
@@ -16,9 +16,11 @@ from flask import url_for
 from kqueen.models import Cluster
 from kqueen.models import Provisioner
 from kqueen.wrappers import login_required
-from uuid import UUID, uuid4
+from uuid import UUID
 
+import yaml
 import logging
+import sys
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -45,7 +47,9 @@ def index():
                 data['provisioner'] = prv.name
             except:
                 pass
+
             clusters.append(data)
+
     clustertable = ClusterTable(clusters)
     provisioners = []
     for provisioner in list(Provisioner.list(return_objects=True).values()):
@@ -152,41 +156,53 @@ def provisioner_delete(provisioner_id):
 @login_required
 def cluster_deploy():
     form = ClusterCreateForm()
-
-    if form.validate_on_submit():
-        cluster_id = str(uuid4())
-        # Create DB object
-        try:
-            cluster = Cluster(
-                id=cluster_id,
-                name=form.name.data,
-                state=app.config['CLUSTER_PROVISIONING_STATE'],
-                provisioner=form.provisioner.data,
-                kubeconfig={},
-            )
-            cluster.save()
-        except Exception as e:
-            flash('Could not create cluster {}.'.format(form.name.data), 'danger')
-            logger.error('Creating cluster {} failed with following reason: {}'.format(form.name.data, repr(e)))
-            return redirect('/')
-
-        # Actually provision cluster
-        result = False
-        try:
-            result, err = cluster.engine.provision()
-        except Exception as e:
-            flash('Could not create cluster {}.'.format(form.name.data), 'danger')
-            logger.error('Creating cluster {} failed with following reason: {}'.format(form.name.data, repr(e)))
-            return redirect('/')
-        if result:
-            flash('Provisioning of cluster {} is in progress.'.format(form.name.data), 'success')
-        else:
-            logger.error('Creating cluster {} failed with following reason: {]'.format(form.name.data, str(err)))
-            flash('Could not create cluster {}.'.format(form.name.data), 'danger')
-        return redirect('/')
-
-    # set choices for provisioner
     form.provisioner.choices = _get_provisioners()
+
+    if request.method == 'POST':
+        if form.validate_on_submit():
+            # Create cluster object
+            try:
+                # load kubeconfig
+                kubeconfig = {}
+                kubeconfig_file = form.kubeconfig.data
+
+                if kubeconfig_file:
+                    try:
+                        kubeconfig = yaml.load(kubeconfig_file.stream)
+                    except:
+                        logger.error(sys.exc_info())
+
+                cluster = Cluster(
+                    name=form.name.data,
+                    state=app.config['CLUSTER_PROVISIONING_STATE'],
+                    provisioner=form.provisioner.data,
+                    kubeconfig=kubeconfig,
+                )
+
+                cluster.save()
+            except Exception as e:
+                flash('Could not create cluster {}.'.format(form.name.data), 'danger')
+                logger.error('Creating cluster {} failed with following reason: {}'.format(form.name.data, repr(e)))
+
+                return redirect('/')
+
+            # Actually provision cluster
+            result = False
+
+            try:
+                result, err = cluster.engine.provision()
+            except Exception as e:
+                flash('Provisioning failed for {}.'.format(form.name.data), 'danger')
+                logger.error('Provisioning cluster {} failed with following reason: {}'.format(form.name.data, repr(e)))
+                return redirect('/')
+
+            if result:
+                flash('Provisioning of cluster {} is in progress.'.format(form.name.data), 'success')
+            else:
+                logger.error('Creating cluster {} failed with following reason: {}'.format(form.name.data, str(err)))
+                flash('Could not create cluster {}: {}.'.format(form.name.data, err), 'danger')
+
+            return redirect('/')
 
     return render_template('ui/cluster_deploy.html', form=form)
 
@@ -208,9 +224,9 @@ def cluster_detail(cluster_id):
 
     # load information about clusters
     try:
-        cluster = obj.get_dict()
+        cluster_dict = obj.get_dict()
     except:
-        cluster = None
+        cluster_dict = None
         flash('Unable to load cluster', 'danger')
 
     status = {}
@@ -222,7 +238,7 @@ def cluster_detail(cluster_id):
 
     return render_template(
         'ui/cluster_detail.html',
-        cluster=cluster,
+        cluster=cluster_dict,
         status=status,
     )
 

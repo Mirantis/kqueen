@@ -25,7 +25,7 @@ class BaseEngine:
         name (str): Name of the engine usable by program.
         verbose_name (str): Human readable name of the engine.
     """
-    name = 'base_engine'
+    name = 'base'
     verbose_name = 'Base Engine'
 
     def __init__(self, cluster, **kwargs):
