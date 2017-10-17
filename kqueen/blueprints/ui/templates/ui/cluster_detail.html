@@ -1,5 +1,7 @@
 {% extends "ui/base.html" %}
 
+{% from "ui/partial/form.html" import render_form %}
+
 {% block page_header %}
 Cluster {{ cluster.name }} detail
 {% endblock %}
@@ -65,6 +67,7 @@ Cluster {{ cluster.name }} detail
 <ul class="nav nav-tabs{% if cluster.state != 'OK' %} hidden{% endif %}">
   <li role="presentation" class="active"><a data-toggle="tab" href="#status">Status</a></li>
   <li role="presentation"><a data-toggle="tab" href="#topology">Topology</a></li>
+  <li role="presentation"><a data-toggle="tab" href="#deploy">Deploy</a></li>
 </ul>
 
 <div class="tab-content clearfix{% if cluster.state != 'OK' %} hidden{% endif %}">
@@ -248,6 +251,9 @@ Cluster {{ cluster.name }} detail
         <div>Replication Controllers</div>
       </div>
     </div>
+  </div>
+  <div class="tab-pane" id="deploy">
+    {{ render_form(form) }}
   </div>
 </div>
 

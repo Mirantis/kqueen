@@ -1,6 +1,7 @@
 from .forms import _get_provisioners
 from .forms import ClusterCreateForm
 from .forms import ProvisionerCreateForm
+from .forms import ClusterApplyForm
 from .tables import ClusterTable
 from .tables import ProvisionerTable
 from flask import current_app as app
@@ -250,11 +251,16 @@ def cluster_detail(cluster_id):
     elif state == app.config['CLUSTER_ERROR_STATE']:
         state_class = 'danger'
 
+    form = ClusterApplyForm()
+    if form.validate_on_submit():
+        pass
+ 
     return render_template(
         'ui/cluster_detail.html',
         cluster=cluster_dict,
         status=status,
-        state_class=state_class
+        state_class=state_class,
+        form=form
     )
 
 

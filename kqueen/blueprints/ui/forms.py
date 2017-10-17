@@ -42,4 +42,4 @@ class ClusterCreateForm(FlaskForm):
     provisioner = SelectField('Provisioner', validators=[DataRequired()], choices=[])
 
 class ClusterApplyForm(FlaskForm):
-    name = TextAreaField('Resource (YAML)')
+    apply = TextAreaField('Apply Resource', validators=[DataRequired()])
