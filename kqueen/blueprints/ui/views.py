@@ -254,7 +254,7 @@ def cluster_detail(cluster_id):
         'ui/cluster_detail.html',
         cluster=cluster_dict,
         status=status,
-        state_class = state_class
+        state_class=state_class
     )
 
 
