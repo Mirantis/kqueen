@@ -1,5 +1,82 @@
 "use strict";
 
+d3.hive = {};
+
+d3.hive.link = function () {
+  var source = function source(d) {
+    return d.source;
+  },
+      target = function target(d) {
+    return d.target;
+  },
+      angle = function angle(d) {
+    return d.angle;
+  },
+      startRadius = function startRadius(d) {
+    return d.radius;
+  },
+      endRadius = startRadius,
+      arcOffset = 0;
+
+  function link(d, i) {
+    var s = node(source, this, d, i),
+        t = node(target, this, d, i),
+        x;
+    if (t.a < s.a) x = t, t = s, s = x;
+    if (t.a - s.a > Math.PI) s.a += 2 * Math.PI;
+    var a1 = s.a + (t.a - s.a) / 3,
+        a2 = t.a - (t.a - s.a) / 3;
+    return s.r0 - s.r1 || t.r0 - t.r1 ? "M" + Math.cos(s.a) * s.r0 + "," + Math.sin(s.a) * s.r0 + "L" + Math.cos(s.a) * s.r1 + "," + Math.sin(s.a) * s.r1 + "C" + Math.cos(a1) * s.r1 + "," + Math.sin(a1) * s.r1 + " " + Math.cos(a2) * t.r1 + "," + Math.sin(a2) * t.r1 + " " + Math.cos(t.a) * t.r1 + "," + Math.sin(t.a) * t.r1 + "L" + Math.cos(t.a) * t.r0 + "," + Math.sin(t.a) * t.r0 + "C" + Math.cos(a2) * t.r0 + "," + Math.sin(a2) * t.r0 + " " + Math.cos(a1) * s.r0 + "," + Math.sin(a1) * s.r0 + " " + Math.cos(s.a) * s.r0 + "," + Math.sin(s.a) * s.r0 : "M" + Math.cos(s.a) * s.r0 + "," + Math.sin(s.a) * s.r0 + "C" + Math.cos(a1) * s.r1 + "," + Math.sin(a1) * s.r1 + " " + Math.cos(a2) * t.r1 + "," + Math.sin(a2) * t.r1 + " " + Math.cos(t.a) * t.r1 + "," + Math.sin(t.a) * t.r1;
+  }
+
+  function node(method, thiz, d, i) {
+    var node = method.call(thiz, d, i),
+        a = +(typeof angle === "function" ? angle.call(thiz, node, i) : angle) + arcOffset,
+        r0 = +(typeof startRadius === "function" ? startRadius.call(thiz, node, i) : startRadius),
+        r1 = startRadius === endRadius ? r0 : +(typeof endRadius === "function" ? endRadius.call(thiz, node, i) : endRadius);
+    return { r0: r0, r1: r1, a: a };
+  }
+
+  link.source = function (_) {
+    if (!arguments.length) return source;
+    source = _;
+    return link;
+  };
+
+  link.target = function (_) {
+    if (!arguments.length) return target;
+    target = _;
+    return link;
+  };
+
+  link.angle = function (_) {
+    if (!arguments.length) return angle;
+    angle = _;
+    return link;
+  };
+
+  link.radius = function (_) {
+    if (!arguments.length) return startRadius;
+    startRadius = endRadius = _;
+    return link;
+  };
+
+  link.startRadius = function (_) {
+    if (!arguments.length) return startRadius;
+    startRadius = _;
+    return link;
+  };
+
+  link.endRadius = function (_) {
+    if (!arguments.length) return endRadius;
+    endRadius = _;
+    return link;
+  };
+
+  return link;
+};
+"use strict";
+
 var cache = {};
 
 function topology_graph(selector, notify, options) {
@@ -82,9 +159,9 @@ function topology_graph(selector, notify, options) {
         });
         force.start();
     }).on("click", function (ev) {
-        if (!d3.select(d3.event.target).datum()) {
+        /*if (!d3.select(d3.event.target).datum()) {
             notify(null);
-        }
+        }*/
     });
 
     function select(item) {
@@ -218,6 +295,217 @@ function topology_graph(selector, notify, options) {
         }
     };
 }
+"use strict";
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+Math.radians = function (degrees) {
+  return degrees * Math.PI / 180;
+};
+
+// Converts from radians to degrees.
+Math.degrees = function (radians) {
+  return radians * 180 / Math.PI;
+};
+
+var K8sHiveChart = {
+  init: function init(container, apiUrl, config) {
+    var chart = this;
+    $(document).one("shown.bs.tab", "a[href='#topology']", function (e) {
+      d3.json(apiUrl, function (data) {
+        config = config || {};
+
+        var width = config.width || 960,
+            height = config.height || 600,
+            outerRadius = config.outerRadius || 400,
+            innerRadius = config.innerRadius || 40,
+            axes = [{ x: 0, angle: 30, radius: 240, name: "Pods", kind: "Pod" }, { x: 1, angle: 270, radius: 160, name: "Nodes", kind: "Node" }, { x: 2, angle: 150, radius: 160, name: "Services", kind: "Service" }, { x: 3, angle: 210, radius: 120, name: "Miscellaneous", kind: "Other" }],
+            icon_mapping = {
+          Pod: "\uF1FB", // engine
+          Node: "\uF48B", // server
+          Service: "\uF59F", // web
+          Other: "\uF59F" // other services
+        },
+            color_mapping = {
+          Pod: "red",
+          Node: "green",
+          Service: "orange",
+          Other: "black"
+        };
+
+        self.itemCounters = {
+          Service: 0,
+          Pod: 0,
+          Node: 0,
+          Other: 0
+        };
+
+        self.axisMapping = {
+          Pod: 0,
+          Node: 1,
+          Service: 2,
+          Other: 3
+        };
+
+        var radius_mapping = {
+          Pod: d3.scale.linear().range([innerRadius, 240]),
+          Node: d3.scale.linear().range([innerRadius, 160]),
+          Service: d3.scale.linear().range([innerRadius, 160]),
+          Other: d3.scale.linear().range([innerRadius, 120])
+        };
+
+        if (_typeof(data.items) === 'object') {
+          data.items = Object.values(data.items);
+        }
+
+        var nodes = chart.createNodes(data.items);
+
+        self.itemStep = {
+          Service: 1 / self.itemCounters.Service,
+          Pod: 1 / self.itemCounters.Pod,
+          Node: 1 / self.itemCounters.Node,
+          Other: 1 / self.itemCounters.Other
+        };
+
+        var links = chart.createLinks(nodes, data.relations);
+
+        var angle = function angle(d) {
+          var angle = 0,
+              found = false;
+          axes.forEach(function (item) {
+            if (d.kind == item.kind) {
+              angle = item.angle;
+              found = true;
+            }
+          });
+          if (!found) {
+            console.log("Cannot compute angle for item " + d);
+          }
+          return angle;
+        };
+        var radius = d3.scale.linear().range([innerRadius, outerRadius]);
+        var icon = function icon(i) {
+          return icon_mapping[i];
+        };
+        var color = function color(i) {
+          return color_mapping[i];
+        };
+
+        var NodeMouseFunctions = {
+          linkOver: function linkOver(d) {
+            svg.selectAll(".link").classed("active", function (p) {
+              return p === d;
+            });
+            svg.selectAll(".node circle").classed("active", function (p) {
+              return p === d.source || p === d.target;
+            });
+            svg.selectAll(".node text").classed("active", function (p) {
+              return p === d.source || p === d.target;
+            });
+            //NodeMouseFunctions.over();
+          },
+          nodeOver: function nodeOver(d) {
+            svg.selectAll(".link").classed("active", function (p) {
+              return p.source === d || p.target === d;
+            });
+            d3.select(this).select("circle").classed("active", true);
+            d3.select(this).select("text").classed("active", true);
+            tooltip.html("Node - " + d.name + "<br/>" + "Kind - " + d.kind).style("left", d3.event.pageX + 5 + "px").style("top", d3.event.pageY - 28 + "px");
+            tooltip.transition().duration(200).style("opacity", .9);
+          },
+          out: function out(d) {
+            svg.selectAll(".active").classed("active", false);
+            tooltip.transition().duration(500).style("opacity", 0);
+          }
+        };
+
+        var svg = d3.select(container).append("svg").attr("width", width).attr("height", height).append("g").attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
+
+        var tooltip = d3.select("body").append("div").attr("class", "tooltip").style("opacity", 0);
+
+        // Hive plot render
+
+        var axe = svg.selectAll(".node").data(axes).enter().append("g");
+
+        axe.append("line").attr("class", "axis").attr("transform", function (d) {
+          return "rotate(" + d.angle + ")";
+        }).attr("x1", function (d) {
+          return radius_mapping[d.kind].range()[0];
+        }).attr("x2", function (d) {
+          return radius_mapping[d.kind].range()[1];
+        });
+
+        axe.append("text").attr("class", "axis-label").attr('font-size', '16px').attr('font-family', 'verdana').attr('text-anchor', 'middle').attr('alignment-baseline', 'central').text(function (d) {
+          return d.name;
+        }).attr("transform", function (d) {
+          var x = (radius_mapping[d.kind].range()[1] + 30) * Math.cos(Math.radians(d.angle));
+          var y = (radius_mapping[d.kind].range()[1] + 30) * Math.sin(Math.radians(d.angle));
+          return "translate(" + x + ", " + y + ")";
+        });
+
+        svg.selectAll(".link").data(links).enter().append("path").attr("class", "link").attr("d", d3.hive.link().angle(function (d) {
+          return Math.radians(angle(d));
+        }).radius(function (d) {
+          return radius_mapping[d.kind](d.y * itemStep[d.kind] - 0.1);
+        }))
+        //.style("stroke", function(d) { return color(d.source.kind); })
+        .on("mouseover", NodeMouseFunctions.linkOver).on("mouseout", NodeMouseFunctions.out);
+
+        var node = svg.selectAll(".node").data(nodes).enter().append("g").attr("class", "node").attr("transform", function (d) {
+          var x = radius_mapping[d.kind](d.y * itemStep[d.kind] - 0.1) * Math.cos(Math.radians(angle(d)));
+          var y = radius_mapping[d.kind](d.y * itemStep[d.kind] - 0.1) * Math.sin(Math.radians(angle(d)));
+          return "translate(" + x + ", " + y + ")";
+        }).on("mouseover", NodeMouseFunctions.nodeOver).on("mouseout", NodeMouseFunctions.out).on("click", function (d) {
+          changeDetailBox(d);
+        });
+
+        node.append("circle").attr("r", 12).style("stroke", function (d) {
+          return color(d.kind);
+        });
+
+        node.append("text").attr('font-family', 'Material Design Icons').attr("color", function (d) {
+          return color(d.kind);
+        }).attr('font-size', function (d) {
+          return '14px';
+        }).text(function (d) {
+          return icon(d.kind);
+        }).attr("transform", "translate(-7, 5)");
+      });
+    });
+  },
+
+  createNodes: function createNodes(items) {
+    return items.map(function (item) {
+      item["id"] = item.metadata.uid;
+      item["name"] = item.metadata.name || "Unnamed node";
+      if (["Pod", "Service", "Node"].indexOf(item.kind) < 0) {
+        item.kind = "Other";
+      }
+      item["x"] = self.axisMapping[item.kind];
+      self.itemCounters[item.kind]++;
+      item["y"] = self.itemCounters[item.kind];
+      return item;
+    });
+  },
+
+  createLinks: function createLinks(nodes, relations) {
+    return relations.map(function (link) {
+      var retLink = {};
+      nodes.forEach(function (node) {
+        if (link.source == node.id) {
+          retLink.source = node;
+        } else if (link.target == node.id) {
+          retLink.target = node;
+        }
+      });
+      if (!retLink.hasOwnProperty("source") || !retLink.hasOwnProperty("target")) {
+        console.log("Cannot found relation node for link " + link);
+        retLink = link;
+      }
+      return retLink;
+    });
+  }
+};
 'use strict';
 
 function topology_data_transform(clusterData) {
@@ -385,9 +673,13 @@ var KubeTopologyVisualization = {
                     });
                     added.append("use").attr("xlink:href", icon);
                     added.append("title");
+                    vertices.on("click", function (d) {
+                        changeDetailBox(d);
+                    });
                     vertices.selectAll("title").text(function (d) {
                         return d.item.metadata.name;
                     });
+
                     vertices.classed("weak", weak);
                     graph.select();
                 }

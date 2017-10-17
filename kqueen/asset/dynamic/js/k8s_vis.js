@@ -39,8 +39,12 @@ $(document).one("shown.bs.tab", "a[href='#topology']", function(e) {
             added.attr("class", function(d) { return d.item.kind; });
             added.append("use").attr("xlink:href", icon);
             added.append("title");
+            vertices.on("click", function(d){
+                    changeDetailBox(d);
+            });
             vertices.selectAll("title")
                  .text(function(d) { return d.item.metadata.name; });
+
             vertices.classed("weak", weak);
             graph.select();
         }

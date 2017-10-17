@@ -90,9 +90,9 @@ function topology_graph(selector, notify, options) {
             force.start();
         })
         .on("click", function(ev) {
-            if (!d3.select(d3.event.target).datum()) {
+            /*if (!d3.select(d3.event.target).datum()) {
                 notify(null);
-            }
+            }*/
         });
 
     function select(item) {
