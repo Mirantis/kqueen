@@ -14,7 +14,6 @@
 }
 
 .topology-tooltip {
-  @extend .text-center;
   h3 {
     margin-bottom: 20px;
   }
@@ -75,9 +74,14 @@
     &.Service text {
       fill: #ff7f0e;
     }
-    &.ReplicationController text {
+    &.Deployment text {
       fill: #9467bd;
       font-size: 20px;
+    }
+    &.Namespace text {
+      fill: #666;
+      font-family: FontAwesome;
+      font-size: 16px;
     }
   }
 }

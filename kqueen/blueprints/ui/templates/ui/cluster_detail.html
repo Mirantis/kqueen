@@ -228,7 +228,7 @@ Cluster {{ cluster.name }} detail
       <div id="ForcedLayoutGraphContainer">
         <div id="topology-graph"></div>
       </div>
-      <div id="HiveGraphContainer">
+      <div id="HiveGraphContainer" style="visibility:hidden;">
         <div id="HiveChart"></div>
       </div>
     </div>
@@ -261,10 +261,26 @@ Cluster {{ cluster.name }} detail
         <br>
         <div>
           <svg class="kindInfo">
-            <use xlink:href="#vertex-ReplicationController" x="15" y="15"></use>
+            <use xlink:href="#vertex-Deployment" x="15" y="15"></use>
           </svg>
-          <div>Replication Controllers</div>
+          <div>Deploys</div>
         </div>
+        <div>
+          <svg class="kindInfo">
+            <use xlink:href="#vertex-Namespace" x="15" y="15"></use>
+          </svg>
+          <div>Namespaces</div>
+        </div>
+
+      </div>
+      {#
+      <h3>Topology Overview</h3>
+      <div class="topology-overview">
+      </div>
+      #}
+      <h3>Resource Detail</h3>
+      <div class="resource-detail" id="resource-detail">
+        None selected
       </div>
     </div>
   </div>
@@ -287,9 +303,13 @@ Cluster {{ cluster.name }} detail
       <circle r="15"></circle>
       <text y="8" x="-2">&#xe61e;</text>
     </g>
-    <g class="ReplicationController" id="vertex-ReplicationController">
+    <g class="Deployment" id="vertex-Deployment">
       <circle r="15"></circle>
       <text y="7.5" x="-1">&#xe624;</text>
+    </g>
+    <g class="Namespace" id="vertex-Namespace">
+      <circle r="15"></circle>
+      <text y="7.5" x="-1">&#xf247;</text>
     </g>
   </defs>
 </svg>
@@ -298,9 +318,8 @@ Cluster {{ cluster.name }} detail
 {% block extrajs %}
 <script>
 function changeDetailBox(node){
-  //TODO: show data in detail view
-  alert(JSON.stringify(node.status));
-  //TODO: $("detail").html(rucne vyrobit HTML)...
+  console.log(node);
+  $('#resource-detail').html("<dl><dt>Name</dt><dd>" + node.item.metadata.name + "</dd><dt>Kind</dt><dd>" + node.item.kind + "</dd><dt>Namespace</dt><dd>" + node.item.metadata.namespace + "</dd></dl>");
 }
 
 jQuery(document).ready(function($){
