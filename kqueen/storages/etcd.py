@@ -3,7 +3,6 @@ import json
 import logging
 import uuid
 
-logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 

@@ -17,7 +17,6 @@ if not app:
         {'config': {k: v for (k, v) in config_dev.__dict__.items() if not k.startswith("__")}}
     )
 
-logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 
