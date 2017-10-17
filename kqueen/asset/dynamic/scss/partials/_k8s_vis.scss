@@ -17,6 +17,9 @@
   h3 {
     margin-bottom: 20px;
   }
+  > .topology-legend {
+    @extend .text-center;
+  }
 }
 
 .topology-legend {
@@ -29,6 +32,15 @@
     padding-bottom: 10px;
   }
 }
+
+#HiveChart{
+  g.node > circle {
+      stroke: #aaa;
+      fill: #fff;
+ stroke-width: 1px;    
+  }
+}
+
 
 .kube-topology {
   height: 600px;

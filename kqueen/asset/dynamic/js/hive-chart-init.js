@@ -19,19 +19,27 @@ var K8sHiveChart = {
          ,  outerRadius = config.outerRadius || 400
          ,  innerRadius = config.innerRadius || 40
          ,  axes = [
-              {x: 0, angle: 30, radius: 240, name: "Pods", kind: "Pod"},
-              {x: 1, angle: 270, radius: 160, name: "Nodes", kind: "Node"},
-              {x: 2, angle: 150, radius: 160, name: "Services", kind: "Service"},
-              {x: 3, angle: 210, radius: 120, name: "Deployments", kind: "Deployment"},
-              {x: 4, angle: 90, radius: 120, name: "Namespaces", kind: "Namespace"}
+              {x: 0, angle: 30, radius: 420, name: "Pods", kind: "Pod"},
+              {x: 1, angle: 270, radius: 200, name: "Nodes", kind: "Node"},
+              {x: 2, angle: 150, radius: 240, name: "Services", kind: "Service"},
+              {x: 3, angle: 210, radius: 240, name: "Deployments", kind: "Deployment"},
+              {x: 4, angle: 90, radius: 240, name: "Namespaces", kind: "Namespace"}
             ]
          ,  icon_mapping = {
-              Pod: "\uf1fb", // engine
-              Node: "\uf48b", // server
-              Service: "\uf59f", // web
-              Deployment: "\uf59f", // other services
-              Namespace: "\uf48b", // other services
-              Container: "\uf59f" // other services
+              Pod: "\uf1b3", // engine
+              Node: "\ue621", // server
+              Service: "\ue61e", // web
+              Deployment: "\ue624", // other services
+              Namespace: "\uf247", // other services
+              Container: "\ue624" // other services
+            }
+         ,  font_mapping = {
+              Pod: "FontAwesome", // engine
+              Node: "PatternFlyIcons-webfont", // server
+              Service: "PatternFlyIcons-webfont", // web
+              Deployment: "PatternFlyIcons-webfont", // other services
+              Namespace: "FontAwesome", // other services
+              Container: "PatternFlyIcons-webfont" // other services
             }
          ,  color_mapping = {
               Pod: "#1186C1",
@@ -61,11 +69,11 @@ var K8sHiveChart = {
         };
 
         var radius_mapping = {
-          Pod: d3.scale.linear().range([innerRadius, 240]),
-          Node: d3.scale.linear().range([innerRadius, 160]),
-          Service: d3.scale.linear().range([innerRadius, 160]),
-          Deployment: d3.scale.linear().range([innerRadius, 120]),
-          Namespace: d3.scale.linear().range([innerRadius, 120])
+          Pod: d3.scale.linear().range([innerRadius, 420]),
+          Node: d3.scale.linear().range([innerRadius, 200]),
+          Service: d3.scale.linear().range([innerRadius, 240]),
+          Deployment: d3.scale.linear().range([innerRadius, 240]),
+          Namespace: d3.scale.linear().range([innerRadius, 240])
         };
 
         if(typeof data.items === 'object'){
@@ -94,7 +102,7 @@ var K8sHiveChart = {
             }
           });
           if(!found){
-            console.log("Cannot compute angle for item " + d)
+            console.log("Cannot compute angle for item " + d.kind + d.metadata.name)
           }
           return angle
         }
@@ -133,7 +141,7 @@ var K8sHiveChart = {
             .attr("width", width)
             .attr("height", height)
           .append("g")
-            .attr("transform", "translate(" + width/2 + "," + height/2 + ")");
+            .attr("transform", "translate(" + (width/2 - 180) + "," + (height/2 - 20) + ")");
 
         var tooltip = d3.select("body").append("div")
           .attr("class", "tooltip")
@@ -153,7 +161,7 @@ var K8sHiveChart = {
         axe.append("text")
           .attr("class", "axis-label")
           .attr('font-size', '16px' )
-          .attr('font-family', 'verdana' )
+          .attr('font-family', 'Open Sans' )
           .attr('text-anchor', 'middle')
           .attr('alignment-baseline', 'central')
           .text(function(d) { return d.name; })
@@ -186,18 +194,19 @@ var K8sHiveChart = {
             .on("click", function(d){
               changeDetailBox(d);
             });
-
         node.append("circle")
-          .attr("r", 12)
-          .style("stroke", function(d) { return color(d.kind); })
+          .attr("r", 15);
 
         node.append("text")
-          .attr('font-family', 'Material Design Icons')
-          .attr("color", function(d) { return color(d.kind); })
-          .attr('font-size', function(d) { return '14px'; } )
+          .attr('font-family', function(d) { return font_mapping[d.kind]; })
+//          .attr("color", function(d) { return color(d.kind); })
+          .style("stroke", function(d) { return color(d.kind); })
+          .style("fill", function(d) { return color(d.kind); })
+          .attr('font-size', function(d) { return '18px'; } )
           .text(function(d) { return icon(d.kind); })
-          .attr("transform", "translate(-7, 5)")
-    });
+          .attr("x", "-10px")
+          .attr("y", "5px");
+      });
     });
   },
 
@@ -205,7 +214,7 @@ var K8sHiveChart = {
     return items.map(function(item){
         item["id"] = item.metadata.uid;
         item["name"] = item.metadata.name || "Unnamed node";
-        if(["Pod","Service","Node"].indexOf(item.kind) < 0){
+        if(["Pod","Service","Node","Deployment","Namespace"].indexOf(item.kind) < 0){
           item.kind = "Other";
         }
         item["x"] = self.axisMapping[item.kind];

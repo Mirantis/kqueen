@@ -228,7 +228,7 @@ Cluster {{ cluster.name }} detail
       <div id="ForcedLayoutGraphContainer">
         <div id="topology-graph"></div>
       </div>
-      <div id="HiveGraphContainer" style="visibility:hidden;">
+      <div id="HiveGraphContainer">
         <div id="HiveChart"></div>
       </div>
     </div>
@@ -319,7 +319,11 @@ Cluster {{ cluster.name }} detail
 <script>
 function changeDetailBox(node){
   console.log(node);
-  $('#resource-detail').html("<dl><dt>Name</dt><dd>" + node.item.metadata.name + "</dd><dt>Kind</dt><dd>" + node.item.kind + "</dd><dt>Namespace</dt><dd>" + node.item.metadata.namespace + "</dd></dl>");
+  if ('item' in node) {
+    $('#resource-detail').html("<dl><dt>Name</dt><dd>" + node.item.metadata.name + "</dd><dt>Kind</dt><dd>" + node.item.kind + "</dd><dt>Namespace</dt><dd>" + node.item.metadata.namespace + "</dd></dl>");
+  } else {
+    $('#resource-detail').html("<dl><dt>Name</dt><dd>" + node.metadata.name + "</dd><dt>Kind</dt><dd>" + node.kind + "</dd><dt>Namespace</dt><dd>" + node.metadata.namespace + "</dd></dl>");
+  }
 }
 
 jQuery(document).ready(function($){
