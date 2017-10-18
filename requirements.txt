@@ -1,4 +1,4 @@
-Flask
+Flask==0.12.2
 Flask-Table
 Flask-WTF
 kubernetes
@@ -6,6 +6,7 @@ python-etcd
 python-jenkins
 pyyaml
 requests
+gunicorn
 
 # dev
 coveralls

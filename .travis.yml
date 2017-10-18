@@ -12,7 +12,7 @@ stages:
 - name: publish
   if: branch = master AND tag =~ ^v
 - name: verify
-  if: branch = master
+  if: branch = master AND type = push
 
 jobs:
   include:
@@ -25,6 +25,11 @@ jobs:
     - python3 -m flake8
     - python3 -m pytest --cov=. --cov-fail-under=69 --cov-report=term-missing:skip-covered
     - coveralls
+
+    - pip3 install --editable .
+    - python3 -m kqueen &
+    - sleep 2
+    - wget -O - http://localhost:5000/api/v1/health
 
   - stage: publish
     deploy:
@@ -42,6 +47,6 @@ jobs:
     install:
     - pip3 install --upgrade kqueen
     script:
-    - kqueen &
-    - sleep 5
+    - ./entrypoint.sh &
+    - sleep 2
     - wget -O - http://localhost:5000/api/v1/health
