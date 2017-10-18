@@ -1,11 +1,3 @@
-Math.radians = function(degrees) {
-    return degrees * Math.PI / 180;
-};
-
-// Converts from radians to degrees.
-Math.degrees = function(radians) {
-    return radians * 180 / Math.PI;
-};
 /**
  * Module with K8SVisualisations hive chart
  */
@@ -17,10 +9,10 @@ var K8SVisualisations = function(K8SVisualisations) {
         if (!data) {
             throw new Error("Cannot init K8S hive chart visualisation, invalid data given " + data);
         }
-        var width = config.width || 960,
-            height = config.height || 600,
+        var width = config.width || "auto",
+            height = config.height || "auto",
             outerRadius = config.outerRadius || 400,
-            innerRadius = config.innerRadius || 40,
+            innerRadius = config.innerRadius || 60,
             axes = [{
                     x: 0,
                     angle: 30,
@@ -159,114 +151,125 @@ var K8SVisualisations = function(K8SVisualisations) {
             return color_mapping[i]
         };
 
-        var mouseFunctions = {
-            linkOver: function(d) {
-                svg.selectAll(".link").classed("active", function(p) {
-                    return p === d;
-                });
-                svg.selectAll(".node circle").classed("active", function(p) {
-                    return p === d.source || p === d.target;
-                });
-                svg.selectAll(".node text").classed("active", function(p) {
-                    return p === d.source || p === d.target;
-                });
-                //NodeMouseFunctions.over();
-            },
-            nodeOver: function(d) {
-                svg.selectAll(".link").classed("active", function(p) {
-                    return p.source === d || p.target === d;
-                });
-                d3.select(this).select("circle").classed("active", true);
-                d3.select(this).select("text").classed("active", true);
-                tooltip.html("Node - " + d.name + "<br/>" + "Kind - " + d.kind)
-                    .style("left", (d3.event.pageX + 5) + "px")
-                    .style("top", (d3.event.pageY - 28) + "px");
-                tooltip.transition()
-                    .duration(200)
-                    .style("opacity", .9);
-            },
-            out: function(d) {
-                svg.selectAll(".active").classed("active", false);
-                tooltip.transition()
-                    .duration(500)
-                    .style("opacity", 0);
-            }
-        };
-
-        var svg = d3.select(selector)
-            .append("svg")
-            .attr("width", width)
-            .attr("height", height)
-            .append("g")
-            .attr("transform", "translate(" + (width / 2 - 180) + "," + (height / 2 - 20) + ")");
-
-        var tooltip = d3.select("body").append("div")
-            .attr("class", "tooltip")
-            .style("opacity", 0);
-
         // Hive plot render
-
-        var axe = svg.selectAll(".node").data(axes)
-            .enter().append("g");
-
-        axe.append("line")
-            .attr("class", "axis")
-            .attr("transform", function(d) {
-                return "rotate(" + d.angle + ")";
-            })
-            .attr("x1", function(d) {
-                return radius_mapping[d.kind].range()[0]
-            })
-            .attr("x2", function(d) {
-                return radius_mapping[d.kind].range()[1]
-            });
-
-        axe.append("text")
-            .attr("class", "axis-label")
-            .attr('font-size', '16px')
-            .attr('font-family', 'Open Sans')
-            .attr('text-anchor', 'middle')
-            .attr('alignment-baseline', 'central')
-            .text(function(d) {
-                return d.name;
-            })
-            .attr("transform", function(d) {
-                var x = (radius_mapping[d.kind].range()[1] + 30) * Math.cos(Math.radians(d.angle));
-                var y = (radius_mapping[d.kind].range()[1] + 30) * Math.sin(Math.radians(d.angle));
-                return "translate(" + x + ", " + y + ")";
-            });
-
-        svg.selectAll(".link").data(links)
-            .enter().append("path")
-            .attr("class", "link")
-            .attr("d", d3.hive.link()
-                .angle(function(d) {
-                    return Math.radians(angle(d));
+        function render(){
+            var container = d3.select(selector),
+                targetHeight,
+                targetWidth;
+            if(width === "auto"){
+                targetWidth = container.node().clientWidth;
+            }
+            if(height === "auto"){
+                targetHeight = container.node().clientHeight;
+            }
+            container.html("");
+            var svg = container
+                .append("svg")
+                .attr("width", targetWidth)
+                .attr("height", targetHeight)
+                .append("g")
+                .attr("transform", "translate(" + (targetWidth / 2 - 80) + "," + (targetHeight / 2 - 20) + ")");
+            var axe = svg.selectAll(".node").data(axes)
+                .enter().append("g");
+            axe.append("line")
+                .attr("class", "axis")
+                .attr("transform", function(d) {
+                    return "rotate(" + d.angle + ")";
                 })
-                .radius(function(d) {
-                    return radius_mapping[d.kind](d.y * itemStep[d.kind] - 0.1);
-                }))
-            //.style("stroke", function(d) { return color(d.source.kind); })
-            .on("mouseover", mouseFunctions.linkOver)
-            .on("mouseout", mouseFunctions.out);
+                .attr("x1", function(d) {
+                    return radius_mapping[d.kind].range()[0]
+                })
+                .attr("x2", function(d) {
+                    return radius_mapping[d.kind].range()[1]
+                });
+            var tooltip = d3.select("body").append("div")
+                .attr("class", "tooltip")
+                .style("opacity", 0);
+            axe.append("text")
+                .attr("class", "axis-label")
+                .attr('font-size', '16px')
+                .attr('font-family', 'Open Sans')
+                .attr('text-anchor', 'middle')
+                .attr('alignment-baseline', 'central')
+                .text(function(d) {
+                    return d.name;
+                })
+                .attr("transform", function(d) {
+                    var x = (radius_mapping[d.kind].range()[1] + 30) * Math.cos(Math.radians(d.angle));
+                    var y = (radius_mapping[d.kind].range()[1] + 30) * Math.sin(Math.radians(d.angle));
+                    return "translate(" + x + ", " + y + ")";
+                });
+                var mouseFunctions = {
+                    linkOver: function(d) {
+                        svg.selectAll(".link").classed("active", function(p) {
+                            return p === d;
+                        });
+                        svg.selectAll(".node circle").classed("active", function(p) {
+                            return p === d.source || p === d.target;
+                        });
+                        svg.selectAll(".node text").classed("active", function(p) {
+                            return p === d.source || p === d.target;
+                        });
+                    },
+                    nodeOver: function(d) {
+                        svg.selectAll(".link").classed("active", function(p) {
+                            return p.source === d || p.target === d;
+                        });
+                        d3.select(this).select("circle").classed("active", true);
+                        d3.select(this).select("text").classed("active", true);
+                        tooltip.html("Node - " + d.name + "<br/>" + "Kind - " + d.kind)
+                            .style("left", (d3.event.pageX + 5) + "px")
+                            .style("top", (d3.event.pageY - 28) + "px");
+                        tooltip.transition()
+                            .duration(200)
+                            .style("opacity", .9);
+                    },
+                    out: function(d) {
+                        svg.selectAll(".active").classed("active", false);
+                        tooltip.transition()
+                            .duration(500)
+                            .style("opacity", 0);
+                    }
+                };
 
-        var node = svg.selectAll(".node").data(nodes)
-            .enter().append("g")
-            .attr("class", "node")
-            .attr("transform", function(d) {
-                var x = radius_mapping[d.kind](d.y * itemStep[d.kind] - 0.1) * Math.cos(Math.radians(angle(d)));
-                var y = radius_mapping[d.kind](d.y * itemStep[d.kind] - 0.1) * Math.sin(Math.radians(angle(d)));
-                return "translate(" + x + ", " + y + ")";
-            })
-            .on("mouseover", mouseFunctions.nodeOver)
-            .on("mouseout", mouseFunctions.out);
+            svg.selectAll(".link").data(links)
+                .enter().append("path")
+                .attr("class", "link")
+                .attr("d", d3.hive.link()
+                    .angle(function(d) {
+                        return Math.radians(angle(d));
+                    })
+                    .radius(function(d) {
+                        return radius_mapping[d.kind](d.y * itemStep[d.kind] - 0.1);
+                    }))
+                //.style("stroke", function(d) { return color(d.source.kind); })
+                .on("mouseover", mouseFunctions.linkOver)
+                .on("mouseout", mouseFunctions.out);
 
-        if(config.hasOwnProperty("nodeClickFn") && typeof config.nodeClickFn === 'function'){
-          node.on("click", config.nodeClickFn);
+            var node = svg.selectAll(".node").data(nodes)
+                .enter().append("g")
+                .attr("class", "node")
+                .attr("transform", function(d) {
+                    var x = radius_mapping[d.kind](d.y * itemStep[d.kind] - 0.1) * Math.cos(Math.radians(angle(d)));
+                    var y = radius_mapping[d.kind](d.y * itemStep[d.kind] - 0.1) * Math.sin(Math.radians(angle(d)));
+                    return "translate(" + x + ", " + y + ")";
+                })
+                .on("mouseover", mouseFunctions.nodeOver)
+                .on("mouseout", mouseFunctions.out);
+
+            if(config.hasOwnProperty("nodeClickFn") && typeof config.nodeClickFn === 'function'){
+              node.on("click", config.nodeClickFn);
+            }
+
+            node.append("use").attr("xlink:href", function(d) { return icon(d.kind); });
         }
-
-        node.append("use").attr("xlink:href", function(d) { return icon(d.kind); });
-
+        render();
+        var timeout;
+        function resized() {
+          window.clearTimeout(timeout);
+          timeout = window.setTimeout(render, 150);
+        }
+        window.addEventListener('resize', resized);
     };
     return K8SVisualisations;
 }(K8SVisualisations || {});

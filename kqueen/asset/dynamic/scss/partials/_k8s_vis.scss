@@ -7,9 +7,22 @@
   font-family: 'FontAwesome';
   src: url('/static/fonts/fontawesome-webfont.woff') format('woff');
 }
+#ForcedLayoutGraphContainer{
+  position: relative;
+  background-color: white;
+  z-index:2;
+}
 
-#topology-graph {
-  min-height: 600px;
+#HiveGraphContainer{
+  margin-top: -600px;
+  background-color: white;
+  position: relative;
+  z-index:1;
+  pointer-events:none;
+}
+
+#topology-graph, #HiveChart {
+  height: 600px;
 }
 
 .topology-tooltip {
@@ -36,7 +49,7 @@
   g.node > circle {
       stroke: #aaa;
       fill: #fff;
- stroke-width: 1px;
+      stroke-width: 1px;
   }
 }
 
@@ -111,11 +124,6 @@
     stroke-width: 1.5px;
   }
 
-  .node text {
-    fill: #000;
-    fill-opacity: .5;
-  }
-
   .tooltip {
     position: absolute;
     padding: 5px 10px;
@@ -136,15 +144,4 @@
     stroke: red;
     stroke-width: 2px;
     stroke-opacity: 1;
-  }
-
-  .node{
-    circle.active {
-      stroke: red;
-      fill: #fff;
-      stroke-width: 3px;
-    }
-    text.active {
-      fill-opacity: 1;
-    }
   }
