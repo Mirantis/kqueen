@@ -52,13 +52,26 @@ class KubernetesAPI:
 
         return out
 
-    def list_pods(self):
+    def list_namespaces(self):
+        out = []
+
+        try:
+            response = self.api_corev1.list_namespace().items
+        except ApiException:
+            raise
+
+        for namespace in response:
+            out.append(namespace.to_dict())
+
+        return out
+
+    def list_pods(self, include_uninitialized=True):
         """List pods in all namespaces"""
         out = []
 
         try:
             response = self.api_corev1.list_pod_for_all_namespaces(
-                include_uninitialized=True
+                include_uninitialized=include_uninitialized
             ).items
         except ApiException:
             raise
@@ -144,13 +157,13 @@ class KubernetesAPI:
 
         return out
 
-    def list_services(self):
+    def list_services(self, include_uninitialized=True):
         """List services in all namespaces"""
         out = []
 
         try:
             response = self.api_corev1.list_service_for_all_namespaces(
-                include_uninitialized=True
+                include_uninitialized=include_uninitialized
             ).items
         except ApiException:
             raise
@@ -160,13 +173,29 @@ class KubernetesAPI:
 
         return out
 
-    def list_deployments(self):
+    def list_deployments(self, include_uninitialized=True):
         """List deployments in all namespaces"""
         out = []
 
         try:
             response = self.api_extensionsv1beta1.list_deployment_for_all_namespaces(
-                include_uninitialized=True
+                include_uninitialized=include_uninitialized
+            ).items
+        except ApiException:
+            raise
+
+        for item in response:
+            out.append(item.to_dict())
+
+        return out
+
+    def list_replica_sets(self, include_uninitialized=True):
+        """List replica sets in all namespaces"""
+        out = []
+
+        try:
+            response = self.api_extensionsv1beta1.list_replica_set_for_all_namespaces(
+                include_uninitialized=include_uninitialized
             ).items
         except ApiException:
             raise

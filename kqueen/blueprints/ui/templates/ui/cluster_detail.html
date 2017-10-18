@@ -28,13 +28,19 @@ Cluster {{ cluster.name }} detail
   </div>
 </div>
 
-<div class="box overview" style="min-height: 200px;">
+<div class="box overview" style="min-height: 160px; padding: 10px;">
+  <div class="col-sm-2 col-sm-offset-1 clearfix">
+    <div class="pie_progress" role="progressbar" data-goal="2" aria-valuemax="2">
+      <div class="pie_progress__number">0</div>
+      <div class="pie_progress__label">Namespaces</div>
+    </div>
+  </div>
   {% if 'nodes' in status %}
     {% set nodecount = status.nodes|length %}
   {% else %}
     {% set nodecount = 0 %}
   {% endif %}
-  <div class="col-sm-4 clearfix">
+  <div class="col-sm-2 clearfix">
     <div class="pie_progress" role="progressbar" data-goal="{{ nodecount }}" aria-valuemax="{{ nodecount }}"> 
       <div class="pie_progress__number">0</div>
       <div class="pie_progress__label">Nodes</div>
@@ -45,10 +51,21 @@ Cluster {{ cluster.name }} detail
   {% else %}
     {% set deploymentcount = 0 %}
   {% endif %}
-  <div class="col-sm-4 clearfix">
+  <div class="col-sm-2 clearfix">
     <div class="pie_progress" role="progressbar" data-goal="{{ deploymentcount }}" aria-valuemax="{{ deploymentcount }}"> 
       <div class="pie_progress__number">0</div>
-      <div class="pie_progress__label">Workload</div>
+      <div class="pie_progress__label">Deployments</div>
+    </div>
+  </div>
+  {% if 'pods' in status %}
+    {% set podcount = status.pods|length %}
+  {% else %}
+    {% set podcount = 0 %}
+  {% endif %}
+  <div class="col-sm-2 clearfix">
+    <div class="pie_progress" role="progressbar" data-goal="{{ podcount }}" aria-valuemax="{{ podcount }}"> 
+      <div class="pie_progress__number">0</div>
+      <div class="pie_progress__label">Pods</div>
     </div>
   </div>
   {% if 'services' in status %}
@@ -56,7 +73,7 @@ Cluster {{ cluster.name }} detail
   {% else %}
     {% set servicecount = 0 %}
   {% endif %}
-  <div class="col-sm-4 clearfix">
+  <div class="col-sm-2 clearfix">
     <div class="pie_progress" role="progressbar" data-goal="{{ servicecount }}" aria-valuemax="{{ servicecount }}"> 
       <div class="pie_progress__number">0</div>
       <div class="pie_progress__label">Services</div>
@@ -133,7 +150,7 @@ Cluster {{ cluster.name }} detail
     {% endif %}
     
     {% if 'deployments' in status %}
-    <h3>Workload</h3>
+    <h3>Deployments</h3>
     <div class="table-container">
       <table class="table table-hover no-actions" id="table-nodes">
         <thead>
@@ -158,7 +175,7 @@ Cluster {{ cluster.name }} detail
               {% set percentage = 0|int %}
             {% endif %}
             <div class="progress-bar-background">
-              <span>{{ ready  }}/{{ desired }}</span>
+              <span>{{ ready }}/{{ desired }}</span>
               <div class="progress-bar" style="width: {{ percentage }}%;"></div>
             </div>
           </td>
@@ -224,31 +241,63 @@ Cluster {{ cluster.name }} detail
   </div>
   {# TOPOLOGY TAB #}
   <div class="tab-pane" id="topology">
-    <div id="topology-graph"></div>
-    <div class="topology-legend">
-      <div>
-        <svg class="kindInfo">
-          <use xlink:href="#vertex-Pod" x="15" y="15"></use>
-        </svg>
-        <div>Pods</div>
+    <div class="col-xs-9">
+      <div id="ForcedLayoutGraphContainer">
+        <div id="topology-graph"></div>
       </div>
-      <div>
-        <svg class="kindInfo">
-          <use xlink:href="#vertex-Service" x="15" y="15"></use>
-        </svg>
-        <div>Services</div>
+      <div id="HiveGraphContainer" class="">
+        <div id="HiveChart"></div>
       </div>
-      <div>
-        <svg class="kindInfo">
-          <use xlink:href="#vertex-Node" x="15" y="15"></use>
-        </svg>
-        <div>Nodes</div>
+    </div>
+    <div class="col-xs-3 topology-tooltip">
+      <h3>Topology Layout</h3>
+      <div class="btn-group">
+        <button id="ForcedLayoutGraphBtn" type="button" class="btn btn-primary active">Force layout</button>
+        <button id="HiveGraphBtn" type="button" class="btn btn-primary">Hivechart</button>
       </div>
-      <div>
-        <svg class="kindInfo">
-          <use xlink:href="#vertex-ReplicationController" x="15" y="15"></use>
-        </svg>
-        <div>Replication Controllers</div>
+      <h3>Topology Resources</h3>
+      <div class="topology-legend">
+        <div>
+          <svg class="kindInfo">
+            <use xlink:href="#vertex-Pod" x="15" y="15"></use>
+          </svg>
+          <div>Pods</div>
+        </div>
+        <div>
+          <svg class="kindInfo">
+            <use xlink:href="#vertex-Service" x="15" y="15"></use>
+          </svg>
+          <div>Services</div>
+        </div>
+        <div>
+          <svg class="kindInfo">
+            <use xlink:href="#vertex-Node" x="15" y="15"></use>
+          </svg>
+          <div>Nodes</div>
+        </div>
+        <br>
+        <div>
+          <svg class="kindInfo">
+            <use xlink:href="#vertex-Deployment" x="15" y="15"></use>
+          </svg>
+          <div>Deploys</div>
+        </div>
+        <div>
+          <svg class="kindInfo">
+            <use xlink:href="#vertex-Namespace" x="15" y="15"></use>
+          </svg>
+          <div>Namespaces</div>
+        </div>
+
+      </div>
+      {#
+      <h3>Topology Overview</h3>
+      <div class="topology-overview">
+      </div>
+      #}
+      <h3>Resource Detail</h3>
+      <div class="resource-detail" id="resource-detail">
+        None selected
       </div>
     </div>
   </div>
@@ -271,9 +320,13 @@ Cluster {{ cluster.name }} detail
       <circle r="15"></circle>
       <text y="8" x="-2">&#xe61e;</text>
     </g>
-    <g class="ReplicationController" id="vertex-ReplicationController">
+    <g class="Deployment" id="vertex-Deployment">
       <circle r="15"></circle>
       <text y="7.5" x="-1">&#xe624;</text>
+    </g>
+    <g class="Namespace" id="vertex-Namespace">
+      <circle r="15"></circle>
+      <text y="7.5" x="-1">&#xf247;</text>
     </g>
   </defs>
 </svg>
@@ -285,7 +338,7 @@ jQuery(document).ready(function($){
   $('.pie_progress').asPieProgress({
     namespace: 'pieProgress',
     barsize: '1',
-    size: '160',
+    size: '120',
     min: 0,
     trackcolor: '#ececea',
     barcolor: '#4bbfaf',
@@ -294,8 +347,38 @@ jQuery(document).ready(function($){
     }
   });
   $('.pie_progress').asPieProgress('start');
+
+  $("#ForcedLayoutGraphBtn").on("click",function (e){
+    $("#ForcedLayoutGraphContainer").show();
+    $("#HiveGraphContainer").hide();
+    $("#HiveGraphBtn").removeClass("active");
+    $("#ForcedLayoutGraphBtn").addClass("active");
+  });
+
+  $("#HiveGraphBtn").on("click",function (e){
+    $("#ForcedLayoutGraphContainer").hide();
+    $("#HiveGraphContainer").show();
+    $("#ForcedLayoutGraphBtn").removeClass("active")
+    $("#HiveGraphBtn").addClass("active");
+  });
 });
-KubeTopologyVisualization.init("{{ url_for('api.cluster_topology_data', cluster_id=cluster.id) }}");
+
+$(document).one("shown.bs.tab", "a[href='#topology']", function(e) {
+  d3.json("{{ url_for('api.cluster_topology_data', cluster_id=cluster.id) }}", function(data){
+      var changeDetailBox =function (node){
+        console.log(node);
+        if ('item' in node) {
+          $('#resource-detail').html("<dl><dt>Name</dt><dd>" + node.item.metadata.name + "</dd><dt>Kind</dt><dd>" + node.item.kind + "</dd><dt>Namespace</dt><dd>" + node.item.metadata.namespace + "</dd></dl>");
+        } else {
+          $('#resource-detail').html("<dl><dt>Name</dt><dd>" + node.metadata.name + "</dd><dt>Kind</dt><dd>" + node.kind + "</dd><dt>Namespace</dt><dd>" + node.metadata.namespace + "</dd></dl>");
+        }
+      };
+
+      K8SVisualisations.forcedChart.init("#topology-graph", data, {nodeClickFn: changeDetailBox});
+      K8SVisualisations.hiveChart.init("#HiveChart", data, {nodeClickFn: changeDetailBox});
+      $("#HiveGraphContainer").hide();
+  });
+});
 </script>
 {% if cluster.state == 'Deploying' %}
 <script>
