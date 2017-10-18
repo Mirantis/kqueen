@@ -194,10 +194,13 @@ class Cluster(Model, metaclass=ModelMeta):
                     })
 
                 if resource.get('metadata', {}).get('labels', {}).get('app', False):
-                    relations.append({
-                        'source': resource_id,
-                        'target': service_select_app_2_uid[resource['metadata']['labels']['app']]
-                    })
+                    try:
+                        relations.append({
+                            'source': resource_id,
+                            'target': service_select_app_2_uid[resource['metadata']['labels']['app']]
+                        })
+                    except:
+                        pass
 
         out = {
             'items': resources,

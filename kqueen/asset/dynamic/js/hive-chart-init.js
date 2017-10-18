@@ -58,28 +58,14 @@ var K8SVisualisations = function(K8SVisualisations) {
                 }
             ],
             icon_mapping = {
-                Pod: "\uf1b3", // engine
-                Node: "\ue621", // server
-                Service: "\ue61e", // web
-                Deployment: "\ue624", // other services
-                Namespace: "\uf247", // other services
-                Container: "\ue624" // other services
-            },
-            font_mapping = {
-                Pod: "FontAwesome", // engine
-                Node: "PatternFlyIcons-webfont", // server
-                Service: "PatternFlyIcons-webfont", // web
-                Deployment: "PatternFlyIcons-webfont", // other services
-                Namespace: "FontAwesome", // other services
-                Container: "PatternFlyIcons-webfont" // other services
-            },
-            color_mapping = {
-                Pod: "#1186C1",
-                Node: "#636363",
-                Service: "#ff7f0e",
-                Deployment: "#9467bd",
-                Namespace: "gray",
-                Container: "#ff7f0e"
+                Pod: '#vertex-Pod',
+                ReplicationController: '#vertex-ReplicationController',
+                Node: '#vertex-Node',
+                Service: '#vertex-Service',
+                ReplicaSet: '#vertex-ReplicaSet',
+                Container: '#vertex-Container',
+                Deployment: '#vertex-Deployment',
+                Namespace: '#vertex-Namespace'
             },
             itemCounters = {
                 Pod: 0,
@@ -279,28 +265,8 @@ var K8SVisualisations = function(K8SVisualisations) {
           node.on("click", config.nodeClickFn);
         }
 
-        node.append("circle")
-            .attr("r", 15);
+        node.append("use").attr("xlink:href", function(d) { return icon(d.kind); });
 
-        node.append("text")
-            .attr('font-family', function(d) {
-                return font_mapping[d.kind];
-            })
-            //          .attr("color", function(d) { return color(d.kind); })
-            .style("stroke", function(d) {
-                return color(d.kind);
-            })
-            .style("fill", function(d) {
-                return color(d.kind);
-            })
-            .attr('font-size', function(d) {
-                return '18px';
-            })
-            .text(function(d) {
-                return icon(d.kind);
-            })
-            .attr("x", "-10px")
-            .attr("y", "5px");
     };
     return K8SVisualisations;
 }(K8SVisualisations || {});
