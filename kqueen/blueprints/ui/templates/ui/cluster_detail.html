@@ -84,7 +84,7 @@ Cluster {{ cluster.name }} detail
 <ul class="nav nav-tabs{% if cluster.state != 'OK' %} hidden{% endif %}">
   <li role="presentation" class="active"><a data-toggle="tab" href="#status">Status</a></li>
   <li role="presentation"><a data-toggle="tab" href="#topology">Topology</a></li>
-  <li role="presentation"><a data-toggle="tab" href="#deploy">Deploy</a></li>
+  <li role="presentation"><a data-toggle="tab" href="#addons">Addons</a></li>
 </ul>
 
 <div class="tab-content clearfix{% if cluster.state != 'OK' %} hidden{% endif %}">
@@ -193,8 +193,8 @@ Cluster {{ cluster.name }} detail
       </table>
     </div>
     {% endif %}
-    
-    
+
+
     {% if 'services' in status %}
     <h3>Services</h3>
     <div class="table-container">
@@ -216,9 +216,12 @@ Cluster {{ cluster.name }} detail
             <td><a href="http://{{ service['spec']['cluster_ip'] }}">{{ service['spec']['cluster_ip'] }}</a></td>
             <td>
               <ul>
-              {% for port in service['spec']['ports'] %}
+              {% set ports = service['spec']['ports'] %}
+              {% if ports %}
+              {% for port in ports %}
                 <li>{{ port['port'] }}/{{ port['protocol'] }} {{ port.get('name', '') }}</li>
               {% endfor %}
+              {% endif %}
               </ul>
             </td>
             <td>
@@ -301,8 +304,35 @@ Cluster {{ cluster.name }} detail
       </div>
     </div>
   </div>
-  <div class="tab-pane" id="deploy">
-    {{ render_form(form) }}
+  {# ADDONS TAB #}
+  <div class="tab-pane" id="addons">
+    <div class="row">
+      <div class="col-xs-12">
+        <div class="filter-box clearfix">
+          <div id="filters" class="btn-group pull-right" role="group">
+            <a class="btn btn-default" data-filter="*">All</a>
+            {% for tag in [] %}
+            <a class="btn btn-default" data-filter=".{{ tag }}">{{ tag|capitalize }}</a>
+            {% endfor %}
+          </div>
+        </div>
+        <div class="grid clearfix">
+          {% for addon in status.addons %}
+          <a href="{{ addon.link }}" class="addon-item" data-category="some_tag">
+            <div class="item-icon" style="background-image: url('{{ addon.icon }}');"></div>
+            <div class="item-label">
+              <span>{{ addon.name }}</span>
+            </div>
+          </a>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-xs-12">
+        {{ render_form(form) }}
+      </div>
+    </div>
   </div>
 </div>
 
@@ -335,6 +365,7 @@ Cluster {{ cluster.name }} detail
 {% block extrajs %}
 <script>
 jQuery(document).ready(function($){
+  // init asPieProgress
   $('.pie_progress').asPieProgress({
     namespace: 'pieProgress',
     barsize: '1',
@@ -348,6 +379,25 @@ jQuery(document).ready(function($){
   });
   $('.pie_progress').asPieProgress('start');
 
+  // init Isotope
+  $(document).one("shown.bs.tab", "a[href='#addons']", function(e) {
+    var $grid = $('.grid').isotope({
+      itemSelector: '.addon-item',
+      layoutMode: 'fitRows'
+    });
+    $('.grid').each(function() {
+      var $grid = $( this );
+      $grid.css('min-height', $grid.innerHeight());
+    });
+    // bind filter button click
+    $('#filters').on( 'click', 'a', function(ev) {
+    ev.preventDefault();
+    var filterValue = $( this ).attr('data-filter');
+      $grid.isotope({ filter: filterValue });
+    });
+  });
+
+  // bind click actions
   $("#ForcedLayoutGraphBtn").on("click",function (e){
     $("#ForcedLayoutGraphContainer").show();
     $("#HiveGraphContainer").hide();

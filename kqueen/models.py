@@ -72,13 +72,14 @@ class Cluster(Model, metaclass=ModelMeta):
             kubernetes = KubernetesAPI(cluster=self)
 
             out = {
+                'addons': kubernetes.list_services(filter_addons=True),
+                'deployments': kubernetes.list_deployments(),
                 'nodes': kubernetes.list_nodes(),
-                'version': kubernetes.get_version(),
                 'nodes_pods': kubernetes.count_pods_by_node(),
                 'pods': kubernetes.list_pods(),
-                'services': kubernetes.list_services(),
-                'deployments': kubernetes.list_deployments(),
                 'replica_sets': kubernetes.list_replica_sets(),
+                'services': kubernetes.list_services(),
+                'version': kubernetes.get_version(),
             }
 
         except:
