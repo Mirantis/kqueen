@@ -27,9 +27,8 @@ function topology_graph(selector, notify, options) {
     /* Allow the force to be passed in, default if not */
     if (!force) {
         force = d3.layout.force()
-            .charge(-800)
-            .gravity(0.2)
-            .linkDistance(80);
+            .charge(-60)
+            .linkDistance(100);
     }
 
     var drag = force.drag();
@@ -90,9 +89,9 @@ function topology_graph(selector, notify, options) {
             force.start();
         })
         .on("click", function(ev) {
-            if (!d3.select(d3.event.target).datum()) {
+            /*if (!d3.select(d3.event.target).datum()) {
                 notify(null);
-            }
+            }*/
         });
 
     function select(item) {

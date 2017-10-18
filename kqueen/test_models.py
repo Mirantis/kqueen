@@ -4,6 +4,8 @@ from kqueen.storages.etcd import Model
 from pprint import pprint
 
 import pytest
+import yaml
+import subprocess
 
 
 class TestModelMethods:
@@ -110,3 +112,53 @@ class TestFieldCompare:
 
         assert not self.first.empty()
         assert empty.empty()
+
+
+class TestApply:
+    def test_kubeconfig_file(self, cluster):
+        cluster.save()
+
+        kubeconfig = cluster.get_kubeconfig_file()
+        assert open(kubeconfig, 'r').read() == yaml.dump(cluster.kubeconfig)
+
+    def test_kubeconfig_recycled(self, cluster):
+        cluster.save()
+
+        assert not hasattr(cluster, 'kubeconfig_path')
+        kubeconfig = cluster.get_kubeconfig_file()
+
+        assert hasattr(cluster, 'kubeconfig_path')
+        assert kubeconfig == cluster.get_kubeconfig_file()
+
+    def test_apply(self, cluster, monkeypatch):
+        req_cmd = 'kubectl --kubeconfig {} apply -f'.format(cluster.get_kubeconfig_file())
+
+        class FakeRun:
+            stdout = 'no stdout'
+            returncode = 0
+
+            def __init__(self, cmd, **kwargs):
+                self.cmd = cmd
+                self.kwargs = kwargs
+
+        def fake_run(cmd, **kwargs):
+            return FakeRun(cmd, **kwargs)
+
+        monkeypatch.setattr(subprocess, 'run', fake_run)
+
+        text = """kind: Service
+apiVersion: v1
+metadata:
+  name: my-service
+spec:
+  selector:
+    app: MyApp
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 9376
+"""
+
+        run = cluster.apply(text)
+        cmd = ' '.join(run.cmd)
+        assert cmd.startswith(req_cmd)

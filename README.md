@@ -23,6 +23,23 @@ etcdctl rm --recursive /kqueen
 ./devenv.py
 ```
 
+* Prepare JS building environment
+
+```
+npm install
+```
+
+* Build static resources
+
+```
+gulp build
+```
+
+* Start local development server with auto-restart
+
+```
+gulp dev
+```
 
 
 ## Configuration

@@ -9,7 +9,6 @@ from werkzeug.contrib.cache import SimpleCache
 import logging
 import os
 
-logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 cache = SimpleCache()
@@ -33,14 +32,13 @@ def create_app(config_file=config_file):
     return app
 
 
-application = create_app()
+app = create_app()
+app.logger.setLevel(logging.INFO)
 
-
-@application.route('/')
+@app.route('/')
 def root():
     return redirect(url_for('ui.index'), code=302)
 
-
 def run():
     logger.debug('kqueen starting')
-    application.run()
+    app.run()

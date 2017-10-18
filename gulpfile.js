@@ -2,6 +2,8 @@
 var gulp        = require('gulp');
 var favicon     = require('gulp-real-favicon');
 var fs          = require('fs');
+var minify      = require('gulp-minify');
+var concat      = require('gulp-concat');
 var runSequence = require('run-sequence'); // Using until gulp v4 is released
 var watch       = require('gulp-watch');
 var batch       = require('gulp-batch');
@@ -40,7 +42,6 @@ gulp.task('sass', function() {
 // JavaScript Task
 gulp.task('javascript', function() {
 	var concat = require('gulp-concat');
-    var minify = require('gulp-minify');
 	var babel = require('gulp-babel');
 	return gulp.src(folderAsset + '/dynamic/js/*.js')
         .pipe(babel({
@@ -57,37 +58,27 @@ gulp.task('javascript', function() {
 		.pipe(reload());
 });
 
-// jQuery Task
-gulp.task('jquery', function() {
-	return gulp.src('node_modules/jquery/dist/jquery.min.*')
-		.pipe(gulp.dest(folderAsset + '/static/js/'));
+// Vendor JS Task
+gulp.task('vendor-js', function() {
+    return gulp.src(['node_modules/jquery/dist/jquery.min.js',
+                     'node_modules/jquery-asPieProgress/dist/jquery-asPieProgress.min.js',
+                     'node_modules/d3/d3.min.js', 
+                     bootstrapDir + '/assets/javascripts/bootstrap.min.js'])
+        .pipe(concat('vendor.js'))
+        .pipe(gulp.dest(folderAsset + '/static/js/'));
 });
 
-// D3 Task
-gulp.task('d3', function() {
-	return gulp.src('node_modules/d3/d3.min.js')
-		.pipe(gulp.dest(folderAsset + '/static/js/'));
-});
-
-// bootstrapjs Task
-gulp.task('bootstrapjs', function() {
-        return gulp.src(bootstrapDir + '/assets/javascripts/bootstrap.min.js')
-                .pipe(gulp.dest(folderAsset + '/static/js/'));
-});
-
-// jQuery Task
-gulp.task('pieprogress', function() {
-        gulp.src('node_modules/jquery-asPieProgress/dist/css/asPieProgress.min.*')
-         .pipe(gulp.dest(folderAsset + '/static/css/'));
-	return gulp.src('node_modules/jquery-asPieProgress/dist/jquery-asPieProgress.min.*')
-		.pipe(gulp.dest(folderAsset + '/static/js/'));
+// Vendor CSS Task
+gulp.task('vendor-css', function() {
+	return gulp.src(['node_modules/jquery-asPieProgress/dist/css/asPieProgress.min.css'])
+		.pipe(concat('vendor.css'))
+        .pipe(gulp.dest(folderAsset + '/static/css/'));
 });
 
 // Particles Task
 gulp.task('particles', function() {
         gulp.src(folderAsset + '/dynamic/js/particles.json')
          .pipe(gulp.dest(folderAsset + '/static/js/'));
-        var minify = require('gulp-minify');
         return gulp.src('node_modules/particles.js/particles.js')
                 .pipe(minify({
                         ext:{
@@ -99,8 +90,7 @@ gulp.task('particles', function() {
 });
 
 // All JS
-gulp.task('javascript-all', ['javascript', 'jquery', 'd3', 'bootstrapjs', 'pieprogress', 'particles']);
-
+gulp.task('javascript-all', ['javascript', 'vendor-js', 'particles']);
 // Fonts Task
 gulp.task('fonts', function() {
     gulp.src('node_modules/mdi/fonts/*')
@@ -219,7 +209,7 @@ gulp.task('watch', function () {
 gulp.task('dev', ['run-server', 'watch']);
 
 // Init - every task
-gulp.task('build', ['sass', 'javascript-all', 'favicon']);
+gulp.task('build', ['sass', 'javascript-all', 'vendor-js', 'vendor-css']);
 
 // Default - only run the tasks that change often
 gulp.task('default', ['build']);

@@ -69,7 +69,7 @@ ul.link-list {
   background-color: #fff;
   border: 1px solid #ddd;
   border-top-color: transparent;
-  @include prefix(box-shadow, -1px -1px 4px -2px rgba(187,187,187,1), webkit moz);
+  @include prefix(box-shadow, 1px 1px 4px -2px rgba(187,187,187,1), webkit moz);
 }
 
 // *****************************************************************************
@@ -325,7 +325,7 @@ footer {
 // Radial progress bar
 
 .pie_progress {
-  width: 160px;
+  width: 120px;
   margin: 10px auto;
 }
 
