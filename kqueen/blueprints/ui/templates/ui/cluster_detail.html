@@ -84,7 +84,7 @@ Cluster {{ cluster.name }} detail
 <ul class="nav nav-tabs{% if cluster.state != 'OK' %} hidden{% endif %}">
   <li role="presentation" class="active"><a data-toggle="tab" href="#status">Status</a></li>
   <li role="presentation"><a data-toggle="tab" href="#topology">Topology</a></li>
-  <li role="presentation"><a data-toggle="tab" href="#deploy">Deploy</a></li>
+  <li role="presentation"><a data-toggle="tab" href="#addons">Addons</a></li>
 </ul>
 
 <div class="tab-content clearfix{% if cluster.state != 'OK' %} hidden{% endif %}">
@@ -301,8 +301,57 @@ Cluster {{ cluster.name }} detail
       </div>
     </div>
   </div>
-  <div class="tab-pane" id="deploy">
-    {{ render_form(form) }}
+  {# ADDONS TAB #}
+
+<style>
+.grid {
+  margin-bottom: 40px;
+}
+.addon-item {
+  position: relative;
+  float: left;
+  padding: 20px;
+}
+.item-icon {
+  background-image: url(https://wiki.jenkins-ci.org/download/attachments/2916393/logo.png);
+  width: 200px;
+  height: 200px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+.item-label {
+  padding-top: 10px;
+  text-align: center;
+}
+</style>
+
+  <div class="tab-pane" id="addons">
+    <div class="row">
+      <div class="col-xs-12">
+        <div id="filters" class="btn-group" role="group">
+          <a class="btn btn-default" data-filter="*">All</a>
+          {% for tag in [] %}
+          <a class="btn" data-filter=".{{ tag }}">{{ tag|capitalize }}</a>
+          {% endfor %}
+        </div>
+        <div class="grid clearfix">
+          {% for i in range(10) %}
+          <div class="addon-item" data-category="some_tag">
+            <div class="item-icon" style="background-image: url('https://wiki.jenkins-ci.org/download/attachments/2916393/logo.png');"></div>
+            <div class="item-label">
+              <span>Jenkins</span>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-xs-12">
+        {{ render_form(form) }}
+      </div>
+    </div>
   </div>
 </div>
 
@@ -335,6 +384,7 @@ Cluster {{ cluster.name }} detail
 {% block extrajs %}
 <script>
 jQuery(document).ready(function($){
+  // init asPieProgress
   $('.pie_progress').asPieProgress({
     namespace: 'pieProgress',
     barsize: '1',
@@ -348,6 +398,15 @@ jQuery(document).ready(function($){
   });
   $('.pie_progress').asPieProgress('start');
 
+  // init Isotope
+  $(document).one("shown.bs.tab", "a[href='#addons']", function(e) {
+    var $grid = $('.grid').isotope({
+      itemSelector: '.addon-item',
+      layoutMode: 'fitRows'
+    });
+  });
+
+  // bind click actions
   $("#ForcedLayoutGraphBtn").on("click",function (e){
     $("#ForcedLayoutGraphContainer").show();
     $("#HiveGraphContainer").hide();
