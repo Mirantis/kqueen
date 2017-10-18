@@ -25,7 +25,8 @@ jobs:
     - python3 -m flake8
     - python3 -m pytest --cov=. --cov-fail-under=69 --cov-report=term-missing:skip-covered
     - coveralls
-    - python3 -m kqueen &; sleep 2
+    - python3 -m kqueen &
+    - sleep 2
     - wget -O - http://localhost:5000/api/v1/health
 
   - stage: publish
@@ -44,5 +45,6 @@ jobs:
     install:
     - pip3 install --upgrade kqueen
     script:
-    - ./entrypoint.sh &; sleep 2
+    - ./entrypoint.sh &
+    - sleep 2
     - wget -O - http://localhost:5000/api/v1/health
