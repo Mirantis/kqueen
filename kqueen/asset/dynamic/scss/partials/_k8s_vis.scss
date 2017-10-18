@@ -36,7 +36,7 @@
   g.node > circle {
       stroke: #aaa;
       fill: #fff;
- stroke-width: 1px;    
+ stroke-width: 1px;
   }
 }
 
@@ -132,17 +132,19 @@
     stroke-opacity: .3;
   }
 
-  .link.active {
+  .link.active, line.active {
     stroke: red;
     stroke-width: 2px;
     stroke-opacity: 1;
   }
 
-  .node circle.active {
-    stroke: red;
-    fill: #fff;
-    stroke-width: 3px;
-  }
-  .node text.active {
-    fill-opacity: 1;
+  .node{
+    circle.active {
+      stroke: red;
+      fill: #fff;
+      stroke-width: 3px;
+    }
+    text.active {
+      fill-opacity: 1;
+    }
   }
