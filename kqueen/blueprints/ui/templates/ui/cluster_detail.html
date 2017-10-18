@@ -260,32 +260,46 @@ Cluster {{ cluster.name }} detail
   </div>
   {# ADDONS TAB #}
   <div class="tab-pane" id="addons">
-    <div class="row">
-      <div class="col-xs-12">
-        <div class="filter-box clearfix">
-          <div id="filters" class="btn-group pull-right" role="group">
-            <a class="btn btn-default" data-filter="*">All</a>
-            {% for tag in [] %}
-            <a class="btn btn-default" data-filter=".{{ tag }}">{{ tag|capitalize }}</a>
-            {% endfor %}
-          </div>
-        </div>
-        <div class="grid clearfix">
-          {% for addon in status.addons %}
-          <a href="{{ addon.link }}" class="addon-item" data-category="some_tag">
-            <div class="item-icon" style="background-image: url('{{ addon.icon }}');"></div>
-            <div class="item-label">
-              <span>{{ addon.name }}</span>
-            </div>
-          </a>
-          {% endfor %}
-        </div>
+    <h3>Active Addons</h3>
+    <div class="filter-box clearfix">
+      <div id="filters" class="btn-group" role="group">
+        <a class="btn btn-default" data-filter="*">All</a>
+        {% for tag in [] %}
+        <a class="btn btn-default" data-filter=".{{ tag }}">{{ tag|capitalize }}</a>
+        {% endfor %}
       </div>
     </div>
-    <div class="row">
-      <div class="col-xs-12">
-        {{ render_form(form) }}
-      </div>
+    <div class="grid clearfix">
+      <a href="#" class="addon-item" data-category="some_tag">
+        <div class="item-icon" style="background-image: url('https://heptio.com/wp-content/uploads/2017/08/sonobuoy.png');"></div>
+        <div class="item-label">
+          <span>TEST</span>
+        </div>
+      </a>
+      <a href="#" class="addon-item" data-category="some_tag">
+        <div class="item-icon" style="background-image: url('https://heptio.com/wp-content/uploads/2017/08/sonobuoy.png');"></div>
+        <div class="item-label">
+          <span>TEST</span>
+        </div>
+      </a>
+      <a href="#" class="addon-item" data-category="some_tag">
+        <div class="item-icon" style="background-image: url('https://heptio.com/wp-content/uploads/2017/08/sonobuoy.png');"></div>
+        <div class="item-label">
+          <span>TEST</span>
+        </div>
+      </a>
+      {% for addon in status.addons %}
+      <a href="{{ addon.link }}" class="addon-item" data-category="some_tag">
+        <div class="item-icon" style="background-image: url('{{ addon.icon }}');"></div>
+        <div class="item-label">
+          <span>{{ addon.name }}</span>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+    <h3>Manage Resources</h3>
+    <div style="padding: 10px 0px;">
+      {{ render_form(form) }}
     </div>
   </div>
 </div>

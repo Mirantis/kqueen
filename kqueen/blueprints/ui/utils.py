@@ -122,6 +122,8 @@ def status_for_cluster_detail(_status):
                 'external_ip': service_external_ip
             })
     status['services'] = services
+
+    status['addons'] = _status['addons'] if 'addons' in _status else []
     status['overview'] = {
         'namespaces': 2,
         'nodes': len(status['nodes']),
