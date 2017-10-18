@@ -1,7 +1,6 @@
 from kqueen.models import Cluster
 from kqueen.storages.etcd import Field
 from kqueen.storages.etcd import Model
-from pprint import pprint
 
 import pytest
 import yaml
@@ -79,10 +78,10 @@ class TestClusterModel:
     def test_status(self, cluster):
         cluster.save()
         status = cluster.status()
-        pprint(status)
 
-        assert isinstance(status, dict)
         # TODO: add tests for content
+        assert isinstance(status, dict)
+        assert 'addons' in status
 
     def test_kubeconfig_is_dict(self, cluster):
         cluster.save()

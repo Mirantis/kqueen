@@ -90,6 +90,25 @@ class TestKubeApi:
         services = api.list_services()
         assert isinstance(services, list)
 
+    def test_extrace_service_addon(self, cluster):
+        service = {
+            'metadata': {
+                'annotations': {
+                    'kqueen/name': 'Addon name',
+                    'kqueen/icon': 'http://icon',
+                    'kqueen/link': 'http://link',
+                    'other': 'other annotation',
+                }
+            }
+        }
+
+        api = KubernetesAPI(cluster=cluster)
+        extracted = api._extract_annotation(service)
+
+        assert extracted['name'] == 'Addon name'
+        assert extracted['icon'] == 'http://icon'
+        assert 'other' not in extracted
+
     def test_list_deployments(self, cluster):
         api = KubernetesAPI(cluster=cluster)
 

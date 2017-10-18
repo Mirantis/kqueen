@@ -157,7 +157,29 @@ class KubernetesAPI:
 
         return out
 
-    def list_services(self, include_uninitialized=True):
+    def _extract_annotation(self, service, prefix='kqueen/'):
+        """Read service and return kqueen annotations (if present)
+
+        Args:
+            service (dict)
+            prefix (str): default `kqueen/`
+
+        Return:
+            dict: Annotations matching prefix
+        """
+
+        out = {}
+
+        annotations = service.get('metadata', {}).get('annotations', {})
+
+        if annotations:
+            for an_name, an in annotations.items():
+                if an_name.startswith(prefix):
+                    out[an_name[len(prefix):]] = an
+
+        return out
+
+    def list_services(self, include_uninitialized=True, filter_addons=False):
         """List services in all namespaces"""
         out = []
 
@@ -169,7 +191,12 @@ class KubernetesAPI:
             raise
 
         for item in response:
-            out.append(item.to_dict())
+            if filter_addons:
+                addon = self._extract_annotation(item.to_dict())
+                if addon:
+                    out.append(addon)
+            else:
+                out.append(item.to_dict())
 
         return out
 

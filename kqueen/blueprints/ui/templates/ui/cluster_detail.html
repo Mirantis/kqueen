@@ -193,8 +193,8 @@ Cluster {{ cluster.name }} detail
       </table>
     </div>
     {% endif %}
-    
-    
+
+
     {% if 'services' in status %}
     <h3>Services</h3>
     <div class="table-container">
@@ -216,9 +216,12 @@ Cluster {{ cluster.name }} detail
             <td><a href="http://{{ service['spec']['cluster_ip'] }}">{{ service['spec']['cluster_ip'] }}</a></td>
             <td>
               <ul>
-              {% for port in service['spec']['ports'] %}
+              {% set ports = service['spec']['ports'] %}
+              {% if ports %}
+              {% for port in ports %}
                 <li>{{ port['port'] }}/{{ port['protocol'] }} {{ port.get('name', '') }}</li>
               {% endfor %}
+              {% endif %}
               </ul>
             </td>
             <td>
@@ -313,8 +316,6 @@ Cluster {{ cluster.name }} detail
   padding: 20px;
 }
 .item-icon {
-  background-image: url(https://wiki.jenkins-ci.org/download/attachments/2916393/logo.png);
-  width: 200px;
   height: 200px;
   background-size: contain;
   background-repeat: no-repeat;
@@ -336,13 +337,13 @@ Cluster {{ cluster.name }} detail
           {% endfor %}
         </div>
         <div class="grid clearfix">
-          {% for i in range(10) %}
-          <div class="addon-item" data-category="some_tag">
-            <div class="item-icon" style="background-image: url('https://wiki.jenkins-ci.org/download/attachments/2916393/logo.png');"></div>
+          {% for addon in status.addons %}
+          <a href="{{ addon.link}}" class="addon-item" data-category="some_tag">
+            <div class="item-icon" style="background-image: url('{{ addon.icon }}');"></div>
             <div class="item-label">
-              <span>Jenkins</span>
+              <span>{{ addon.name }}</span>
             </div>
-          </div>
+          </a>
           {% endfor %}
         </div>
       </div>
