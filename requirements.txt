@@ -10,6 +10,7 @@ requests
 # dev
 coveralls
 flake8
+flake8_docstrings
 ipython
 pytest
 pytest-cov
