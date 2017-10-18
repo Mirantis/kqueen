@@ -12,7 +12,7 @@ stages:
 - name: publish
   if: branch = master AND tag =~ ^v
 - name: verify
-  if: branch = master
+  if: branch = master AND type = push
 
 jobs:
   include:
