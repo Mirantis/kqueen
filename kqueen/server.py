@@ -32,14 +32,15 @@ def create_app(config_file=config_file):
     return app
 
 
+app = create_app()
+app.logger.setLevel(logging.INFO)
+
+
+@app.route('/')
+def root():
+    return redirect(url_for('ui.index'), code=302)
+
+
 def run():
     logger.debug('kqueen starting')
-    app = create_app()
-
-    app.logger.setLevel(logging.INFO)
-
-    @app.route('/')
-    def root():
-        return redirect(url_for('ui.index'), code=302)
-
-    app.run(host='0.0.0.0')
+    app.run()
