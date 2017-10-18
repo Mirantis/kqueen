@@ -305,40 +305,20 @@ Cluster {{ cluster.name }} detail
     </div>
   </div>
   {# ADDONS TAB #}
-
-<style>
-.grid {
-  margin-bottom: 40px;
-}
-.addon-item {
-  position: relative;
-  float: left;
-  padding: 20px;
-}
-.item-icon {
-  height: 200px;
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
-}
-.item-label {
-  padding-top: 10px;
-  text-align: center;
-}
-</style>
-
   <div class="tab-pane" id="addons">
     <div class="row">
       <div class="col-xs-12">
-        <div id="filters" class="btn-group" role="group">
-          <a class="btn btn-default" data-filter="*">All</a>
-          {% for tag in [] %}
-          <a class="btn" data-filter=".{{ tag }}">{{ tag|capitalize }}</a>
-          {% endfor %}
+        <div class="filter-box clearfix">
+          <div id="filters" class="btn-group pull-right" role="group">
+            <a class="btn btn-default" data-filter="*">All</a>
+            {% for tag in [] %}
+            <a class="btn btn-default" data-filter=".{{ tag }}">{{ tag|capitalize }}</a>
+            {% endfor %}
+          </div>
         </div>
         <div class="grid clearfix">
           {% for addon in status.addons %}
-          <a href="{{ addon.link}}" class="addon-item" data-category="some_tag">
+          <a href="{{ addon.link }}" class="addon-item" data-category="some_tag">
             <div class="item-icon" style="background-image: url('{{ addon.icon }}');"></div>
             <div class="item-label">
               <span>{{ addon.name }}</span>
@@ -404,6 +384,16 @@ jQuery(document).ready(function($){
     var $grid = $('.grid').isotope({
       itemSelector: '.addon-item',
       layoutMode: 'fitRows'
+    });
+    $('.grid').each(function() {
+      var $grid = $( this );
+      $grid.css('min-height', $grid.innerHeight());
+    });
+    // bind filter button click
+    $('#filters').on( 'click', 'a', function(ev) {
+    ev.preventDefault();
+    var filterValue = $( this ).attr('data-filter');
+      $grid.isotope({ filter: filterValue });
     });
   });
 

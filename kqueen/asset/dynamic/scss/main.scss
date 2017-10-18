@@ -375,4 +375,50 @@ footer {
     @include prefix(transform, rotate(-60deg), webkit moz ms o);
   }
 }
-                                
+
+// *****************************************************************************
+// Addon grid
+// *****************************************************************************
+
+.grid {
+  margin-bottom: 40px;
+  overflow: hidden;
+}
+
+.filter-box {
+  margin: 20px 0px;
+}
+
+.addon-item {
+  position: relative;
+  float: left;
+  padding: 20px;
+  width: 260px;
+  border: 1px solid #f5f5f5;
+  margin: 10px; 
+  margin-right: 0px;
+  &:hover,
+  &:focus,
+  &:active {
+    border-color: #ddd;
+    text-decoration: none;
+    span {
+      color: $brand-primary;
+    }
+  }
+}
+
+.item-icon {
+  width: 200px;
+  height: 200px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  margin: 0px auto;
+}
+
+.item-label {
+  padding-top: 10px;
+  text-align: center;
+}
+
