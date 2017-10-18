@@ -44,5 +44,5 @@ jobs:
     install:
     - pip3 install --upgrade kqueen
     script:
-    - ./gunicorn_start.sh &; sleep 2
+    - ./entrypoint.sh &; sleep 2
     - wget -O - http://localhost:5000/api/v1/health
