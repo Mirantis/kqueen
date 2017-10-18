@@ -8,7 +8,7 @@ Cluster {{ cluster.name }} detail
 
 
 {% block content %}
-<div class="box overview" style="margin-bottom: 20px;">
+<div class="box overview_detail_top">
   <div class="col-sm-4">
     <a href="{{ url_for('api.cluster_kubeconfig', cluster_id=cluster.id) }}" class="btn btn-primary btn-xs">Download kubeconfig</a>
   </div>
@@ -28,7 +28,7 @@ Cluster {{ cluster.name }} detail
   </div>
 </div>
 
-<div class="box overview" style="min-height: 160px; padding: 10px;">
+<div class="box overview_detail_bot">
   <div class="col-sm-2 col-sm-offset-1 clearfix">
     <div class="pie_progress" role="progressbar" data-goal="2" aria-valuemax="2">
       <div class="pie_progress__number">0</div>
