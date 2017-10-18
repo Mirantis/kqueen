@@ -18,7 +18,7 @@ setup(
     packages=find_packages(),
     zip_safe=False,
     install_requires=[
-        'Flask',
+        'Flask==0.12.2',
         'Flask-Table',
         'Flask-WTF',
         'gunicorn',
