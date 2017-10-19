@@ -82,9 +82,9 @@ Cluster {{ cluster.name }} detail
 </div>
 
 <ul class="nav nav-tabs{% if cluster.state != 'OK' %} hidden{% endif %}">
-  <li role="presentation" class="active"><a data-toggle="tab" href="#status">Status</a></li>
-  <li role="presentation"><a data-toggle="tab" href="#topology">Topology</a></li>
-  <li role="presentation"><a data-toggle="tab" href="#addons">Addons</a></li>
+  <li role="presentation" class="active"><a data-toggle="tab" href="#status" data-tabcode="#statusTab">Status</a></li>
+  <li role="presentation"><a data-toggle="tab" href="#topology" data-tabcode="#topologyTab">Topology</a></li>
+  <li role="presentation"><a data-toggle="tab" href="#addons" data-tabcode="#addonsTab">Addons</a></li>
 </ul>
 
 <div class="tab-content clearfix{% if cluster.state != 'OK' %} hidden{% endif %}">
@@ -218,9 +218,9 @@ Cluster {{ cluster.name }} detail
               <ul>
               {% set ports = service['spec']['ports'] %}
               {% if ports %}
-              {% for port in ports %}
-                <li>{{ port['port'] }}/{{ port['protocol'] }} {{ port.get('name', '') }}</li>
-              {% endfor %}
+                {% for port in ports %}
+                  <li>{{ port['port'] }}/{{ port['protocol'] }} {{ port.get('name', '') }}</li>
+                {% endfor %}
               {% endif %}
               </ul>
             </td>
@@ -248,15 +248,15 @@ Cluster {{ cluster.name }} detail
       <div id="ForcedLayoutGraphContainer">
         <div id="topology-graph"></div>
       </div>
-      <div id="HiveGraphContainer" class="">
+      <div id="HiveGraphContainer">
         <div id="HiveChart"></div>
       </div>
     </div>
     <div class="col-xs-3 topology-tooltip">
       <h3>Topology Layout</h3>
       <div class="btn-group">
-        <button id="ForcedLayoutGraphBtn" type="button" class="btn btn-primary active">Force-directed</button>
-        <button id="HiveGraphBtn" type="button" class="btn btn-primary">Hive Plot</button>
+        <button id="ForcedLayoutGraphBtn" type="button" class="btn btn-primary active" disabled>Force-directed</button>
+        <button id="HiveGraphBtn" type="button" class="btn btn-primary" disabled>Hive Plot</button>
       </div>
       <h3>Topology Resources</h3>
       <div class="topology-legend">
@@ -338,23 +338,23 @@ Cluster {{ cluster.name }} detail
 
 <svg class="kube-topology" hidden>
   <defs>
-    <g class="Node" id="vertex-Node">
+    <g class="Node node" id="vertex-Node">
       <circle r="15"></circle>
       <text y="7">&#xe621;</text>
     </g>
-    <g class="Pod" id="vertex-Pod">
+    <g class="Pod node" id="vertex-Pod">
       <circle r="15"></circle>
       <text y="5" x="0.5">&#xf1b3;</text>
     </g>
-    <g class="Service" id="vertex-Service">
+    <g class="Service node" id="vertex-Service">
       <circle r="15"></circle>
       <text y="8" x="-2">&#xe61e;</text>
     </g>
-    <g class="Deployment" id="vertex-Deployment">
+    <g class="Deployment node" id="vertex-Deployment">
       <circle r="15"></circle>
       <text y="7.5" x="-1">&#xe624;</text>
     </g>
-    <g class="Namespace" id="vertex-Namespace">
+    <g class="Namespace node" id="vertex-Namespace">
       <circle r="15"></circle>
       <text y="7.5" x="-1">&#xf247;</text>
     </g>
@@ -399,15 +399,15 @@ jQuery(document).ready(function($){
 
   // bind click actions
   $("#ForcedLayoutGraphBtn").on("click",function (e){
-    $("#ForcedLayoutGraphContainer").show();
-    $("#HiveGraphContainer").hide();
+    $("#HiveGraphContainer").css("z-index","1").css("pointer-events","none");
+    $("#ForcedLayoutGraphContainer").css("z-index","2").css("pointer-events","all");
     $("#HiveGraphBtn").removeClass("active");
     $("#ForcedLayoutGraphBtn").addClass("active");
   });
 
   $("#HiveGraphBtn").on("click",function (e){
-    $("#ForcedLayoutGraphContainer").hide();
-    $("#HiveGraphContainer").show();
+    $("#ForcedLayoutGraphContainer").css("z-index","1").css("pointer-events","none");
+    $("#HiveGraphContainer").css("z-index","2").css("pointer-events","all");
     $("#ForcedLayoutGraphBtn").removeClass("active")
     $("#HiveGraphBtn").addClass("active");
   });
@@ -426,7 +426,8 @@ $(document).one("shown.bs.tab", "a[href='#topology']", function(e) {
 
       K8SVisualisations.forcedChart.init("#topology-graph", data, {nodeClickFn: changeDetailBox});
       K8SVisualisations.hiveChart.init("#HiveChart", data, {nodeClickFn: changeDetailBox});
-      $("#HiveGraphContainer").hide();
+      //$("#HiveGraphContainer").hide();
+      $("#HiveGraphBtn, #ForcedLayoutGraphBtn").attr("disabled", false);
   });
 });
 </script>
