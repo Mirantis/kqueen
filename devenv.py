@@ -1,10 +1,14 @@
 #!/usr/bin/env python3
 
 from kqueen.models import Cluster
+from kqueen.models import Organization
 from kqueen.models import Provisioner
+from kqueen.models import User
 
 import requests
 import yaml
+
+uuid_organization = '22d8df64-4ac9-4be0-89a7-c45ea0fc85da'
 
 uuid_jenkins = 'c88b05d6-a107-4636-a3cc-eb5c90562f8f'
 uuid_local = '2d51891a-adac-4bbc-a725-eed20cc67849'
@@ -15,6 +19,26 @@ uuid_provisioner_kubespray = '689de9a2-50e0-4fcd-b6a6-96930b5fadc9'
 
 kubeconfig_url = 'https://ci.mcp.mirantis.net/job/deploy-aws-k8s_ha_calico_sm/33/artifact/kubeconfig'
 
+# Organization and user
+try:
+    organization = Organization(
+        id=uuid_organization,
+        name='DemoOrg',
+        namespace='demoorg'
+    )
+    organization.save()
+except:
+    raise Exception('Adding DemoOrg organization failed')
+
+try:
+    user = User(
+        username='admin',
+        password='default',
+        organization=uuid_organization
+    )
+    user.save()
+except:
+    raise Exception('Adding admin user failed')
 
 # AWS + Jenkins
 try:

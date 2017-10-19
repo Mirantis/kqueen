@@ -14,8 +14,10 @@ from flask import render_template
 from flask import request
 from flask import session
 from flask import url_for
+from kqueen.auth import authenticate
 from kqueen.models import Cluster
 from kqueen.models import Provisioner
+from kqueen.models import User
 from kqueen.wrappers import login_required
 from uuid import UUID
 
@@ -31,7 +33,13 @@ ui = Blueprint('ui', __name__, template_folder='templates')
 # COntext processor
 @ui.context_processor
 def inject_username():
-    return {'username': app.config['USERNAME']}
+    try:
+        user = User.load(session['user_id'])
+        username = user.username
+    except:
+        username = ''
+
+    return {'username': username}
 
 
 # logins
@@ -80,24 +88,23 @@ def index():
 def login():
     error = None
     if request.method == 'POST':
-        if request.form['username'] != app.config['USERNAME']:
-            error = 'Invalid username'
-        elif request.form['password'] != app.config['PASSWORD']:
-            error = 'Invalid password'
-        else:
-            session['logged_in'] = True
+        user = authenticate(request.form['username'], request.form['password'])
+        if user:
+            session['user_id'] = user.id
             flash('You were logged in', 'success')
             next_url = request.form.get('next', '')
             if next_url:
                 return redirect(next_url)
             return redirect(url_for('.index'))
+        else:
+            error = 'Invalid credentials'
 
     return render_template('ui/login.html', error=error)
 
 
 @ui.route('/logout')
 def logout():
-    session.pop('logged_in', None)
+    session.pop('user_id', None)
     flash('You were logged out', 'success')
     return redirect(url_for('.index'))
 

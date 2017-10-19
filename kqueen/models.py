@@ -311,3 +311,21 @@ class Provisioner(Model, metaclass=ModelMeta):
         if check_status:
             self.state = self.engine_status(save=False)
         return super(Provisioner, self).save()
+
+
+#
+# AUTHENTICATION
+#
+
+
+class Organization(Model, metaclass=ModelMeta):
+    id = IdField(required=True)
+    name = StringField(required=True)
+    namespace = StringField(required=True)
+
+
+class User(Model, metaclass=ModelMeta):
+    id = IdField(required=True)
+    username = StringField(required=True)
+    password = StringField(required=True)
+    organization = StringField(required=True)
