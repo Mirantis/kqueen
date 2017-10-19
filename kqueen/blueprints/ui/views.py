@@ -2,6 +2,7 @@ from .forms import _get_provisioners
 from .forms import ClusterCreateForm
 from .forms import ProvisionerCreateForm
 from .forms import ClusterApplyForm
+from .forms import ChangePasswordForm
 from .tables import ClusterTable
 from .tables import ProvisionerTable
 from flask import current_app as app
@@ -40,6 +41,12 @@ def inject_username():
         username = ''
 
     return {'username': username}
+
+
+@ui.context_processor
+def inject_change_pw():
+    form = ChangePasswordForm()
+    return {'change_pw_form': form}
 
 
 # logins
@@ -107,6 +114,28 @@ def logout():
     session.pop('user_id', None)
     flash('You were logged out', 'success')
     return redirect(url_for('.index'))
+
+
+@ui.route('/changepw', methods=['POST'])
+@login_required
+def change_password():
+    form = ChangePasswordForm()
+    if form.validate_on_submit():
+        if form.new_pw.data == form.repeat_pw.data:
+            try:
+                user = User.load(session['user_id'])
+                user.password = form.new_pw.data
+                user.save()
+                flash('Password successfully updated. Please log in again.', 'success')
+                session.pop('user_id')
+                redirect(url_for('ui.login'))
+            except:
+                flash('Password update failed.', 'danger')
+        else:
+            flash('Passwords does not match.', 'danger')
+    else:
+        flash('Both fields are required.', 'danger')
+    return redirect(request.environ['HTTP_REFERER'])
 
 
 # catalog

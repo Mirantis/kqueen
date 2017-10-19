@@ -15,6 +15,11 @@ class LoginForm(FlaskForm):
     password = PasswordField('Password', validators=[DataRequired()])
 
 
+class ChangePasswordForm(FlaskForm):
+    new_pw = PasswordField('New Password', validators=[DataRequired()])
+    repeat_pw = PasswordField('Repeat Password', validators=[DataRequired()])
+
+
 class ProvisionerCreateForm(FlaskForm):
     name = StringField('Name', validators=[DataRequired()])
     engine = SelectField('Engine', choices=PROVISIONER_ENGINES)
