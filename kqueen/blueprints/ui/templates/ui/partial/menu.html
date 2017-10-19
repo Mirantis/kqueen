@@ -3,7 +3,8 @@
           <li class="dropdown">
             <a class="dropdown-toggle" data-toggle="dropdown" href="#">{{ username }}<span class="caret"></span></a>
             <ul class="dropdown-menu">
-              <li><a href="#" data-toggle="modal" data-target="#change_pw">Change Password</a></li>
+              <li><a href="{{ url_for('ui.change_password') }}">Change Password</a></li>
+              <li><a href="{{ url_for('ui.organization_manage') }}">Manage Organization</a></li>
 	      <li><a href="{{ url_for('ui.logout') }}">Logout</a></li>
             </ul>
           </li>

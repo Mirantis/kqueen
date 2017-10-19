@@ -33,6 +33,22 @@ class ClusterTable(Table):
     )
 
 
+class OrganizationMembersTable(Table):
+    # Table meta
+    classes = ['table', 'table-hover']
+    # Table fields
+    username = Col('Name')
+    email = Col('Email')
+    # name = Col('Name')
+    role = Col('Role')
+    state = StatusCol('Status')
+    delete = DeleteCol(
+        'Delete',
+        'ui.user_delete',
+        url_kwargs=dict(user_id='id')
+    )
+
+
 class ProvisionerTable(Table):
     # Table meta
     classes = ['table', 'table-hover']

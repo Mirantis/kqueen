@@ -327,5 +327,6 @@ class Organization(Model, metaclass=ModelMeta):
 class User(Model, metaclass=ModelMeta):
     id = IdField(required=True)
     username = StringField(required=True)
+    email = StringField(required=False)
     password = StringField(required=True)
     organization = StringField(required=True)

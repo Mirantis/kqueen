@@ -1,0 +1,11 @@
+{% extends "ui/base.html" %}
+{% from "ui/partial/form.html" import render_form %}
+
+{% block page_header %}Add Member{% endblock %}
+
+{% block content %}
+<div class="box">
+  {{ render_form(form) }}
+</div>
+{% endblock %}
+

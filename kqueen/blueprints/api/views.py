@@ -82,7 +82,6 @@ def cluster_status(cluster_id):
 
 
 @api.route('/clusters/<cluster_id>/topology-data', methods=['GET'])
-@jwt_required()
 def cluster_topology_data(cluster_id):
 
     try:

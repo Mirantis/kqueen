@@ -3,7 +3,9 @@ from .forms import ClusterCreateForm
 from .forms import ProvisionerCreateForm
 from .forms import ClusterApplyForm
 from .forms import ChangePasswordForm
+from .forms import UserCreateForm
 from .tables import ClusterTable
+from .tables import OrganizationMembersTable
 from .tables import ProvisionerTable
 from flask import current_app as app
 from flask import abort
@@ -17,6 +19,7 @@ from flask import session
 from flask import url_for
 from kqueen.auth import authenticate
 from kqueen.models import Cluster
+from kqueen.models import Organization
 from kqueen.models import Provisioner
 from kqueen.models import User
 from kqueen.wrappers import login_required
@@ -41,12 +44,6 @@ def inject_username():
         username = ''
 
     return {'username': username}
-
-
-@ui.context_processor
-def inject_change_pw():
-    form = ChangePasswordForm()
-    return {'change_pw_form': form}
 
 
 # logins
@@ -98,6 +95,7 @@ def login():
         user = authenticate(request.form['username'], request.form['password'])
         if user:
             session['user_id'] = user.id
+            session['organization_id'] = user.organization
             flash('You were logged in', 'success')
             next_url = request.form.get('next', '')
             if next_url:
@@ -112,30 +110,101 @@ def login():
 @ui.route('/logout')
 def logout():
     session.pop('user_id', None)
+    session.pop('organization_id', None)
     flash('You were logged out', 'success')
     return redirect(url_for('.index'))
 
 
-@ui.route('/changepw', methods=['POST'])
+@ui.route('/users/changepw', methods=['GET', 'POST'])
 @login_required
 def change_password():
     form = ChangePasswordForm()
     if form.validate_on_submit():
-        if form.new_pw.data == form.repeat_pw.data:
-            try:
-                user = User.load(session['user_id'])
-                user.password = form.new_pw.data
-                user.save()
-                flash('Password successfully updated. Please log in again.', 'success')
-                session.pop('user_id')
-                redirect(url_for('ui.login'))
-            except:
-                flash('Password update failed.', 'danger')
-        else:
-            flash('Passwords does not match.', 'danger')
-    else:
-        flash('Both fields are required.', 'danger')
-    return redirect(request.environ['HTTP_REFERER'])
+       try:
+           user = User.load(session['user_id'])
+           user.password = form.password_1.data
+           user.save()
+           flash('Password successfully updated. Please log in again.', 'success')
+           session.pop('user_id')
+           session.pop('organization_id')
+           return redirect(url_for('ui.login'))
+       except Exception as e:
+           logger.error('Could not update password: {}'.format(repr(e)))
+           flash('Password update failed.', 'danger')
+    return render_template('ui/change_password.html', form=form)
+
+
+@ui.route('/users/create', methods=['GET', 'POST'])
+@login_required
+def user_create():
+    form = UserCreateForm()
+    if form.validate_on_submit():
+        try:
+            # Instantiate new user DB object
+            user = User(
+                username=form.username.data,
+                password=form.password_1.data,
+                email=form.email.data or None,
+                organization=session['organization_id']
+            )
+            user.save()
+            flash('User {} successfully created.'.format(user.username), 'success')
+        except Exception as e:
+            logger.error('Could not create user: {}'.format(repr(e)))
+            flash('Could not create user.', 'danger')
+        return redirect(url_for('ui.organization_manage'))
+    return render_template('ui/user_create.html', form=form)
+
+
+@ui.route('/users/<user_id>/delete')
+@login_required
+def user_delete(user_id):
+    try:
+        object_id = UUID(user_id, version=4)
+    except ValueError:
+        abort(404)
+
+    # load object
+    try:
+        obj = User.load(object_id)
+        obj.delete()
+        flash('User {} successfully deleted.'.format(obj.username), 'success')
+        return redirect(request.environ['HTTP_REFERER'])
+    except NameError:
+        abort(404)
+    except Exception as e:
+        logger.error(e)
+        abort(500)
+
+
+@ui.route('/organizations/manage')
+@login_required
+def organization_manage():
+    try:
+        current_user = User.load(session['user_id'])
+        # TODO: teach ORM to get related objects for us
+        _org = Organization.load(current_user.organization)
+        organization = _org.get_dict()
+        users = list(User.list(return_objects=True).values())
+        members = [
+            u.get_dict()
+            for u
+            in users
+            if u.organization == _org.id and u.id != current_user.id
+        ]
+        # Patch members until we actually have these data for realsies
+        for member in members:
+            member['role'] = 'Member'
+            member['state'] = 'Active'
+            if 'email' not in member:
+                member['email'] = '-'
+    except:
+        organization = {}
+        members = []
+    membertable = OrganizationMembersTable(members)
+    return render_template('ui/organization_manage.html',
+                           organization=organization,
+                           membertable=membertable)
 
 
 # catalog
