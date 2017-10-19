@@ -1,0 +1,8 @@
+version: '2'
+services:
+  kqueen:
+    image: tomkukral/kqueen
+    ports:
+      - 127.0.0.1:5000:5000
+    depends_on:
+      - etcd
