@@ -4,43 +4,43 @@ from uuid import uuid4
 import pytest
 
 
-def test_root(client):
-    response = client.get(url_for('api.index'))
+def test_root(client, auth_header):
+    response = client.get(url_for('api.index'), headers=auth_header)
 
     assert response.json == {'response': 'Gutten tag!'}
 
 
 class TestClusterList:
-    def test_cluster_list(self, cluster, client):
+    def test_cluster_list(self, cluster, client, auth_header):
         cluster.save()
 
-        response = client.get(url_for('api.cluster_list'))
+        response = client.get(url_for('api.cluster_list'), headers=auth_header)
         assert cluster.get_dict() in response.json
 
 
 class TestClusterDetails:
-    def test_cluster_detail(self, cluster, client):
+    def test_cluster_detail(self, cluster, client, auth_header):
         cluster.save()
         cluster_id = cluster.id
 
-        response = client.get(url_for('api.cluster_detail', cluster_id=cluster_id))
+        response = client.get(url_for('api.cluster_detail', cluster_id=cluster_id), headers=auth_header)
         assert response.json == cluster.get_dict()
 
     @pytest.mark.parametrize('cluster_id', [
         uuid4(),
         'wrong-uuid',
     ])
-    def test_object_not_found(self, client, cluster_id):
-        response = client.get(url_for('api.cluster_detail', cluster_id=cluster_id))
+    def test_object_not_found(self, client, cluster_id, auth_header):
+        response = client.get(url_for('api.cluster_detail', cluster_id=cluster_id), headers=auth_header)
         assert response.status_code == 404
 
 
 class TestClusterStatus:
-    def test_cluster_status_returns(self, cluster, client):
+    def test_cluster_status_returns(self, cluster, client, auth_header):
         cluster.save()
         cluster_id = cluster.id
 
-        response = client.get(url_for('api.cluster_status', cluster_id=cluster_id))
+        response = client.get(url_for('api.cluster_status', cluster_id=cluster_id), headers=auth_header)
         assert response.status_code == 200
 
         rj = response.json
@@ -62,27 +62,27 @@ class TestClusterStatus:
         'cluster_status',
         'cluster_kubeconfig'
     ])
-    def test_cluster_status_404(self, client, url, cluster_id):
+    def test_cluster_status_404(self, client, url, cluster_id, auth_header):
         url = url_for('api.{}'.format(url), cluster_id=cluster_id)
-        response = client.get(url)
+        response = client.get(url, headers=auth_header)
         assert response.status_code == 404
 
 
 class TestClusterKubeconfig:
-    def test_kubeconfig(self, cluster, client):
+    def test_kubeconfig(self, cluster, client, auth_header):
         cluster.save()
 
         url = url_for('api.cluster_kubeconfig', cluster_id=cluster.id)
-        response = client.get(url)
+        response = client.get(url, headers=auth_header)
         assert response.json == cluster.kubeconfig
 
 
 class TestTopologyData:
-    def test_topology_data_format(self, cluster, client):
+    def test_topology_data_format(self, cluster, client, auth_header):
         cluster.save()
 
         url = url_for('api.cluster_topology_data', cluster_id=cluster.id)
-        response = client.get(url)
+        response = client.get(url, headers=auth_header)
 
         assert isinstance(response.json, dict)
 

@@ -99,7 +99,7 @@ class TestGetFieldNames:
         field_names = create_object.__class__.get_field_names()
         req = model_fields
 
-        assert field_names == req
+        assert set(field_names) == set(req)
 
     def test_get_dict(self, create_object):
         print(create_object.__dict__)
