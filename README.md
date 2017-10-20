@@ -6,6 +6,8 @@
 
 ## Development
 
+### Backend
+
 * Bootstrap environment
 
 ```
@@ -22,6 +24,8 @@ kqueen
 etcdctl rm --recursive /kqueen
 ./devenv.py
 ```
+
+### Frontend
 
 * Prepare JS building environment
 
