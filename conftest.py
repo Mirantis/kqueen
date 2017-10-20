@@ -1,4 +1,3 @@
-from flask import current_app
 from flask import url_for
 from flask_jwt import JWT
 from kqueen.auth import authenticate, identity
@@ -19,7 +18,7 @@ config_file = 'config/test.py'
 @pytest.fixture
 def app():
     app = create_app(config_file=config_file)
-    jwt = JWT(app, authenticate, identity)
+    JWT(app, authenticate, identity)
     return app
 
 
@@ -62,8 +61,8 @@ def client_login(client):
 def auth_header(client):
     _user = user()
     data = {
-            'username': _user.username,
-            'password': _user.password
+        'username': _user.username,
+        'password': _user.password
     }
     response = client.post(
         '/api/v1/auth',
