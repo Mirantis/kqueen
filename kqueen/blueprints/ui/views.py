@@ -120,17 +120,17 @@ def logout():
 def change_password():
     form = ChangePasswordForm()
     if form.validate_on_submit():
-       try:
-           user = User.load(session['user_id'])
-           user.password = form.password_1.data
-           user.save()
-           flash('Password successfully updated. Please log in again.', 'success')
-           session.pop('user_id')
-           session.pop('organization_id')
-           return redirect(url_for('ui.login'))
-       except Exception as e:
-           logger.error('Could not update password: {}'.format(repr(e)))
-           flash('Password update failed.', 'danger')
+        try:
+            user = User.load(session['user_id'])
+            user.password = form.password_1.data
+            user.save()
+            flash('Password successfully updated. Please log in again.', 'success')
+            session.pop('user_id')
+            session.pop('organization_id')
+            return redirect(url_for('ui.login'))
+        except Exception as e:
+            logger.error('Could not update password: {}'.format(repr(e)))
+            flash('Password update failed.', 'danger')
     return render_template('ui/change_password.html', form=form)
 
 

@@ -2,7 +2,7 @@ from flask import abort
 from flask import Blueprint
 from flask import jsonify
 from flask import make_response
-from flask_jwt import jwt_required, current_identity
+from flask_jwt import jwt_required
 from kqueen.models import Cluster
 from uuid import UUID
 
