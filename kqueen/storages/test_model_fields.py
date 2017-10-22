@@ -194,8 +194,15 @@ class TestRelationField:
 
         assert ser == req
 
-    def test_relation_loading(self):
-        self.obj1.save()
+    def test_relation_loading(self, monkeypatch):
+        def fake_related_class(their, class_name):
+            return self.obj1.__class__
 
+        monkeypatch.setattr(RelationField, '_get_related_class', fake_related_class)
+
+        self.obj1.save()
         loaded = self.obj1.__class__.load(self.obj1.id)
-        print(loaded.get_dict())
+
+        assert isinstance(loaded, self.obj1.__class__)
+        assert hasattr(loaded, 'relation')
+        assert loaded.relation == self.obj2
