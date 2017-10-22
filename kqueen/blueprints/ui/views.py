@@ -4,6 +4,7 @@ from .forms import ProvisionerCreateForm
 from .forms import ClusterApplyForm
 from .tables import ClusterTable
 from .tables import ProvisionerTable
+from .utils import status_for_cluster_detail
 from flask import current_app as app
 from flask import abort
 from flask import Blueprint
@@ -238,17 +239,19 @@ def cluster_detail(cluster_id):
         cluster_dict = None
         flash('Unable to load cluster', 'danger')
 
-    status = {}
+    _status = {}
     state_class = 'info'
     state = obj.get_state()
     if state == app.config['CLUSTER_OK_STATE']:
         state_class = 'success'
         try:
-            status = obj.status()
+            _status = obj.status()
         except:
             flash('Unable to get information about cluster', 'danger')
     elif state == app.config['CLUSTER_ERROR_STATE']:
         state_class = 'danger'
+
+    status = status_for_cluster_detail(_status)
 
     form = ClusterApplyForm()
     if form.validate_on_submit():
