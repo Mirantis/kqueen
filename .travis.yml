@@ -10,7 +10,7 @@ service:
 stages:
 - name: test
 - name: publish
-  if: branch = master AND tag =~ ^v
+  if: tag =~ ^v.*
 - name: verify
   if: branch = master AND type = push
 
@@ -23,7 +23,7 @@ jobs:
     - pip3 install -r requirements.txt
     script:
     - python3 -m flake8
-    - python3 -m pytest --cov=. --cov-fail-under=69 --cov-report=term-missing:skip-covered
+    - python3 -m pytest --cov=. --cov-report=term-missing:skip-covered
     - coveralls
 
     - pip3 install --editable .
