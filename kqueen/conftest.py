@@ -56,7 +56,6 @@ def client_login(client):
     })
     return client
 
-
 @pytest.fixture
 def auth_header(client):
     _user = user()
@@ -68,6 +67,7 @@ def auth_header(client):
         '/api/v1/auth',
         data=json.dumps(data),
         content_type='application/json')
+
     return {'Authorization': 'JWT %s' % response.json['access_token']}
 
 

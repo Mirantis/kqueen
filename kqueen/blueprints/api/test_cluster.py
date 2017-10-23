@@ -1,15 +1,88 @@
 from flask import url_for
 from uuid import uuid4
+from kqueen.conftest import cluster
+from kqueen.conftest import auth_header
 
 import pytest
+import json
 
 
-class TestClusterList:
-    def test_cluster_list(self, cluster, client, auth_header):
+@pytest.mark.usefixtures('client_class')
+class TestCRUD:
+    def get_object(self):
+        return cluster()
+
+    def get_resource_type(self):
+        return self.obj.__class__.__name__.lower()
+
+    def get_edit_data(self):
+        return {'name': 'patched cluster'}
+
+    def get_urls(self):
+        return {
+            'list': url_for('api.{}_list'.format(self.get_resource_type())),
+            'create': url_for('api.{}_create'.format(self.get_resource_type())),
+            'read': url_for(
+                'api.{}_get'.format(self.get_resource_type()),
+                pk=self.obj.id
+            ),
+            'update': url_for(
+                'api.{}_update'.format(self.get_resource_type()),
+                pk=self.obj.id
+            ),
+            'delete': url_for(
+                'api.{}_delete'.format(self.get_resource_type()),
+                pk=self.obj.id
+            ),
+        }
+
+    def setup(self):
+        self.obj = self.get_object()
+        self.auth_header = auth_header(self.client)
+        self.urls = self.get_urls()
+
+        self.obj.save()
+
+    def test_list(self):
+
+        response = self.client.get(
+            self.urls['list'],
+            headers=self.auth_header,
+        )
+
+        data = response.json
+        print(data)
+
+        assert isinstance(data, list)
+        assert len(data) == len(self.obj.__class__.list(return_objects=False))
+        assert self.obj.get_dict() in data
+
+
+    def test_edit(self):
+        response = self.client.patch(
+            url_for('api.cluster_detail', cluster_id=cluster_id),
+            data=json.dumps(self.get_edit_data()),
+            headers=auth_header,
+        )
+
+        assert response.status_code == 200
+
+        patched = cluster_class.load(cluster_id)
+        assert patched.name == patch_data['name']
+
+    def test_delete_cluster(self, cluster, client, auth_header):
         cluster.save()
+        cluster_id = cluster.id
+        cluster_class = cluster.__class__
 
-        response = client.get(url_for('api.cluster_list'), headers=auth_header)
-        assert cluster.get_dict() in response.json
+        response = client.delete(
+            url_for('api.cluster_detail', cluster_id=cluster_id),
+            headers=auth_header,
+        )
+
+        assert response.status_code == 200
+        with pytest.raises(NameError, message='Object not found'):
+            cluster_class.load(cluster_id)
 
 
 class TestClusterDetails:
