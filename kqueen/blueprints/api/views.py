@@ -7,6 +7,7 @@ from flask import request
 from flask_jwt import jwt_required
 from kqueen.models import Cluster
 from kqueen.models import Provisioner
+from kqueen.models import Organization
 from uuid import UUID
 
 import logging
@@ -219,4 +220,77 @@ def provisioner_delete(pk):
 
     return jsonify({'id': obj.id, 'state': 'deleted'})
 
+
+
+# Organizations
+
+@api.route('/organizations', methods=['GET'])
+@jwt_required()
+def organization_list():
+    output = []
+
+    for obj in list(Organization.list(return_objects=True).values()):
+        output.append(obj.get_dict())
+
+    return jsonify(output)
+
+
+@api.route('/organizations', methods=['POST'])
+@jwt_required()
+def organization_create():
+    if not request.json:
+        abort(400)
+    else:
+        obj = Organization(**request.json)
+        try:
+            obj.save()
+            output = obj.serialize()
+        except:
+            abort(500)
+
+    return jsonify(output)
+
+
+@api.route('/organizations/<pk>', methods=['GET'])
+@jwt_required()
+def organization_get(pk):
+    obj = get_object(Organization, pk)
+
+    return jsonify(obj.get_dict())
+
+
+@api.route('/organizations/<pk>', methods=['PATCH'])
+@jwt_required()
+def organization_update(pk):
+    if not request.json:
+        abort(400)
+
+    data = request.json
+    if not isinstance(data, dict):
+        abort(400)
+
+    obj = get_object(Organization, pk)
+    for key, value in data.items():
+        print('---', key, value)
+        setattr(obj, key, value)
+
+    try:
+        obj.save()
+        print(obj.get_dict())
+        return jsonify(obj.serialize())
+    except:
+        abort(500)
+
+
+@api.route('/organizations/<pk>', methods=['DELETE'])
+@jwt_required()
+def organization_delete(pk):
+    obj = get_object(Organization, pk)
+
+    try:
+        obj.delete()
+    except:
+        abort(500)
+
+    return jsonify({'id': obj.id, 'state': 'deleted'})
 
