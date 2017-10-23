@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-version = '0.6'
+version = '0.7'
 
 with open('README.md') as f:
     long_description = ''.join(f.readlines())
@@ -19,6 +19,7 @@ setup(
     zip_safe=False,
     install_requires=[
         'Flask==0.12.2',
+        'Flask-JWT',
         'Flask-Table',
         'Flask-WTF',
         'gunicorn',
