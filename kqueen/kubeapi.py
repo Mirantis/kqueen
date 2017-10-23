@@ -84,16 +84,16 @@ class KubernetesAPI:
     def list_pods_by_node(self):
         out = {}
         try:
+            nodes = self.list_nodes()
             pods = self.list_pods()
         except ApiException:
             raise
 
+        for node in nodes:
+            out[node['metadata']['name']] = []
+
         for pod in pods:
             node = pod['spec'].get('node_name', 'Unknown')
-
-            if node not in out:
-                out[node] = []
-
             out[node].append(pod)
 
         return out
