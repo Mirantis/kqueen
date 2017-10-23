@@ -32,6 +32,8 @@ jobs:
     - wget -O - http://localhost:5000/api/v1/health
 
   - stage: publish
+    script:
+    - /bin/true
     deploy:
       provider: pypi
       user: tomkukral
