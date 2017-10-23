@@ -29,7 +29,6 @@ def test_logout(client_login):
     assert response.headers['Location'].endswith(url_for('.index'))
 
 
-
 def test_inject_username_empty(monkeypatch):
     def fake_load(self, *args, **kwargs):
         raise Exception('Fake error')
