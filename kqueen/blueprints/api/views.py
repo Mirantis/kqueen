@@ -1,3 +1,4 @@
+from .helpers import get_object
 from flask import abort
 from flask import Blueprint
 from flask import jsonify
@@ -9,7 +10,6 @@ from kqueen.models import Provisioner
 from uuid import UUID
 
 import logging
-import json
 
 logger = logging.getLogger(__name__)
 
@@ -37,11 +37,6 @@ def bad_request(error):
     return error_response(400, error)
 
 
-@api.errorhandler(403)
-def forbidden(error):
-    return error_response(403, error)
-
-
 @api.errorhandler(404)
 def not_found(error):
     return error_response(404, error)
@@ -60,32 +55,13 @@ def index():
 
 # Clusters
 
-def get_obj(_class, pk):
-    # read uuid
-    try:
-        object_id = UUID(pk, version=4)
-    except ValueError:
-        abort(400)
-
-    # load object
-    try:
-        obj = _class.load(object_id)
-    except NameError:
-        abort(404)
-
-    return obj
-
-
-# TODO: use <resource>
 @api.route('/clusters', methods=['GET'])
 @jwt_required()
 def cluster_list():
-    # TODO: implement native serialization
-
     output = []
 
-    for cluster in list(Cluster.list(return_objects=True).values()):
-        output.append(cluster.get_dict())
+    for obj in list(Cluster.list(return_objects=True).values()):
+        output.append(obj.get_dict())
 
     return jsonify(output)
 
@@ -109,7 +85,7 @@ def cluster_create():
 @api.route('/clusters/<pk>', methods=['GET'])
 @jwt_required()
 def cluster_get(pk):
-    obj = get_obj(Cluster, pk)
+    obj = get_object(Cluster, pk)
 
     return jsonify(obj.get_dict())
 
@@ -120,121 +96,127 @@ def cluster_update(pk):
     if not request.json:
         abort(400)
 
-    data = json.load(request.json)
+    data = request.json
     if not isinstance(data, dict):
         abort(400)
 
-    obj = get_obj(Cluster, pk)
+    obj = get_object(Cluster, pk)
     for key, value in data.items():
-        print(key, value)
+        setattr(obj, key, value)
 
-
+    try:
+        obj.save()
+        return jsonify(obj.serialize())
+    except:
+        abort(500)
 
 
 @api.route('/clusters/<pk>', methods=['DELETE'])
 @jwt_required()
 def cluster_delete(pk):
-    obj = get_obj(pk)
+    obj = get_object(Cluster, pk)
 
     try:
         obj.delete()
     except:
         abort(500)
 
+    return jsonify({'id': obj.id, 'state': 'deleted'})
 
-@api.route('/clusters/<cluster_id>/status', methods=['GET'])
+
+@api.route('/clusters/<pk>/status', methods=['GET'])
 @jwt_required()
-def cluster_status(cluster_id):
-    print(cluster_id)
-
-    try:
-        object_id = UUID(cluster_id, version=4)
-    except ValueError:
-        abort(400)
-
-    # load object
-    try:
-        obj = Cluster.load(object_id)
-    except NameError:
-        abort(404)
+def cluster_status(pk):
+    obj = get_object(Cluster, pk)
 
     return jsonify(obj.status())
 
 
-@api.route('/clusters/<cluster_id>/topology-data', methods=['GET'])
-def cluster_topology_data(cluster_id):
-
-    try:
-        object_id = UUID(cluster_id, version=4)
-    except ValueError:
-        abort(400)
-
-    # load object
-    try:
-        obj = Cluster.load(object_id)
-    except NameError:
-        abort(404)
+@api.route('/clusters/<pk>/topology-data', methods=['GET'])
+def cluster_topology_data(pk):
+    obj = get_object(Cluster, pk)
 
     return jsonify(obj.topology_data())
 
 
-@api.route('/clusters/<cluster_id>/kubeconfig', methods=['GET'])
+@api.route('/clusters/<pk>/kubeconfig', methods=['GET'])
 @jwt_required()
-def cluster_kubeconfig(cluster_id):
-
-    try:
-        object_id = UUID(cluster_id, version=4)
-    except ValueError:
-        abort(400)
-
-    # load object
-    try:
-        obj = Cluster.load(object_id)
-    except NameError:
-        abort(404)
+def cluster_kubeconfig(pk):
+    obj = get_object(Cluster, pk)
 
     return jsonify(obj.kubeconfig)
 
 
 # Provisioners
 
-@api.route('/provisioners', methods=['GET', 'POST'])
+@api.route('/provisioners', methods=['GET'])
 @jwt_required()
 def provisioner_list():
-    # TODO: implement native serialization
+    output = []
 
-    if request.method == 'POST':
-        if not request.json:
-            abort(400)
-        else:
-            try:
-                raise NotImplementedError
-            except:
-                abort(500)
-
-    else:
-        output = []
-
-        for obj in list(Provisioner.list(return_objects=True).values()):
-            output.append(obj.get_dict())
+    for obj in list(Provisioner.list(return_objects=True).values()):
+        output.append(obj.get_dict())
 
     return jsonify(output)
 
 
-@api.route('/provisioners/<provisioner_id>', methods=['GET'])
+@api.route('/provisioners', methods=['POST'])
 @jwt_required()
-def provisioner_detail(provisioner_id):
-
-    # read uuid
-    try:
-        object_id = UUID(provisioner_id, version=4)
-    except ValueError:
+def provisioner_create():
+    if not request.json:
         abort(400)
+    else:
+        obj = Provisioner(**request.json)
+        try:
+            obj.save()
+            output = obj.serialize()
+        except:
+            abort(500)
 
-    # load object
-    try:
-        obj = Provisioner.load(object_id)
-    except NameError:
-        abort(404)
+    return jsonify(output)
+
+
+@api.route('/provisioners/<pk>', methods=['GET'])
+@jwt_required()
+def provisioner_get(pk):
+    obj = get_object(Provisioner, pk)
 
     return jsonify(obj.get_dict())
+
+
+@api.route('/provisioners/<pk>', methods=['PATCH'])
+@jwt_required()
+def provisioner_update(pk):
+    if not request.json:
+        abort(400)
+
+    data = request.json
+    if not isinstance(data, dict):
+        abort(400)
+
+    obj = get_object(Provisioner, pk)
+    for key, value in data.items():
+        print('---', key, value)
+        setattr(obj, key, value)
+
+    try:
+        obj.save()
+        print(obj.get_dict())
+        return jsonify(obj.serialize())
+    except:
+        abort(500)
+
+
+@api.route('/provisioners/<pk>', methods=['DELETE'])
+@jwt_required()
+def provisioner_delete(pk):
+    obj = get_object(Provisioner, pk)
+
+    try:
+        obj.delete()
+    except:
+        abort(500)
+
+    return jsonify({'id': obj.id, 'state': 'deleted'})
+
+
