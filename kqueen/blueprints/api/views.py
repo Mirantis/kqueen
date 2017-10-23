@@ -2,6 +2,7 @@ from flask import abort
 from flask import Blueprint
 from flask import jsonify
 from flask import make_response
+from flask import request
 from flask_jwt import jwt_required
 from kqueen.models import Cluster
 from uuid import UUID
@@ -14,14 +15,39 @@ api = Blueprint('api', __name__)
 
 
 # error handlers
+def error_response(code, error):
+    """Return JSONed response of error code.
+
+    Attributes:
+        code (int): Error code number.
+        error (obj): HTTP error code
+
+    Returns:
+        JSONified error response
+    """
+
+    response = {'code': code, 'description': error.description}
+    return make_response(jsonify(response), code)
+
+
+@api.errorhandler(400)
+def bad_request(error):
+    return error_response(400, error)
+
+
+@api.errorhandler(403)
+def forbidden(error):
+    return error_response(403, error)
+
+
 @api.errorhandler(404)
 def not_found(error):
-    return make_response(jsonify({'error': 'Not found'}), 404)
+    return error_response(404, error)
 
 
 @api.errorhandler(500)
 def not_implemented(error):
-    return make_response(jsonify({'error': 'Not implemented'}), 500)
+    return error_response(500, error)
 
 
 @api.route('/')
@@ -31,15 +57,27 @@ def index():
 
 
 # Clusters
-@api.route('/clusters', methods=['GET'])
+@api.route('/clusters', methods=['GET', 'POST'])
 @jwt_required()
 def cluster_list():
     # TODO: implement native serialization
 
-    output = []
+    if request.method == 'POST':
+        if not request.json:
+            abort(400)
+        else:
+            obj = Cluster(**request.json)
+            try:
+                obj.save()
+                output = obj.serialize()
+            except:
+                abort(500)
 
-    for cluster in list(Cluster.list(return_objects=True).values()):
-        output.append(cluster.get_dict())
+    else:
+        output = []
+
+        for cluster in list(Cluster.list(return_objects=True).values()):
+            output.append(cluster.get_dict())
 
     return jsonify(output)
 
@@ -52,7 +90,7 @@ def cluster_detail(cluster_id):
     try:
         object_id = UUID(cluster_id, version=4)
     except ValueError:
-        abort(404)
+        abort(400)
 
     # load object
     try:
@@ -66,11 +104,12 @@ def cluster_detail(cluster_id):
 @api.route('/clusters/<cluster_id>/status', methods=['GET'])
 @jwt_required()
 def cluster_status(cluster_id):
+    print(cluster_id)
 
     try:
         object_id = UUID(cluster_id, version=4)
     except ValueError:
-        abort(404)
+        abort(400)
 
     # load object
     try:
@@ -87,7 +126,7 @@ def cluster_topology_data(cluster_id):
     try:
         object_id = UUID(cluster_id, version=4)
     except ValueError:
-        abort(404)
+        abort(400)
 
     # load object
     try:
@@ -105,7 +144,7 @@ def cluster_kubeconfig(cluster_id):
     try:
         object_id = UUID(cluster_id, version=4)
     except ValueError:
-        abort(404)
+        abort(400)
 
     # load object
     try:

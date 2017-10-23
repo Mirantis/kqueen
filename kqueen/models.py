@@ -262,6 +262,7 @@ class Cluster(Model, metaclass=ModelMeta):
         # apply resource file
         cmd = ['kubectl', '--kubeconfig', kubeconfig, 'apply', '-f', file_path]
 
+        # TODO: validate output
         run = subprocess.run(
             cmd,
             stdout=subprocess.PIPE,
