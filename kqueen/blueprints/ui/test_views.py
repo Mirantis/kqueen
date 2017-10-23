@@ -1,4 +1,6 @@
 from flask import url_for
+from .views import inject_username
+from kqueen.models import User
 
 import pytest
 
@@ -25,3 +27,14 @@ def test_logout(client_login):
     response = client_login.get(url_for('.logout'))
     assert response.status_code == 302
     assert response.headers['Location'].endswith(url_for('.index'))
+
+
+
+def test_inject_username_empty(monkeypatch):
+    def fake_load(self, *args, **kwargs):
+        raise Exception('Fake error')
+
+    monkeypatch.setattr(User, 'load', fake_load)
+
+    injection = inject_username()
+    assert injection['username'] == ''
