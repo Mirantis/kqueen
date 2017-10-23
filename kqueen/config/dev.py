@@ -1,8 +1,12 @@
+from datetime import timedelta
+
+
 DEBUG = True
 
 # JWT auth options
 JWT_DEFAULT_REALM = 'Login Required'
 JWT_AUTH_URL_RULE = '/api/v1/auth'
+JWT_EXPIRATION_DELTA = timedelta(hours=1)
 
 # App secret
 SECRET_KEY = 'secret'
