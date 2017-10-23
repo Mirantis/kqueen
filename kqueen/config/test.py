@@ -1,8 +1,8 @@
 DEBUG = True
 
-# Demo login
-USERNAME = 'admin'
-PASSWORD = 'default'
+# JWT auth options
+JWT_DEFAULT_REALM = 'Login Required'
+JWT_AUTH_URL_RULE = '/api/v1/auth'
 
 # App secret
 SECRET_KEY = 'secret'

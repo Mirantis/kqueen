@@ -2,6 +2,7 @@ from flask import abort
 from flask import Blueprint
 from flask import jsonify
 from flask import make_response
+from flask_jwt import jwt_required
 from kqueen.models import Cluster
 from uuid import UUID
 
@@ -31,6 +32,7 @@ def index():
 
 # Clusters
 @api.route('/clusters', methods=['GET'])
+@jwt_required()
 def cluster_list():
     # TODO: implement native serialization
 
@@ -43,6 +45,7 @@ def cluster_list():
 
 
 @api.route('/clusters/<cluster_id>', methods=['GET'])
+@jwt_required()
 def cluster_detail(cluster_id):
 
     # read uuid
@@ -61,6 +64,7 @@ def cluster_detail(cluster_id):
 
 
 @api.route('/clusters/<cluster_id>/status', methods=['GET'])
+@jwt_required()
 def cluster_status(cluster_id):
 
     try:
@@ -95,6 +99,7 @@ def cluster_topology_data(cluster_id):
 
 
 @api.route('/clusters/<cluster_id>/kubeconfig', methods=['GET'])
+@jwt_required()
 def cluster_kubeconfig(cluster_id):
 
     try:

@@ -1,0 +1,16 @@
+{% extends "ui/base.html" %}
+
+{% block page_header %}
+Manage {{ organization.name }}
+{% endblock %}
+
+{% block content %}
+<h3>Members</h3>
+
+<div class="table-container">
+  <div class="table-actions">
+    <a href="{{ url_for('ui.user_create') }}" role="button" class="btn btn-primary">Add Member</a>
+  </div>
+  {{ membertable }}
+</div>
+{% endblock %}
