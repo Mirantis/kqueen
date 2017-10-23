@@ -176,5 +176,3 @@ class BaseTestCRUD:
         )
 
         assert response.status_code == 500
-
-

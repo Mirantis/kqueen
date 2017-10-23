@@ -1,9 +1,5 @@
 from .test_crud import BaseTestCRUD
-from flask import url_for
 from kqueen.conftest import organization
-from uuid import uuid4
-
-import pytest
 
 
 class TestOrganizationCRUD(BaseTestCRUD):

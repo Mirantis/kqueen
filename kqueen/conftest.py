@@ -56,6 +56,7 @@ def client_login(client):
     })
     return client
 
+
 @pytest.fixture
 def auth_header(client):
     _user = user()
@@ -73,9 +74,7 @@ def auth_header(client):
 
 @pytest.fixture
 def organization():
-    uuid_organization = '22d8df64-4ac9-4be0-89a7-c45ea0fc85da'
     organization = Organization(
-        id=uuid_organization,
         name='DemoOrg',
         namespace='demoorg',
     )
@@ -86,9 +85,7 @@ def organization():
 
 @pytest.fixture
 def user():
-    uuid_user = '22d8df64-4ac9-4be0-89a7-c45ea0fc85za'
     user = User(
-        id=uuid_user,
         username='admin',
         password='default',
         organization=organization().id,

@@ -18,8 +18,7 @@ class TestClusterCRUD(BaseTestCRUD):
         cluster_id = self.obj.id
 
         response = self.client.get(
-            url_for('api.cluster_get',
-            pk=cluster_id),
+            url_for('api.cluster_get', pk=cluster_id),
             headers=self.auth_header
         )
         assert response.json == self.obj.get_dict()
@@ -30,8 +29,7 @@ class TestClusterCRUD(BaseTestCRUD):
     ])
     def test_object_not_found(self, cluster_id, status_code):
         response = self.client.get(
-            url_for('api.cluster_get',
-            pk=cluster_id),
+            url_for('api.cluster_get', pk=cluster_id),
             headers=self.auth_header
         )
         assert response.status_code == status_code
@@ -86,7 +84,6 @@ class TestClusterCRUD(BaseTestCRUD):
         assert 'items' in response.json
         assert 'kinds' in response.json
         assert 'relations' in response.json
-
 
     def test_create(self, provisioner):
         provisioner.save()
