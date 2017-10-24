@@ -19,6 +19,8 @@ $(document).ready(function() {
     });
 });
 $(window).on("popstate", function() {
-    var anchor = location.hash || $("a[data-toggle='tab']").first().attr("href");
-    $("a[data-tabcode='" + anchor + "']").tab("show");
+    var anchor = location.hash;
+    if (location.hash) {
+        $("a[data-tabcode='" + anchor + "']").tab("show");
+    }
 });

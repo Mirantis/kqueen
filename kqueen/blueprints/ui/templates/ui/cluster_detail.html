@@ -220,35 +220,35 @@ Cluster {{ cluster.name }} detail
       <h3>Topology Resources</h3>
       <div class="topology-legend">
         <div>
-          <svg class="kindInfo">
+          <svg class="kindInfo" data-kind="Pod">
             <use xlink:href="#vertex-Pod" x="15" y="15"></use>
           </svg>
-          <div>Pods</div>
+          <div>Pods <br/><input class="topology-filter-checkbox" type="checkbox" name="pods" checked></div>
         </div>
         <div>
-          <svg class="kindInfo">
+          <svg class="kindInfo" data-kind="Service">
             <use xlink:href="#vertex-Service" x="15" y="15"></use>
           </svg>
-          <div>Services</div>
+          <div>Services <br/><input class="topology-filter-checkbox" type="checkbox" name="services" checked></div>
         </div>
         <div>
-          <svg class="kindInfo">
+          <svg class="kindInfo" data-kind="Node">
             <use xlink:href="#vertex-Node" x="15" y="15"></use>
           </svg>
-          <div>Nodes</div>
+          <div>Nodes <br/><input class="topology-filter-checkbox" type="checkbox" name="nodes" checked></div>
         </div>
         <br>
         <div>
-          <svg class="kindInfo">
+          <svg class="kindInfo" data-kind="Deployment">
             <use xlink:href="#vertex-Deployment" x="15" y="15"></use>
           </svg>
-          <div>Deploys</div>
+          <div>Deploys <br/><input class="topology-filter-checkbox" type="checkbox" name="deploys" checked></div>
         </div>
         <div>
-          <svg class="kindInfo">
+          <svg class="kindInfo" data-kind="Namespace">
             <use xlink:href="#vertex-Namespace" x="15" y="15"></use>
           </svg>
-          <div>Namespaces</div>
+          <div>Namespaces <br/><input class="topology-filter-checkbox" type="checkbox" name="namespaces" checked></div>
         </div>
 
       </div>
@@ -323,7 +323,7 @@ Cluster {{ cluster.name }} detail
 <script>
 jQuery(document).ready(function($){
   // init Clipboard
-  new Clipboard('.clipboard'); 
+  new Clipboard('.clipboard');
   // init asPieProgress
   $('.pie_progress').asPieProgress({
     namespace: 'pieProgress',
@@ -370,10 +370,27 @@ jQuery(document).ready(function($){
     $("#ForcedLayoutGraphBtn").removeClass("active")
     $("#HiveGraphBtn").addClass("active");
   });
+  $(".topology-legend svg").each(function(){
+    var filterData = function(data, filterState){
+      var enabledKinds = Object.entries(filterState).filter(function(i){return i[1]}).map(function(i){return i[0]})
+       ,  items = window._originalGraphData.items.filter(function(i){
+            return enabledKinds.indexOf(i.kind) != -1;
+          })
+       ,  relations = window._originalGraphData.relations;
+      return {items: items, kinds: window._originalGraphData.kinds, relations: relations};
+    };
+    $(this).on("click", function(e){
+      $(e.target).parent().toggleClass("filterDisabled")
+      var filterState = {};
+      $(".topology-legend svg").each(function(){
+          var $chbox = $(this);
+          filterState[$chbox.attr("data-kind")]=!$chbox.hasClass("filterDisabled");
+      });
+      initCharts(filterData(window._originalGraphData, filterState));
+    });
+  });
 });
-
-$(document).one("shown.bs.tab", "a[href='#topology']", function(e) {
-  d3.json("{{ url_for('api.cluster_topology_data', cluster_id=cluster.id) }}", function(data){
+var initCharts = function(data){
       var changeDetailBox =function (node){
         console.log(node);
         if ('item' in node) {
@@ -382,11 +399,18 @@ $(document).one("shown.bs.tab", "a[href='#topology']", function(e) {
           $('#resource-detail').html("<dl><dt>Name</dt><dd>" + node.metadata.name + "</dd><dt>Kind</dt><dd>" + node.kind + "</dd><dt>Namespace</dt><dd>" + node.metadata.namespace + "</dd></dl>");
         }
       };
-
-      K8SVisualisations.forcedChart.init("#topology-graph", data, {nodeClickFn: changeDetailBox});
-      K8SVisualisations.hiveChart.init("#HiveChart", data, {nodeClickFn: changeDetailBox});
-      //$("#HiveGraphContainer").hide();
+      if(data){
+        window._graphData = data;
+      }
+      K8SVisualisations.forcedChart.init("#topology-graph", window._graphData, {nodeClickFn: changeDetailBox});
+      K8SVisualisations.hiveChart.init("#HiveChart", window._graphData, {nodeClickFn: changeDetailBox});
       $("#HiveGraphBtn, #ForcedLayoutGraphBtn").attr("disabled", false);
+}
+
+$(document).one("shown.bs.tab", "a[href='#topology']", function(e) {
+  d3.json("{{ url_for('api.cluster_topology_data', cluster_id=cluster.id) }}", function(data){
+    window._originalGraphData = data;
+    initCharts(data);
   });
 });
 </script>

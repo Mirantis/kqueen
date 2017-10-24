@@ -82,8 +82,9 @@ d3.hive.link = function () {
  */
 var K8SVisualisations = function (K8SVisualisations) {
     K8SVisualisations.forcedChart = K8SVisualisations.forcedChart || {};
-    K8SVisualisations.forcedChart.cache = {};
+
     K8SVisualisations.forcedChart.init = function (selector, data, config) {
+        K8SVisualisations.forcedChart.cache = {};
         config = config || {};
         if (!data) {
             throw new Error("Cannot init K8S forced layout chart visualisation, invalid data given " + data);
@@ -107,6 +108,7 @@ var K8SVisualisations = function (K8SVisualisations) {
 
     K8SVisualisations.forcedChart.constructChart = function (selector, options) {
         var outer = d3.select(selector);
+        outer.html("");
         /* Kinds of objects to show */
         var _kinds = options["kinds"];
         /* Data we've been fed */
@@ -469,7 +471,6 @@ var K8SVisualisations = function (K8SVisualisations) {
                     }
                 });
                 if (!retLink.hasOwnProperty("source") || !retLink.hasOwnProperty("target")) {
-                    console.log("Cannot found relation node for link " + link);
                     retLink = link;
                 }
                 return retLink;
@@ -493,17 +494,12 @@ var K8SVisualisations = function (K8SVisualisations) {
         var links = createLinks(nodes, data.relations);
 
         var angle = function angle(d) {
-            var angle = 0,
-                found = false;
+            var angle = 0;
             axes.forEach(function (item) {
                 if (d.kind == item.kind) {
                     angle = item.angle;
-                    found = true;
                 }
             });
-            if (!found) {
-                console.log("Cannot compute angle for item " + d.kind + d.metadata.name);
-            }
             return angle;
         };
         var radius = d3.scale.linear().range([innerRadius, outerRadius]);
@@ -573,7 +569,10 @@ var K8SVisualisations = function (K8SVisualisations) {
             svg.selectAll(".link").data(links).enter().append("path").attr("class", "link").attr("d", d3.hive.link().angle(function (d) {
                 return Math.radians(angle(d));
             }).radius(function (d) {
-                return radius_mapping[d.kind](d.y * itemStep[d.kind] - 0.1);
+                if (d.kind) {
+                    return radius_mapping[d.kind](d.y * itemStep[d.kind] - 0.1);
+                }
+                return 0;
             }))
             //.style("stroke", function(d) { return color(d.source.kind); })
             .on("mouseover", mouseFunctions.linkOver).on("mouseout", mouseFunctions.out);
@@ -748,6 +747,8 @@ $(document).ready(function () {
     });
 });
 $(window).on("popstate", function () {
-    var anchor = location.hash || $("a[data-toggle='tab']").first().attr("href");
-    $("a[data-tabcode='" + anchor + "']").tab("show");
+    var anchor = location.hash;
+    if (location.hash) {
+        $("a[data-tabcode='" + anchor + "']").tab("show");
+    }
 });

@@ -43,6 +43,12 @@
     vertical-align: middle;
     padding-bottom: 10px;
   }
+  .topology-filter-checkbox{
+    display:none;
+  }
+  svg.filterDisabled{
+    filter: opacity(0.2);
+  }
 }
 
 #HiveChart{
