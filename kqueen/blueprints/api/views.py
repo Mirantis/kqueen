@@ -75,8 +75,12 @@ def cluster_create():
     else:
         obj = Cluster(**request.json)
         try:
+            # save cluster
             obj.save()
             output = obj.serialize()
+
+            # start provisioning
+            obj.engine.provision()
         except:
             abort(500)
 

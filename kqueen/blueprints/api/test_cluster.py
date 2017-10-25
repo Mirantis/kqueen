@@ -107,6 +107,33 @@ class TestClusterCRUD(BaseTestCRUD):
         assert response_dict['name'] == post_data['name']
         assert response_dict['provisioner'] == provisioner.id
 
+    def test_provision_after_create(self, provisioner, monkeypatch):
+        provisioner.save()
+
+        def fake_provision(self, *args, **kwargs):
+            self.cluster.name = 'Provisioned'
+            self.cluster.save()
+
+        monkeypatch.setattr(provisioner.get_engine_cls(), 'provision', fake_provision)
+
+        post_data = {
+            'name': 'Testing cluster',
+            'provisioner': provisioner.id,
+        }
+
+        response = self.client.post(
+            url_for('api.cluster_create'),
+            data=json.dumps(post_data),
+            headers=self.auth_header,
+            content_type='application/json',
+        )
+
+        object_id = json.loads(response.json)['id']
+        obj = self.obj.__class__.load(object_id)
+
+        assert response.status_code == 200
+        assert obj.name == 'Provisioned'
+
     def test_return_400_missing_json(self):
         response = self.client.post(
             url_for('api.cluster_create'),
