@@ -58,9 +58,7 @@ class BaseTestCRUD:
         )
 
         assert response.status_code == 200
-
-        response_dict = json.loads(response.json)
-        assert response_dict['id'] != self.obj.id
+        assert response.json['id'] != self.obj.id
 
     def test_crud_create_not_json(self):
         response = self.client.post(

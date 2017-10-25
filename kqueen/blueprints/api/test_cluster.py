@@ -1,7 +1,9 @@
 from flask import url_for
 from uuid import uuid4
 from kqueen.conftest import cluster
+from kqueen.conftest import provisioner
 from .test_crud import BaseTestCRUD
+from pprint import pprint as print
 
 import pytest
 import json
@@ -9,7 +11,12 @@ import json
 
 class TestClusterCRUD(BaseTestCRUD):
     def get_object(self):
-        return cluster()
+        clu = cluster()
+        prov = provisioner()
+        prov.save()
+        clu.provisioner = prov
+
+        return clu
 
     def get_edit_data(self):
         return {'name': 'patched cluster'}
@@ -21,6 +28,7 @@ class TestClusterCRUD(BaseTestCRUD):
             url_for('api.cluster_get', pk=cluster_id),
             headers=self.auth_header
         )
+
         assert response.json == self.obj.get_dict()
 
     @pytest.mark.parametrize('cluster_id,status_code', [
@@ -102,10 +110,9 @@ class TestClusterCRUD(BaseTestCRUD):
 
         assert response.status_code == 200
 
-        response_dict = json.loads(response.json)
-        assert 'id' in response_dict
-        assert response_dict['name'] == post_data['name']
-        assert response_dict['provisioner'] == provisioner.id
+        assert 'id' in response.json
+        assert response.json['name'] == post_data['name']
+        assert response.json['provisioner'] == provisioner.id
 
     def test_provision_after_create(self, provisioner, monkeypatch):
         provisioner.save()
@@ -128,7 +135,7 @@ class TestClusterCRUD(BaseTestCRUD):
             content_type='application/json',
         )
 
-        object_id = json.loads(response.json)['id']
+        object_id = response.json['id']
         obj = self.obj.__class__.load(object_id)
 
         assert response.status_code == 200
