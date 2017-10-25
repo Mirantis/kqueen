@@ -77,7 +77,7 @@ def cluster_create():
         try:
             # save cluster
             obj.save()
-            output = obj.serialize()
+            output = obj.get_dict()
 
             # start provisioning
             obj.engine.provision()
@@ -111,7 +111,7 @@ def cluster_update(pk):
 
     try:
         obj.save()
-        return jsonify(obj.serialize())
+        return jsonify(obj.get_dict())
     except:
         abort(500)
 
@@ -174,7 +174,7 @@ def provisioner_create():
         obj = Provisioner(**request.json)
         try:
             obj.save()
-            output = obj.serialize()
+            output = obj.get_dict()
         except:
             abort(500)
 
@@ -205,7 +205,7 @@ def provisioner_update(pk):
 
     try:
         obj.save()
-        return jsonify(obj.serialize())
+        return jsonify(obj.get_dict())
     except:
         abort(500)
 
@@ -245,7 +245,7 @@ def organization_create():
         obj = Organization(**request.json)
         try:
             obj.save()
-            output = obj.serialize()
+            output = obj.get_dict()
         except:
             abort(500)
 
@@ -276,7 +276,7 @@ def organization_update(pk):
 
     try:
         obj.save()
-        return jsonify(obj.serialize())
+        return jsonify(obj.get_dict())
     except:
         abort(500)
 
@@ -316,7 +316,7 @@ def user_create():
         obj = User(**request.json)
         try:
             obj.save()
-            output = obj.serialize()
+            output = obj.get_dict()
         except:
             abort(500)
 
@@ -347,7 +347,7 @@ def user_update(pk):
 
     try:
         obj.save()
-        return jsonify(obj.serialize())
+        return jsonify(obj.get_dict())
     except:
         abort(500)
 
