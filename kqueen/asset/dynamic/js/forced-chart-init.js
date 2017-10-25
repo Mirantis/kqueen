@@ -2,6 +2,7 @@
  * Module with K8SVisualisations forced chart
  */
 var K8SVisualisations = function(K8SVisualisations) {
+    K8SVisualisations = K8SVisualisations || {};
     K8SVisualisations.forcedChart = K8SVisualisations.forcedChart || {};
 
     K8SVisualisations.forcedChart.init = function(selector, data, config) {

@@ -2,6 +2,7 @@
  * Module with K8SVisualisations hive chart
  */
 var K8SVisualisations = function(K8SVisualisations) {
+    K8SVisualisations = K8SVisualisations || {};
     K8SVisualisations.hiveChart = K8SVisualisations.hiveChart || {};
 
     K8SVisualisations.hiveChart.init = function(selector, data, config) {
@@ -176,9 +177,15 @@ var K8SVisualisations = function(K8SVisualisations) {
                 .attr("x2", function(d) {
                     return radius_mapping[d.kind].range()[1]
                 });
-            var tooltip = d3.select("body").append("div")
-                .attr("class", "tooltip")
-                .style("opacity", 0);
+            var tooltip = d3.select("#HiveChartTooltip");
+            // tooltip is d3 selection
+            if(tooltip.empty()){
+              tooltip = d3.select("body").append("div")
+                    .attr("id", "HiveChartTooltip")
+                    .attr("class", "tooltip")
+                   .style("opacity", 0);
+            }
+
             axe.append("text")
                 .attr("class", "axis-label")
                 .attr('font-size', '16px')
@@ -261,12 +268,8 @@ var K8SVisualisations = function(K8SVisualisations) {
             node.append("use").attr("xlink:href", function(d) { return icon(d.kind); });
         }
         render();
-        var timeout;
-        function resized() {
-          window.clearTimeout(timeout);
-          timeout = window.setTimeout(render, 150);
-        }
-        window.addEventListener('resize', resized);
+        window.removeEventListener('resize', render);
+        window.addEventListener('resize', render);
     };
     return K8SVisualisations;
 }(K8SVisualisations || {});

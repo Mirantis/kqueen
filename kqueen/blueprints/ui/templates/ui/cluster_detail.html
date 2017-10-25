@@ -277,7 +277,7 @@ Cluster {{ cluster.name }} detail
       </div>
     </div>
     <div class="grid clearfix">
-      {% for addon in status.addons %} 
+      {% for addon in status.addons %}
       <a href="{{ addon.link }}" class="addon-item" data-category="{{ addon.tag }}">
         <div class="item-icon" style="background-image: url('{{ addon.icon }}');"></div>
         <div class="item-label">
@@ -321,98 +321,7 @@ Cluster {{ cluster.name }} detail
 
 {% block extrajs %}
 <script>
-jQuery(document).ready(function($){
-  // init Clipboard
-  new Clipboard('.clipboard');
-  // init asPieProgress
-  $('.pie_progress').asPieProgress({
-    namespace: 'pieProgress',
-    barsize: '1',
-    size: '120',
-    min: 0,
-    trackcolor: '#ececea',
-    barcolor: '#4bbfaf',
-    numberCallback(n) {
-      return n;
-    }
-  });
-  $('.pie_progress').asPieProgress('start');
-
-  // init Isotope
-  $(document).one("shown.bs.tab", "a[href='#addons']", function(e) {
-    var $grid = $('.grid').isotope({
-      itemSelector: '.addon-item',
-      layoutMode: 'fitRows'
-    });
-    $('.grid').each(function() {
-      var $grid = $( this );
-      $grid.css('min-height', $grid.innerHeight());
-    });
-    // bind filter button click
-    $('#filters').on( 'click', 'a', function(ev) {
-    ev.preventDefault();
-    var filterValue = $( this ).attr('data-filter');
-      $grid.isotope({ filter: filterValue });
-    });
-  });
-
-  // bind click actions
-  $("#ForcedLayoutGraphBtn").on("click",function (e){
-    $("#HiveGraphContainer").css("z-index","1").css("pointer-events","none");
-    $("#ForcedLayoutGraphContainer").css("z-index","2").css("pointer-events","all");
-    $("#HiveGraphBtn").removeClass("active");
-    $("#ForcedLayoutGraphBtn").addClass("active");
-  });
-
-  $("#HiveGraphBtn").on("click",function (e){
-    $("#ForcedLayoutGraphContainer").css("z-index","1").css("pointer-events","none");
-    $("#HiveGraphContainer").css("z-index","2").css("pointer-events","all");
-    $("#ForcedLayoutGraphBtn").removeClass("active")
-    $("#HiveGraphBtn").addClass("active");
-  });
-  $(".topology-legend svg").each(function(){
-    var filterData = function(data, filterState){
-      var enabledKinds = Object.entries(filterState).filter(function(i){return i[1]}).map(function(i){return i[0]})
-       ,  items = window._originalGraphData.items.filter(function(i){
-            return enabledKinds.indexOf(i.kind) != -1;
-          })
-       ,  relations = window._originalGraphData.relations;
-      return {items: items, kinds: window._originalGraphData.kinds, relations: relations};
-    };
-    $(this).on("click", function(e){
-      $(e.target).parent().toggleClass("filterDisabled")
-      var filterState = {};
-      $(".topology-legend svg").each(function(){
-          var $chbox = $(this);
-          filterState[$chbox.attr("data-kind")]=!$chbox.hasClass("filterDisabled");
-      });
-      initCharts(filterData(window._originalGraphData, filterState));
-    });
-  });
-});
-var initCharts = function(data){
-      var changeDetailBox =function (node){
-        console.log(node);
-        if ('item' in node) {
-          $('#resource-detail').html("<dl><dt>Name</dt><dd>" + node.item.metadata.name + "</dd><dt>Kind</dt><dd>" + node.item.kind + "</dd><dt>Namespace</dt><dd>" + node.item.metadata.namespace + "</dd></dl>");
-        } else {
-          $('#resource-detail').html("<dl><dt>Name</dt><dd>" + node.metadata.name + "</dd><dt>Kind</dt><dd>" + node.kind + "</dd><dt>Namespace</dt><dd>" + node.metadata.namespace + "</dd></dl>");
-        }
-      };
-      if(data){
-        window._graphData = data;
-      }
-      K8SVisualisations.forcedChart.init("#topology-graph", window._graphData, {nodeClickFn: changeDetailBox});
-      K8SVisualisations.hiveChart.init("#HiveChart", window._graphData, {nodeClickFn: changeDetailBox});
-      $("#HiveGraphBtn, #ForcedLayoutGraphBtn").attr("disabled", false);
-}
-
-$(document).one("shown.bs.tab", "a[href='#topology']", function(e) {
-  d3.json("{{ url_for('api.cluster_topology_data', cluster_id=cluster.id) }}", function(data){
-    window._originalGraphData = data;
-    initCharts(data);
-  });
-});
+  K8SVisualisations.init("{{ url_for('api.cluster_topology_data', cluster_id=cluster.id) }}");
 </script>
 {% if cluster.state == config.CLUSTER_PROVISIONING_STATE %}
 <script>
