@@ -1,7 +1,5 @@
 Flask==0.12.2
 Flask-JWT
-Flask-Table
-Flask-WTF
 kubernetes
 python-etcd
 python-jenkins
