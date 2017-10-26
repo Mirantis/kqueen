@@ -12,3 +12,10 @@ class TestUserCRUD(BaseTestCRUD):
             'email': 'root@localhost',
             'password': 'password123',
         }
+
+    def get_create_data(self):
+        data = self.obj.get_dict()
+        data['id'] = None
+        data['organization'] = 'Organization:{}'.format(self.obj.organization.id)
+
+        return data

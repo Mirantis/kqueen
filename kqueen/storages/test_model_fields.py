@@ -41,13 +41,14 @@ def model_serialized(related=None):
 
 
 @pytest.fixture
-def create_object(request):
+def create_object():
     model = create_model()
 
     obj1 = model(**model_kwargs)
     obj2 = model(**model_kwargs)
 
     obj2.save()
+
     obj1.relation = obj2
 
     return obj1
@@ -94,6 +95,7 @@ class TestSave:
 class TestModelAddId:
     def test_id_added(self, create_object):
         obj = create_object
+        print(obj)
 
         assert obj.id is None
         assert obj.verify_id()
@@ -139,8 +141,6 @@ class TestFieldSetGet:
         obj = model_class()
         setattr(obj, field_name, model_kwargs[field_name])
 
-        print(obj.get_dict())
-
         assert getattr(obj, field_name) == model_kwargs[field_name]
         assert obj.get_dict()[field_name] == model_kwargs[field_name]
         assert getattr(obj, '_{}'.format(field_name)).get_value() == model_kwargs[field_name]
@@ -171,8 +171,10 @@ class TestGetDict:
     """Verify objects are serialized properly"""
 
     def setup(self):
-        self.obj1 = create_object(string='obj1')
-        self.obj2 = create_object(string='obj2')
+        self.obj1 = create_object()
+        self.obj1.string = 'obj1'
+        self.obj2 = create_object()
+        self.obj1.string = 'obj2'
 
         self.obj1.save()
         self.obj2.save()
@@ -180,7 +182,9 @@ class TestGetDict:
         self.obj1.relation = self.obj2
 
     def test_get_dict(self):
-        pass
+        dicted = self.obj1.get_dict(expand=False)
+
+        assert dicted['relation'] == self.obj2
 
     def test_get_dict_expand(self):
         dicted = self.obj1.get_dict(expand=True)
@@ -218,8 +222,10 @@ class TestDuplicateId:
 
 class TestRelationField:
     def setup(self):
-        self.obj1 = create_object(name='obj1')
-        self.obj2 = create_object(name='obj2')
+        self.obj1 = create_object()
+        self.obj1.name = 'obj1'
+        self.obj2 = create_object()
+        self.obj2.name = 'obj2'
 
         self.obj1.save()
         self.obj2.save()

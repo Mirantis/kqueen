@@ -21,6 +21,13 @@ class TestClusterCRUD(BaseTestCRUD):
     def get_edit_data(self):
         return {'name': 'patched cluster'}
 
+    def get_create_data(self):
+        data = self.obj.get_dict()
+        data['id'] = None
+        data['provisioner'] = 'Provisioner:{}'.format(self.obj.provisioner.id)
+
+        return data
+
     def test_get_dict_expanded(self):
 
         dicted = self.obj.get_dict(expand=True)
@@ -130,7 +137,7 @@ class TestClusterCRUD(BaseTestCRUD):
 
         post_data = {
             'name': 'Testing cluster',
-            'provisioner': provisioner.id,
+            'provisioner': 'Provisioner:{}'.format(provisioner.id),
         }
 
         response = self.client.post(

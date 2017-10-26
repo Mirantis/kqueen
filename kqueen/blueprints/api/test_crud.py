@@ -10,11 +10,17 @@ class BaseTestCRUD:
     def get_object(self):
         raise NotImplementedError
 
+    def get_edit_data(self):
+        raise NotImplementedError
+
     def get_resource_type(self):
         return self.obj.__class__.__name__.lower()
 
-    def get_edit_data(self):
-        raise NotImplementedError
+    def get_create_data(self):
+        data = self.obj.get_dict()
+        data['id'] = None
+
+        return data
 
     def get_urls(self):
 
@@ -47,8 +53,8 @@ class BaseTestCRUD:
         self.urls = self.get_urls()
 
     def test_crud_create(self):
-        data = self.obj.get_dict()
-        data['id'] = None
+        data = self.get_create_data()
+        print(data)
 
         response = self.client.post(
             self.urls['create'],
@@ -74,8 +80,7 @@ class BaseTestCRUD:
             raise Exception('Test')
 
         monkeypatch.setattr(self.obj.__class__, 'save', fake_save)
-        data = self.obj.get_dict()
-        data['id'] = None
+        data = self.get_create_data()
 
         response = self.client.post(
             self.urls['create'],
@@ -93,7 +98,7 @@ class BaseTestCRUD:
         )
 
         assert response.status_code == 200
-        assert response.json == self.obj.get_dict()
+        assert response.json == self.obj.get_dict(expand=True)
 
     def test_crud_list(self):
         response = self.client.get(
@@ -105,7 +110,7 @@ class BaseTestCRUD:
 
         assert isinstance(data, list)
         assert len(data) == len(self.obj.__class__.list(return_objects=False))
-        assert self.obj.get_dict() in data
+        assert self.obj.get_dict(expand=True) in data
 
     def test_crud_update(self):
         data = self.get_edit_data()

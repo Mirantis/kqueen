@@ -210,7 +210,6 @@ class Model:
                 field_object.set_value(kwargs.get(field_name))
                 setattr(self, '_{}'.format(field_name), field_object)
 
-        print(self)
     @classmethod
     def get_model_name(cls):
         """Return lowercased name of the class"""
@@ -389,10 +388,12 @@ class Model:
             hidden_field = '_{}'.format(field)
             field_object = getattr(self, hidden_field)
 
+            # validation
+            # TODO: move to validate method of Field
             if field_object.required and field_object.value is None:
                 return False
 
-            if not field_object.validate():
+            if field_object.value and not field_object.validate():
                 return False
 
         return True
