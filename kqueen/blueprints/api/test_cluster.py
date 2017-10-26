@@ -21,6 +21,10 @@ class TestClusterCRUD(BaseTestCRUD):
     def get_edit_data(self):
         return {'name': 'patched cluster'}
 
+    def test_get_dict_expanded(self):
+        dicted = self.obj.get_dict(expand=True)
+        assert dicted['provisioner']['id'] == self.obj.provisioner.id
+
     def test_cluster_get(self):
         cluster_id = self.obj.id
 
@@ -29,7 +33,7 @@ class TestClusterCRUD(BaseTestCRUD):
             headers=self.auth_header
         )
 
-        assert response.json == self.obj.get_dict()
+        assert response.json == self.obj.get_dict(expand=True)
 
     @pytest.mark.parametrize('cluster_id,status_code', [
         (uuid4(), 404),

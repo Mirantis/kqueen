@@ -367,13 +367,28 @@ class Model:
 
         return True
 
-    def get_dict(self):
+    def get_dict(self, expand=False):
+        """Return object properties represented by dict.
+
+        Attributes:
+            expand (bool): Expand properties to dict (if possible).
+
+        Returns:
+            Dict with object properties
+        """
+
         output = {}
 
         for field_name in self.__class__.get_field_names():
-            field = getattr(self, field_name)
-            if field:
-                output[field_name] = field
+            field = getattr(self, '_{}'.format(field_name))
+
+            if expand and hasattr(field.value, 'get_dict'):
+                wr = field.value.get_dict()
+            else:
+                wr = field.get_value()
+
+            if wr:
+                output[field_name] = wr
 
         return output
 
@@ -398,3 +413,5 @@ class Model:
 # TODO: implement unique field:w
 # TODO: implement predefined values for fields
 # TODO: use validation
+# TODO: add is_saved method
+# TODO: add load raw data method
