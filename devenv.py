@@ -34,7 +34,7 @@ try:
     user = User(
         username='admin',
         password='default',
-        organization=uuid_organization
+        organization=organization,
     )
     user.save()
 except:
@@ -62,7 +62,7 @@ try:
         id=uuid_jenkins,
         name='AWS Calico SM 33',
         state='OK',
-        provisioner=uuid_provisioner_jenkins,
+        provisioner=provisioner,
         kubeconfig=yaml.load(requests.get(kubeconfig_url).text),
     )
     cluster.save()
@@ -89,7 +89,7 @@ try:
         id=uuid_local,
         name='local_cluster',
         state='OK',
-        provisioner=uuid_provisioner_local,
+        provisioner=provisioner,
         kubeconfig=yaml.load(open('kubeconfig_localhost', 'r').read()),
     )
     cluster.save()
