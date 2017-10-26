@@ -77,11 +77,13 @@ def cluster_create():
         try:
             # save cluster
             obj.save()
-            output = obj.get_dict()
+            output = obj.get_dict(expand=True)
 
             # start provisioning
             obj.engine.provision()
-        except:
+
+        except Exception as e:
+            logger.error(e)
             abort(500)
 
     return jsonify(output)

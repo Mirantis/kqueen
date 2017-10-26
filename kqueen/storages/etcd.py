@@ -63,6 +63,16 @@ class Field:
     def empty(self):
         return self.value is None
 
+    def validate(self):
+        """
+        This method is called before saving model and can be used to validate format or
+        consitence of fields
+
+        Returns:
+            Result of validation. True for success, False otherwise.
+        """
+        return True
+
     def __str__(self):
         return str(self.value)
 
@@ -138,6 +148,23 @@ class RelationField(Field):
 
         return getattr(module, class_name)
 
+    def validate(self):
+        try:
+            class_name = self.value.__class__.__name__
+            selfid = self.value.id
+        except AttributeError:
+            return False
+
+        return class_name and selfid
+
+    def set_value(self, value):
+        """Detect serialized format and deserialized according to format."""
+        if isinstance(value, str) and ':' in value:
+            # deserialize
+            self.deserialize(value)
+        else:
+            super(RelationField, self).set_value(value)
+
 
 class ModelMeta(type):
     def __new__(cls, clsname, superclasses, attributedict):
@@ -183,6 +210,7 @@ class Model:
                 field_object.set_value(kwargs.get(field_name))
                 setattr(self, '_{}'.format(field_name), field_object)
 
+        print(self)
     @classmethod
     def get_model_name(cls):
         """Return lowercased name of the class"""
@@ -211,10 +239,6 @@ class Model:
     @classmethod
     def create(cls, **kwargs):
         """Create new object"""
-        logger.debug('Model create')
-        logger.debug(cls)
-        logger.debug(kwargs)
-
         o = cls(**kwargs)
 
         return o
@@ -366,6 +390,9 @@ class Model:
             field_object = getattr(self, hidden_field)
 
             if field_object.required and field_object.value is None:
+                return False
+
+            if not field_object.validate():
                 return False
 
         return True

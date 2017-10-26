@@ -3,7 +3,6 @@ from uuid import uuid4
 from kqueen.conftest import cluster
 from kqueen.conftest import provisioner
 from .test_crud import BaseTestCRUD
-from pprint import pprint as print
 
 import pytest
 import json
@@ -14,6 +13,7 @@ class TestClusterCRUD(BaseTestCRUD):
         clu = cluster()
         prov = provisioner()
         prov.save()
+
         clu.provisioner = prov
 
         return clu
@@ -22,6 +22,7 @@ class TestClusterCRUD(BaseTestCRUD):
         return {'name': 'patched cluster'}
 
     def test_get_dict_expanded(self):
+
         dicted = self.obj.get_dict(expand=True)
         assert dicted['provisioner']['id'] == self.obj.provisioner.id
 
@@ -102,7 +103,7 @@ class TestClusterCRUD(BaseTestCRUD):
 
         post_data = {
             'name': 'Testing cluster',
-            'provisioner': provisioner.id,
+            'provisioner': 'Provisioner:{}'.format(provisioner.id),
         }
 
         response = self.client.post(
@@ -116,7 +117,7 @@ class TestClusterCRUD(BaseTestCRUD):
 
         assert 'id' in response.json
         assert response.json['name'] == post_data['name']
-        assert response.json['provisioner'] == provisioner.id
+        assert response.json['provisioner'] == provisioner.get_dict()
 
     def test_provision_after_create(self, provisioner, monkeypatch):
         provisioner.save()

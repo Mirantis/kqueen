@@ -7,6 +7,7 @@ from kqueen.storages.etcd import Model
 from kqueen.storages.etcd import ModelMeta
 from kqueen.storages.etcd import RelationField
 from kqueen.storages.etcd import StringField
+from kqueen.storages.etcd import SecretField
 from tempfile import mkstemp
 
 import logging
@@ -42,20 +43,12 @@ class Cluster(Model, metaclass=ModelMeta):
             pass
         return self.state
 
-    def get_provisioner(self):
-        try:
-            provisioner = Provisioner.load(self.provisioner)
-        except:
-            provisioner = None
-        return provisioner
-
     @property
     def engine(self):
-        provisioner = self.get_provisioner()
-        if provisioner:
-            _class = provisioner.get_engine_cls()
+        if self.provisioner:
+            _class = self.provisioner.get_engine_cls()
             if _class:
-                parameters = provisioner.parameters or {}
+                parameters = self.provisioner.parameters or {}
                 return _class(self, **parameters)
         return None
 
@@ -330,5 +323,5 @@ class User(Model, metaclass=ModelMeta):
     id = IdField(required=True)
     username = StringField(required=True)
     email = StringField(required=False)
-    password = StringField(required=True)
+    password = SecretField(required=True)
     organization = RelationField(required=True)

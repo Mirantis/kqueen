@@ -26,13 +26,16 @@ def app():
 def cluster():
     _uuid = uuid.uuid4()
 
-    prov = provisioner()
-    prov.save()
+    prov = Provisioner(
+        name='Fixtured provisioner',
+        engine='kqueen.engines.ManualEngine',
+    )
+    prov.save(check_status=False)
 
     create_kwargs = {
         'id': _uuid,
         'name': 'Name for cluster {}'.format(_uuid),
-        'provisioner': provisioner,
+        'provisioner': prov,
         'state': 'deployed',
         'kubeconfig': yaml.load(open('kubeconfig_localhost', 'r').read()),
     }
@@ -53,6 +56,7 @@ def provisioner():
 @pytest.fixture
 def client_login(client):
     _user = user()
+
     client.post(url_for('ui.login'), data={
         'username': _user.username,
         'password': _user.password,
@@ -91,7 +95,7 @@ def user():
     user = User(
         username='admin',
         password='default',
-        organization=organization().id,
+        organization=organization(),
     )
     user.save()
 

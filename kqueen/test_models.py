@@ -30,15 +30,19 @@ class TestClusterModel:
         assert cluster.save()
 
     def test_load(self, cluster):
-        get_id = cluster.id
         cluster.save()
+
+        get_id = cluster.id
+        print(get_id)
 
         loaded = Cluster.load(get_id)
         assert loaded == cluster
         assert hasattr(loaded, '_key'), 'Loaded object is missing _key'
 
-    def test_id_generation(self):
-        empty = Cluster(name='test')
+    def test_id_generation(self, provisioner):
+        provisioner.save(check_status=False)
+
+        empty = Cluster(name='test', provisioner=provisioner)
         empty.save()
 
     def test_added_key(self, cluster):
