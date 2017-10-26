@@ -26,10 +26,13 @@ def app():
 def cluster():
     _uuid = uuid.uuid4()
 
+    prov = provisioner()
+    prov.save()
+
     create_kwargs = {
         'id': _uuid,
         'name': 'Name for cluster {}'.format(_uuid),
-        'provisioner': 'Jenkins',
+        'provisioner': provisioner,
         'state': 'deployed',
         'kubeconfig': yaml.load(open('kubeconfig_localhost', 'r').read()),
     }

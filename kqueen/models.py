@@ -5,6 +5,7 @@ from kqueen.storages.etcd import IdField
 from kqueen.storages.etcd import JSONField
 from kqueen.storages.etcd import Model
 from kqueen.storages.etcd import ModelMeta
+from kqueen.storages.etcd import RelationField
 from kqueen.storages.etcd import StringField
 from tempfile import mkstemp
 
@@ -23,7 +24,7 @@ logger = logging.getLogger(__name__)
 class Cluster(Model, metaclass=ModelMeta):
     id = IdField(required=True)
     name = StringField(required=True)
-    provisioner = StringField()
+    provisioner = RelationField()
     state = StringField()
     kubeconfig = JSONField()
     metadata = JSONField()
@@ -324,10 +325,9 @@ class Organization(Model, metaclass=ModelMeta):
     name = StringField(required=True)
     namespace = StringField(required=True)
 
-
 class User(Model, metaclass=ModelMeta):
     id = IdField(required=True)
     username = StringField(required=True)
     email = StringField(required=False)
     password = StringField(required=True)
-    organization = StringField(required=True)
+    organization = RelationField(required=True)
