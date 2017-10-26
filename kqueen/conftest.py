@@ -54,17 +54,6 @@ def provisioner():
 
 
 @pytest.fixture
-def client_login(client):
-    _user = user()
-
-    client.post(url_for('ui.login'), data={
-        'username': _user.username,
-        'password': _user.password,
-    })
-    return client
-
-
-@pytest.fixture
 def auth_header(client):
     _user = user()
     data = {

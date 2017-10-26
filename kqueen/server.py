@@ -37,11 +37,6 @@ app.logger.setLevel(logging.INFO)
 jwt = JWT(app, authenticate, identity)
 
 
-@app.route('/')
-def root():
-    return redirect(url_for('ui.index'), code=302)
-
-
 def run():
     logger.debug('kqueen starting')
     app.run()

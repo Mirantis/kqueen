@@ -20,8 +20,6 @@ setup(
     install_requires=[
         'Flask==0.12.2',
         'Flask-JWT',
-        'Flask-Table',
-        'Flask-WTF',
         'gunicorn',
         'kubernetes',
         'python-etcd',
@@ -31,7 +29,7 @@ setup(
     ],
     classifiers=[
         'Operating System :: POSIX :: Linux',
-        'Programming Language :: Python',
+        Programming Language :: Python',
         'Programming Language :: Python :: Implementation :: CPython',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.6',
