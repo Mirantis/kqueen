@@ -81,9 +81,11 @@ d3.hive.link = function () {
  * Module with K8SVisualisations forced chart
  */
 var K8SVisualisations = function (K8SVisualisations) {
+    K8SVisualisations = K8SVisualisations || {};
     K8SVisualisations.forcedChart = K8SVisualisations.forcedChart || {};
-    K8SVisualisations.forcedChart.cache = {};
+
     K8SVisualisations.forcedChart.init = function (selector, data, config) {
+        K8SVisualisations.forcedChart.cache = {};
         config = config || {};
         if (!data) {
             throw new Error("Cannot init K8S forced layout chart visualisation, invalid data given " + data);
@@ -107,6 +109,7 @@ var K8SVisualisations = function (K8SVisualisations) {
 
     K8SVisualisations.forcedChart.constructChart = function (selector, options) {
         var outer = d3.select(selector);
+        outer.html("");
         /* Kinds of objects to show */
         var _kinds = options["kinds"];
         /* Data we've been fed */
@@ -370,6 +373,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
  * Module with K8SVisualisations hive chart
  */
 var K8SVisualisations = function (K8SVisualisations) {
+    K8SVisualisations = K8SVisualisations || {};
     K8SVisualisations.hiveChart = K8SVisualisations.hiveChart || {};
 
     K8SVisualisations.hiveChart.init = function (selector, data, config) {
@@ -469,7 +473,6 @@ var K8SVisualisations = function (K8SVisualisations) {
                     }
                 });
                 if (!retLink.hasOwnProperty("source") || !retLink.hasOwnProperty("target")) {
-                    console.log("Cannot found relation node for link " + link);
                     retLink = link;
                 }
                 return retLink;
@@ -493,17 +496,12 @@ var K8SVisualisations = function (K8SVisualisations) {
         var links = createLinks(nodes, data.relations);
 
         var angle = function angle(d) {
-            var angle = 0,
-                found = false;
+            var angle = 0;
             axes.forEach(function (item) {
                 if (d.kind == item.kind) {
                     angle = item.angle;
-                    found = true;
                 }
             });
-            if (!found) {
-                console.log("Cannot compute angle for item " + d.kind + d.metadata.name);
-            }
             return angle;
         };
         var radius = d3.scale.linear().range([innerRadius, outerRadius]);
@@ -535,7 +533,12 @@ var K8SVisualisations = function (K8SVisualisations) {
             }).attr("x2", function (d) {
                 return radius_mapping[d.kind].range()[1];
             });
-            var tooltip = d3.select("body").append("div").attr("class", "tooltip").style("opacity", 0);
+            var tooltip = d3.select("#HiveChartTooltip");
+            // tooltip is d3 selection
+            if (tooltip.empty()) {
+                tooltip = d3.select("body").append("div").attr("id", "HiveChartTooltip").attr("class", "tooltip").style("opacity", 0);
+            }
+
             axe.append("text").attr("class", "axis-label").attr('font-size', '16px').attr('font-family', 'Open Sans').attr('text-anchor', 'middle').attr('alignment-baseline', 'central').text(function (d) {
                 return d.name;
             }).attr("transform", function (d) {
@@ -573,7 +576,10 @@ var K8SVisualisations = function (K8SVisualisations) {
             svg.selectAll(".link").data(links).enter().append("path").attr("class", "link").attr("d", d3.hive.link().angle(function (d) {
                 return Math.radians(angle(d));
             }).radius(function (d) {
-                return radius_mapping[d.kind](d.y * itemStep[d.kind] - 0.1);
+                if (d.kind) {
+                    return radius_mapping[d.kind](d.y * itemStep[d.kind] - 0.1);
+                }
+                return 0;
             }))
             //.style("stroke", function(d) { return color(d.source.kind); })
             .on("mouseover", mouseFunctions.linkOver).on("mouseout", mouseFunctions.out);
@@ -593,138 +599,123 @@ var K8SVisualisations = function (K8SVisualisations) {
             });
         }
         render();
-        var timeout;
-        function resized() {
-            window.clearTimeout(timeout);
-            timeout = window.setTimeout(render, 150);
-        }
-        window.addEventListener('resize', resized);
+        window.removeEventListener('resize', render);
+        window.addEventListener('resize', render);
     };
     return K8SVisualisations;
 }(K8SVisualisations || {});
-'use strict';
+"use strict";
 
-function topology_data_transform(clusterData) {
+/**
+* Module with K8SVisualisations main init
+*/
+var K8SVisualisations = function (K8SVisualisations) {
+  K8SVisualisations = K8SVisualisations || {};
 
-  var relations = [];
-
-  // Basic Transformation Array > Object with UID as Keys
-  var transformedData = clusterData.reduce(function (acc, cur) {
-    acc[cur.metadata.uid] = cur;
-    return acc;
-  }, {});
-
-  // Add Containers as top-level resource
-  var resource = void 0;
-  for (resource in transformedData) {
-    resource = transformedData[resource];
-    if (resource.kind === 'Pod') {
-      var _iteratorNormalCompletion = true;
-      var _didIteratorError = false;
-      var _iteratorError = undefined;
-
-      try {
-        for (var _iterator = resource.spec.containers[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-          var container = _step.value;
-
-          var containerId = resource.metadata.uid + '-' + container.name;
-          transformedData[containerId] = {};
-          transformedData[containerId].metadata = container;
-          transformedData[containerId].kind = 'Container';
-
-          // Add to relations
-          relations.push({ target: containerId, source: resource.metadata.uid });
+  K8SVisualisations.init = function (topologyDataURL) {
+    // init Isotope
+    $(document).one("shown.bs.tab", "a[href='#addons']", function (e) {
+      var $grid = $('.grid').isotope({
+        itemSelector: '.addon-item',
+        layoutMode: 'fitRows'
+      });
+      $('.grid').each(function () {
+        var $grid = $(this);
+        $grid.css('min-height', $grid.innerHeight());
+      });
+      // bind filter button click
+      $('#filters').on('click', 'a', function (ev) {
+        ev.preventDefault();
+        var filterValue = $(this).attr('data-filter');
+        $grid.isotope({ filter: filterValue });
+      });
+    });
+    $(function () {
+      // init Clipboard
+      // TODO: failing new Clipboard('.clipboard');
+      // init asPieProgress
+      $('.pie_progress').asPieProgress({
+        namespace: 'pieProgress',
+        barsize: '1',
+        size: '120',
+        min: 0,
+        trackcolor: '#ececea',
+        barcolor: '#4bbfaf',
+        numberCallback: function numberCallback(n) {
+          return n;
         }
-      } catch (err) {
-        _didIteratorError = true;
-        _iteratorError = err;
-      } finally {
-        try {
-          if (!_iteratorNormalCompletion && _iterator.return) {
-            _iterator.return();
-          }
-        } finally {
-          if (_didIteratorError) {
-            throw _iteratorError;
-          }
-        }
-      }
-    }
-  }
+      });
+      $('.pie_progress').asPieProgress('start');
 
-  var item = void 0,
-      kind = void 0;
+      // bind click actions
+      $("#ForcedLayoutGraphBtn").on("click", function (e) {
+        $("#HiveGraphContainer").css("z-index", "1").css("pointer-events", "none");
+        $("#ForcedLayoutGraphContainer").css("z-index", "2").css("pointer-events", "all");
+        $("#HiveGraphBtn").removeClass("active");
+        $("#ForcedLayoutGraphBtn").addClass("active");
+      });
 
-  var _iteratorNormalCompletion2 = true;
-  var _didIteratorError2 = false;
-  var _iteratorError2 = undefined;
-
-  try {
-    for (var _iterator2 = clusterData[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-      item = _step2.value;
-
-      kind = item.kind;
-      if (kind === 'Pod') {
-        (function () {
-          var pod = item;
-          // define relationship between pods and nodes
-          var podsNode = clusterData.find(function (i) {
-            return i.metadata.name === pod.spec.nodeName;
-          });
-          if (podsNode) {
-            relations.push({ source: pod.metadata.uid, target: podsNode.metadata.uid });
-          } else {
-            console.log("Cannot found pods node!");
-          }
-          // define relationships between pods and rep sets and replication controllers
-          if (pod.metadata.ownerReferences) {
-            var ownerReferences = pod.metadata.ownerReferences[0].uid;
-            var podsRepController = clusterData.find(function (i) {
-              return i.metadata.uid === ownerReferences;
-            });
-            relations.push({ target: pod.metadata.uid, source: podsRepController.metadata.uid });
-          } else {
-            console.log("Cannot found owner references!");
-          }
-
-          // rel'n between pods and services
-          var podsService = clusterData.find(function (i) {
-            if (i.kind === 'Service' && i.spec.selector) {
-              return i.spec.selector.run === pod.metadata.labels.run;
+      $("#HiveGraphBtn").on("click", function (e) {
+        $("#ForcedLayoutGraphContainer").css("z-index", "1").css("pointer-events", "none");
+        $("#HiveGraphContainer").css("z-index", "2").css("pointer-events", "all");
+        $("#ForcedLayoutGraphBtn").removeClass("active");
+        $("#HiveGraphBtn").addClass("active");
+      });
+      $(".topology-legend svg").each(function () {
+        var filterData = function filterData(data, filterState) {
+          var enabledKinds = Object.entries(filterState).filter(function (i) {
+            return i[1];
+          }).map(function (i) {
+            return i[0];
+          }),
+              newItems = {};
+          // filter entries by kind
+          Object.entries(window._originalGraphData.items).forEach(function (i) {
+            if (enabledKinds.indexOf(i[1].kind) != -1) {
+              newItems[i[0]] = i[1];
             }
           });
-          relations.push({ target: pod.metadata.uid, source: podsService.metadata.uid });
-        })();
-      }
+          return { items: newItems, kinds: window._originalGraphData.kinds, relations: window._originalGraphData.relations };
+        };
 
-      if (kind === 'Service') {
-        var podsService = void 0;
-        // console.log('item', item)
-        // console.log(item.spec.selector)
-      }
+        $(this).on("click", function (e) {
+          $(e.target).parent().toggleClass("filterDisabled");
+          var filterState = {};
+          $(".topology-legend svg").each(function () {
+            var $chbox = $(this);
+            filterState[$chbox.attr("data-kind")] = !$chbox.hasClass("filterDisabled");
+          });
+          initCharts(filterData(window._originalGraphData, filterState));
+        });
+      });
+    });
 
-      if (kind === 'Deployment') {
-        // console.log('item deployment', item)
+    var initCharts = function initCharts(data) {
+      var changeDetailBox = function changeDetailBox(node) {
+        console.log(node);
+        if ('item' in node) {
+          $('#resource-detail').html("<dl><dt>Name</dt><dd>" + node.item.metadata.name + "</dd><dt>Kind</dt><dd>" + node.item.kind + "</dd><dt>Namespace</dt><dd>" + node.item.metadata.namespace + "</dd></dl>");
+        } else {
+          $('#resource-detail').html("<dl><dt>Name</dt><dd>" + node.metadata.name + "</dd><dt>Kind</dt><dd>" + node.kind + "</dd><dt>Namespace</dt><dd>" + node.metadata.namespace + "</dd></dl>");
+        }
+      };
+      if (data) {
+        window._graphData = data;
       }
-    }
-  } catch (err) {
-    _didIteratorError2 = true;
-    _iteratorError2 = err;
-  } finally {
-    try {
-      if (!_iteratorNormalCompletion2 && _iterator2.return) {
-        _iterator2.return();
-      }
-    } finally {
-      if (_didIteratorError2) {
-        throw _iteratorError2;
-      }
-    }
-  }
+      K8SVisualisations.forcedChart.init("#topology-graph", $.extend({}, window._graphData), { nodeClickFn: changeDetailBox });
+      K8SVisualisations.hiveChart.init("#HiveChart", $.extend({}, window._graphData), { nodeClickFn: changeDetailBox });
+      $("#HiveGraphBtn, #ForcedLayoutGraphBtn").attr("disabled", false);
+    };
 
-  var items = transformedData;
-  return { items: items, relations: relations };
-}
+    $(document).one("shown.bs.tab", "a[href='#topology']", function (e) {
+      d3.json(topologyDataURL, function (data) {
+        window._originalGraphData = data;
+        initCharts(data);
+      });
+    });
+  };
+  return K8SVisualisations;
+}(K8SVisualisations || {});
 "use strict";
 
 /*
@@ -748,6 +739,8 @@ $(document).ready(function () {
     });
 });
 $(window).on("popstate", function () {
-    var anchor = location.hash || $("a[data-toggle='tab']").first().attr("href");
-    $("a[data-tabcode='" + anchor + "']").tab("show");
+    var anchor = location.hash;
+    if (location.hash) {
+        $("a[data-tabcode='" + anchor + "']").tab("show");
+    }
 });

@@ -2,9 +2,11 @@
  * Module with K8SVisualisations forced chart
  */
 var K8SVisualisations = function(K8SVisualisations) {
+    K8SVisualisations = K8SVisualisations || {};
     K8SVisualisations.forcedChart = K8SVisualisations.forcedChart || {};
-    K8SVisualisations.forcedChart.cache = {};
+
     K8SVisualisations.forcedChart.init = function(selector, data, config) {
+        K8SVisualisations.forcedChart.cache = {};
         config = config || {}
         if (!data) {
             throw new Error("Cannot init K8S forced layout chart visualisation, invalid data given " + data);
@@ -28,6 +30,7 @@ var K8SVisualisations = function(K8SVisualisations) {
 
     K8SVisualisations.forcedChart.constructChart = function (selector, options) {
         var outer = d3.select(selector);
+        outer.html("");
         /* Kinds of objects to show */
         var kinds = options["kinds"];
         /* Data we've been fed */
