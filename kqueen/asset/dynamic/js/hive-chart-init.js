@@ -2,6 +2,7 @@
  * Module with K8SVisualisations hive chart
  */
 var K8SVisualisations = function(K8SVisualisations) {
+    K8SVisualisations = K8SVisualisations || {};
     K8SVisualisations.hiveChart = K8SVisualisations.hiveChart || {};
 
     K8SVisualisations.hiveChart.init = function(selector, data, config) {
@@ -106,7 +107,6 @@ var K8SVisualisations = function(K8SVisualisations) {
                         }
                     });
                     if (!retLink.hasOwnProperty("source") || !retLink.hasOwnProperty("target")) {
-                        console.log("Cannot found relation node for link " + link);
                         retLink = link;
                     }
                     return retLink;
@@ -130,17 +130,12 @@ var K8SVisualisations = function(K8SVisualisations) {
         var links = createLinks(nodes, data.relations);
 
         var angle = function(d) {
-            var angle = 0,
-                found = false;
+            var angle = 0;
             axes.forEach(function(item) {
                 if (d.kind == item.kind) {
                     angle = item.angle;
-                    found = true;
                 }
             });
-            if (!found) {
-                console.log("Cannot compute angle for item " + d.kind + d.metadata.name)
-            }
             return angle
         }
         var radius = d3.scale.linear().range([innerRadius, outerRadius]);
@@ -182,9 +177,15 @@ var K8SVisualisations = function(K8SVisualisations) {
                 .attr("x2", function(d) {
                     return radius_mapping[d.kind].range()[1]
                 });
-            var tooltip = d3.select("body").append("div")
-                .attr("class", "tooltip")
-                .style("opacity", 0);
+            var tooltip = d3.select("#HiveChartTooltip");
+            // tooltip is d3 selection
+            if(tooltip.empty()){
+              tooltip = d3.select("body").append("div")
+                    .attr("id", "HiveChartTooltip")
+                    .attr("class", "tooltip")
+                   .style("opacity", 0);
+            }
+
             axe.append("text")
                 .attr("class", "axis-label")
                 .attr('font-size', '16px')
@@ -240,7 +241,10 @@ var K8SVisualisations = function(K8SVisualisations) {
                         return Math.radians(angle(d));
                     })
                     .radius(function(d) {
-                        return radius_mapping[d.kind](d.y * itemStep[d.kind] - 0.1);
+                        if(d.kind){
+                            return radius_mapping[d.kind](d.y * itemStep[d.kind] - 0.1);
+                        }
+                        return 0;
                     }))
                 //.style("stroke", function(d) { return color(d.source.kind); })
                 .on("mouseover", mouseFunctions.linkOver)
@@ -264,12 +268,8 @@ var K8SVisualisations = function(K8SVisualisations) {
             node.append("use").attr("xlink:href", function(d) { return icon(d.kind); });
         }
         render();
-        var timeout;
-        function resized() {
-          window.clearTimeout(timeout);
-          timeout = window.setTimeout(render, 150);
-        }
-        window.addEventListener('resize', resized);
+        window.removeEventListener('resize', render);
+        window.addEventListener('resize', render);
     };
     return K8SVisualisations;
 }(K8SVisualisations || {});

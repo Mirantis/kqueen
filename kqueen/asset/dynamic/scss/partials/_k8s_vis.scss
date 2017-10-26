@@ -7,6 +7,10 @@
   font-family: 'FontAwesome';
   src: url('/static/fonts/fontawesome-webfont.woff') format('woff');
 }
+#ForcedLayoutGraphContainer,
+#HiveGraphContainer{
+  overflow:hidden;
+}
 #ForcedLayoutGraphContainer{
   position: relative;
   background-color: white;
@@ -42,6 +46,12 @@
     text-align: center;
     vertical-align: middle;
     padding-bottom: 10px;
+  }
+  .topology-filter-checkbox{
+    display:none;
+  }
+  svg.filterDisabled{
+    filter: opacity(0.2);
   }
 }
 
