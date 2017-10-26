@@ -325,6 +325,7 @@ class Organization(Model, metaclass=ModelMeta):
     name = StringField(required=True)
     namespace = StringField(required=True)
 
+
 class User(Model, metaclass=ModelMeta):
     id = IdField(required=True)
     username = StringField(required=True)

@@ -2,6 +2,7 @@ import etcd
 import json
 import logging
 import uuid
+import importlib
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +40,7 @@ class Field:
         return self.value
 
     def serialize(self):
+
         if self.value:
             return str(self.value)
         else:
@@ -132,7 +134,7 @@ class RelationField(Field):
             self.set_value(obj)
 
     def _get_related_class(self, class_name):
-        module = __import__('kqueen.models')
+        module = importlib.import_module('kqueen.models')
 
         return getattr(module, class_name)
 
@@ -328,6 +330,7 @@ class Model:
 
         if assign_id:
             self.verify_id()
+
         if validate and not self.validate():
             raise ValueError('Validation for model failed')
 
