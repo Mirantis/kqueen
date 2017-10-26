@@ -632,7 +632,7 @@ var K8SVisualisations = function (K8SVisualisations) {
     });
     $(function () {
       // init Clipboard
-      // TODO: failing new Clipboard('.clipboard');
+      new Clipboard('.clipboard');
       // init asPieProgress
       $('.pie_progress').asPieProgress({
         namespace: 'pieProgress',
