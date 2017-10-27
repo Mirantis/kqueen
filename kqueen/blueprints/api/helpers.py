@@ -2,7 +2,7 @@ from flask import abort
 from uuid import UUID
 
 
-def get_object(_class, pk):
+def get_object(object_class, pk):
 
     # read uuid
     try:
@@ -12,7 +12,7 @@ def get_object(_class, pk):
 
     # load object
     try:
-        obj = _class.load(object_id)
+        obj = object_class.load(object_id)
     except NameError:
         abort(404)
 

@@ -124,6 +124,8 @@ class RelationField(Field):
 
     """
 
+    # TODO: make Model property - limit relation objects only to one model
+
     def serialize(self):
         if self.value and self.__class__.is_field:
             return '{model_name}:{object_id}'.format(
