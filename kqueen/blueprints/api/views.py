@@ -94,7 +94,7 @@ def cluster_create():
 def cluster_get(pk):
     obj = get_object(Cluster, pk)
 
-    return jsonify(obj.get_dict())
+    return jsonify(obj.get_dict(expand=True))
 
 
 @api.route('/clusters/<pk>', methods=['PATCH'])
@@ -113,7 +113,7 @@ def cluster_update(pk):
 
     try:
         obj.save()
-        return jsonify(obj.get_dict())
+        return jsonify(obj.get_dict(expand=True))
     except:
         abort(500)
 
@@ -176,7 +176,7 @@ def provisioner_create():
         obj = Provisioner(**request.json)
         try:
             obj.save()
-            output = obj.get_dict()
+            output = obj.get_dict(expand=True)
         except:
             abort(500)
 
@@ -188,7 +188,7 @@ def provisioner_create():
 def provisioner_get(pk):
     obj = get_object(Provisioner, pk)
 
-    return jsonify(obj.get_dict())
+    return jsonify(obj.get_dict(expand=True))
 
 
 @api.route('/provisioners/<pk>', methods=['PATCH'])
@@ -207,7 +207,7 @@ def provisioner_update(pk):
 
     try:
         obj.save()
-        return jsonify(obj.get_dict())
+        return jsonify(obj.get_dict(expand=True))
     except:
         abort(500)
 
@@ -247,7 +247,7 @@ def organization_create():
         obj = Organization(**request.json)
         try:
             obj.save()
-            output = obj.get_dict()
+            output = obj.get_dict(expand=True)
         except:
             abort(500)
 
@@ -259,7 +259,7 @@ def organization_create():
 def organization_get(pk):
     obj = get_object(Organization, pk)
 
-    return jsonify(obj.get_dict())
+    return jsonify(obj.get_dict(expand=True))
 
 
 @api.route('/organizations/<pk>', methods=['PATCH'])
@@ -278,7 +278,7 @@ def organization_update(pk):
 
     try:
         obj.save()
-        return jsonify(obj.get_dict())
+        return jsonify(obj.get_dict(expand=True))
     except:
         abort(500)
 
@@ -318,7 +318,7 @@ def user_create():
         obj = User(**request.json)
         try:
             obj.save()
-            output = obj.get_dict()
+            output = obj.get_dict(expand=True)
         except:
             abort(500)
 
@@ -330,7 +330,7 @@ def user_create():
 def user_get(pk):
     obj = get_object(User, pk)
 
-    return jsonify(obj.get_dict())
+    return jsonify(obj.get_dict(expand=True))
 
 
 @api.route('/users/<pk>', methods=['PATCH'])
@@ -349,7 +349,7 @@ def user_update(pk):
 
     try:
         obj.save()
-        return jsonify(obj.get_dict())
+        return jsonify(obj.get_dict(expand=True))
     except:
         abort(500)
 
