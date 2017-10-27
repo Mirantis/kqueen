@@ -7,7 +7,6 @@ Subpackages
 .. toctree::
 
     kqueen.blueprints.api
-    kqueen.blueprints.ui
 
 Module contents
 ---------------

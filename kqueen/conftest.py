@@ -1,4 +1,3 @@
-from flask import url_for
 from flask_jwt import JWT
 from kqueen.auth import authenticate, identity
 from kqueen.models import Cluster
@@ -51,17 +50,6 @@ def provisioner():
     }
 
     return Provisioner.create(**create_kwargs)
-
-
-@pytest.fixture
-def client_login(client):
-    _user = user()
-
-    client.post(url_for('ui.login'), data={
-        'username': _user.username,
-        'password': _user.password,
-    })
-    return client
 
 
 @pytest.fixture
