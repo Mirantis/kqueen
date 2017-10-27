@@ -153,6 +153,28 @@ class TestClusterCRUD(BaseTestCRUD):
         assert response.status_code == 200
         assert obj.name == 'Provisioned'
 
+    def test_provision_failed(self, provisioner, monkeypatch):
+        provisioner.save()
+
+        def fake_provision(self, *args, **kwargs):
+            return (False, 'Testing msg')
+
+        monkeypatch.setattr(provisioner.get_engine_cls(), 'provision', fake_provision)
+
+        post_data = {
+            'name': 'Testing cluster',
+            'provisioner': 'Provisioner:{}'.format(provisioner.id),
+        }
+
+        response = self.client.post(
+            url_for('api.cluster_create'),
+            data=json.dumps(post_data),
+            headers=self.auth_header,
+            content_type='application/json',
+        )
+
+        assert response.status_code == 500
+
     def test_return_400_missing_json(self):
         response = self.client.post(
             url_for('api.cluster_create'),

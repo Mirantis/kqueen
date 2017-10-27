@@ -80,7 +80,11 @@ def cluster_create():
             output = obj.get_dict(expand=True)
 
             # start provisioning
-            obj.engine.provision()
+            prov_status, prov_msg = obj.engine.provision()
+
+            if not prov_status:
+                logger.error('Provisioning failed: {}'.format(prov_msg))
+                abort(500)
 
         except Exception as e:
             logger.error(e)
