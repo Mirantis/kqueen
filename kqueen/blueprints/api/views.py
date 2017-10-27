@@ -62,7 +62,7 @@ def cluster_list():
     output = []
 
     for obj in list(Cluster.list(return_objects=True).values()):
-        output.append(obj.get_dict())
+        output.append(obj.get_dict(expand=True))
 
     return jsonify(output)
 
@@ -162,7 +162,7 @@ def provisioner_list():
     output = []
 
     for obj in list(Provisioner.list(return_objects=True).values()):
-        output.append(obj.get_dict())
+        output.append(obj.get_dict(expand=True))
 
     return jsonify(output)
 
@@ -233,7 +233,7 @@ def organization_list():
     output = []
 
     for obj in list(Organization.list(return_objects=True).values()):
-        output.append(obj.get_dict())
+        output.append(obj.get_dict(expand=True))
 
     return jsonify(output)
 
@@ -304,7 +304,7 @@ def user_list():
     output = []
 
     for obj in list(User.list(return_objects=True).values()):
-        output.append(obj.get_dict())
+        output.append(obj.get_dict(expand=True))
 
     return jsonify(output)
 
