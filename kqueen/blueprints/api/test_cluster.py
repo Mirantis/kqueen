@@ -133,6 +133,8 @@ class TestClusterCRUD(BaseTestCRUD):
             self.cluster.name = 'Provisioned'
             self.cluster.save()
 
+            return (True, None)
+
         monkeypatch.setattr(provisioner.get_engine_cls(), 'provision', fake_provision)
 
         post_data = {
