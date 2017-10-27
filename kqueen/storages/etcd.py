@@ -154,7 +154,7 @@ class RelationField(Field):
         try:
             class_name = self.value.__class__.__name__
             selfid = self.value.id
-        except AttributeError:
+        except:
             return False
 
         return class_name and selfid
