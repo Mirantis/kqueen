@@ -6,8 +6,6 @@
 
 ## Development
 
-### Backend
-
 * Bootstrap environment
 
 ```
@@ -24,27 +22,6 @@ kqueen
 etcdctl rm --recursive /kqueen
 ./devenv.py
 ```
-
-### Frontend
-
-* Prepare JS building environment
-
-```
-npm install
-```
-
-* Build static resources
-
-```
-gulp build
-```
-
-* Start local development server with auto-restart
-
-```
-gulp dev
-```
-
 
 ## Configuration
 
