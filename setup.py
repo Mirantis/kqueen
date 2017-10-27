@@ -29,7 +29,7 @@ setup(
     ],
     classifiers=[
         'Operating System :: POSIX :: Linux',
-        Programming Language :: Python',
+        'Programming Language :: Python',
         'Programming Language :: Python :: Implementation :: CPython',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.6',
