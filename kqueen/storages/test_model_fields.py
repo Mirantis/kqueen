@@ -22,18 +22,36 @@ def create_model(required=False):
 
 model_kwargs = {'string': 'abc123', 'json': {'a': 1, 'b': 2, 'c': 'tri'}, 'secret': 'pass'}
 model_fields = ['id', 'string', 'json', 'secret', 'relation']
-model_serialized = '{"string": "abc123", "json": "{\\"a\\": 1, \\"b\\": 2, \\"c\\": \\"tri\\"}", "secret": "pass"}'
+
+
+def model_serialized(related=None):
+    if related:
+        return (
+            '{{"string": "abc123", "json": "{{\\"a\\": 1, \\"b\\": 2, \\"c\\": \\"tri\\"}}", '
+            '"secret": "pass", "relation": "{}:{}"}}'.format(
+                related.__class__.__name__,
+                related.id,
+            )
+        )
+    else:
+        return (
+            '{"string": "abc123", "json": "{\\"a\\": 1, \\"b\\": 2, \\"c\\": \\"tri\\"}", '
+            '"secret": "pass"}'
+        )
 
 
 @pytest.fixture
-def create_object(**kwargs):
+def create_object():
     model = create_model()
-    if kwargs:
-        use_kwargs = kwargs
-    else:
-        use_kwargs = model_kwargs
 
-    return model(**use_kwargs)
+    obj1 = model(**model_kwargs)
+    obj2 = model(**model_kwargs)
+
+    obj2.save()
+
+    obj1.relation = obj2
+
+    return obj1
 
 
 class TestModelInit:
@@ -77,6 +95,7 @@ class TestSave:
 class TestModelAddId:
     def test_id_added(self, create_object):
         obj = create_object
+        print(obj)
 
         assert obj.id is None
         assert obj.verify_id()
@@ -102,8 +121,9 @@ class TestGetFieldNames:
         assert set(field_names) == set(req)
 
     def test_get_dict(self, create_object):
-        print(create_object.__dict__)
-        print(create_object.get_dict())
+        dicted = create_object.get_dict()
+
+        assert isinstance(dicted, dict)
 
 
 class TestFieldSetGet:
@@ -121,8 +141,6 @@ class TestFieldSetGet:
         obj = model_class()
         setattr(obj, field_name, model_kwargs[field_name])
 
-        print(obj.get_dict())
-
         assert getattr(obj, field_name) == model_kwargs[field_name]
         assert obj.get_dict()[field_name] == model_kwargs[field_name]
         assert getattr(obj, '_{}'.format(field_name)).get_value() == model_kwargs[field_name]
@@ -134,14 +152,45 @@ class TestSerialization:
     def test_serizalization(self, create_object):
         serialized = create_object.serialize()
 
-        assert serialized == model_serialized
+        assert serialized == model_serialized(related=create_object.relation)
 
-    def test_deserialization(self, create_object):
+    def test_deserialization(self, create_object, monkeypatch):
+        def fake(self, class_name):
+            return create_object.__class__
+
+        monkeypatch.setattr(RelationField, '_get_related_class', fake)
+
         object_class = create_object.__class__
         create_object.save()
         new_object = object_class.deserialize(create_object.serialize())
 
         assert new_object.get_dict() == create_object.get_dict()
+
+
+class TestGetDict:
+    """Verify objects are serialized properly"""
+
+    def setup(self):
+        self.obj1 = create_object()
+        self.obj1.string = 'obj1'
+        self.obj2 = create_object()
+        self.obj1.string = 'obj2'
+
+        self.obj1.save()
+        self.obj2.save()
+
+        self.obj1.relation = self.obj2
+
+    def test_get_dict(self):
+        dicted = self.obj1.get_dict(expand=False)
+
+        assert dicted['relation'] == self.obj2
+
+    def test_get_dict_expand(self):
+        dicted = self.obj1.get_dict(expand=True)
+
+        assert isinstance(dicted['relation'], dict)
+        assert dicted['relation'] == self.obj2.get_dict()
 
 
 class TestDuplicateId:
@@ -173,8 +222,10 @@ class TestDuplicateId:
 
 class TestRelationField:
     def setup(self):
-        self.obj1 = create_object(name='obj1')
-        self.obj2 = create_object(name='obj2')
+        self.obj1 = create_object()
+        self.obj1.name = 'obj1'
+        self.obj2 = create_object()
+        self.obj2.name = 'obj2'
 
         self.obj1.save()
         self.obj2.save()

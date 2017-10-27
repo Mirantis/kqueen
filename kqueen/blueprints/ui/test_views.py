@@ -18,6 +18,7 @@ def test_login_required(client, view, values):
     assert response.status_code == 302
 
 
+@pytest.mark.skip('We don\'t care about UI anymore in this repo')
 def test_index(client_login):
     response = client_login.get(url_for('.index'))
     assert response.status_code == 200

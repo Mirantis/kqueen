@@ -26,10 +26,16 @@ def app():
 def cluster():
     _uuid = uuid.uuid4()
 
+    prov = Provisioner(
+        name='Fixtured provisioner',
+        engine='kqueen.engines.ManualEngine',
+    )
+    prov.save(check_status=False)
+
     create_kwargs = {
         'id': _uuid,
         'name': 'Name for cluster {}'.format(_uuid),
-        'provisioner': 'Jenkins',
+        'provisioner': prov,
         'state': 'deployed',
         'kubeconfig': yaml.load(open('kubeconfig_localhost', 'r').read()),
     }
@@ -50,6 +56,7 @@ def provisioner():
 @pytest.fixture
 def client_login(client):
     _user = user()
+
     client.post(url_for('ui.login'), data={
         'username': _user.username,
         'password': _user.password,
@@ -68,25 +75,28 @@ def auth_header(client):
         '/api/v1/auth',
         data=json.dumps(data),
         content_type='application/json')
+
     return {'Authorization': 'JWT %s' % response.json['access_token']}
 
 
 @pytest.fixture
-def user():
-    uuid_organization = '22d8df64-4ac9-4be0-89a7-c45ea0fc85da'
+def organization():
     organization = Organization(
-        id=uuid_organization,
         name='DemoOrg',
-        namespace='demoorg'
+        namespace='demoorg',
     )
     organization.save()
 
-    uuid_user = '22d8df64-4ac9-4be0-89a7-c45ea0fc85za'
+    return organization
+
+
+@pytest.fixture
+def user():
     user = User(
-        id=uuid_user,
         username='admin',
         password='default',
-        organization=uuid_organization
+        organization=organization(),
     )
     user.save()
+
     return user

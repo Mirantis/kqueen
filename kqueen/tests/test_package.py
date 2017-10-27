@@ -1,10 +1,6 @@
-from .server import create_app
+from kqueen.server import create_app
 
 import pytest
-
-
-def test_dummy():
-    assert True
 
 
 def test_main(monkeypatch):

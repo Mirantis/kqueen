@@ -2,6 +2,7 @@ import etcd
 import json
 import logging
 import uuid
+import importlib
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +40,7 @@ class Field:
         return self.value
 
     def serialize(self):
+
         if self.value:
             return str(self.value)
         else:
@@ -60,6 +62,16 @@ class Field:
 
     def empty(self):
         return self.value is None
+
+    def validate(self):
+        """
+        This method is called before saving model and can be used to validate format or
+        consitence of fields
+
+        Returns:
+            Result of validation. True for success, False otherwise.
+        """
+        return True
 
     def __str__(self):
         return str(self.value)
@@ -112,6 +124,8 @@ class RelationField(Field):
 
     """
 
+    # TODO: make Model property - limit relation objects only to one model
+
     def serialize(self):
         if self.value and self.__class__.is_field:
             return '{model_name}:{object_id}'.format(
@@ -132,9 +146,26 @@ class RelationField(Field):
             self.set_value(obj)
 
     def _get_related_class(self, class_name):
-        module = __import__('kqueen.models')
+        module = importlib.import_module('kqueen.models')
 
         return getattr(module, class_name)
+
+    def validate(self):
+        try:
+            class_name = self.value.__class__.__name__
+            selfid = self.value.id
+        except:
+            return False
+
+        return class_name and selfid
+
+    def set_value(self, value):
+        """Detect serialized format and deserialized according to format."""
+        if isinstance(value, str) and ':' in value:
+            # deserialize
+            self.deserialize(value)
+        else:
+            super(RelationField, self).set_value(value)
 
 
 class ModelMeta(type):
@@ -209,10 +240,6 @@ class Model:
     @classmethod
     def create(cls, **kwargs):
         """Create new object"""
-        logger.debug('Model create')
-        logger.debug(cls)
-        logger.debug(kwargs)
-
         o = cls(**kwargs)
 
         return o
@@ -328,6 +355,7 @@ class Model:
 
         if assign_id:
             self.verify_id()
+
         if validate and not self.validate():
             raise ValueError('Validation for model failed')
 
@@ -362,18 +390,38 @@ class Model:
             hidden_field = '_{}'.format(field)
             field_object = getattr(self, hidden_field)
 
+            # validation
+            # TODO: move to validate method of Field
             if field_object.required and field_object.value is None:
+                return False
+
+            if field_object.value and not field_object.validate():
                 return False
 
         return True
 
-    def get_dict(self):
+    def get_dict(self, expand=False):
+        """Return object properties represented by dict.
+
+        Attributes:
+            expand (bool): Expand properties to dict (if possible).
+
+        Returns:
+            Dict with object properties
+        """
+
         output = {}
 
         for field_name in self.__class__.get_field_names():
-            field = getattr(self, field_name)
-            if field:
-                output[field_name] = field
+            field = getattr(self, '_{}'.format(field_name))
+
+            if expand and hasattr(field.value, 'get_dict'):
+                wr = field.value.get_dict()
+            else:
+                wr = field.get_value()
+
+            if wr:
+                output[field_name] = wr
 
         return output
 
@@ -398,3 +446,5 @@ class Model:
 # TODO: implement unique field:w
 # TODO: implement predefined values for fields
 # TODO: use validation
+# TODO: add is_saved method
+# TODO: add load raw data method

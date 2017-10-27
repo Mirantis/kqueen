@@ -5,7 +5,7 @@ from flask_jwt import JWT
 from kqueen.auth import authenticate, identity
 from kqueen.blueprints.api.views import api
 from kqueen.blueprints.ui.views import ui
-from kqueen.serializers import CustomJSONEncoder
+from kqueen.serializers import KqueenJSONEncoder
 from werkzeug.contrib.cache import SimpleCache
 
 import logging
@@ -20,7 +20,7 @@ config_file = os.environ.get('KQUEEN_CONFIG_FILE', 'config/dev.py')
 
 def create_app(config_file=config_file):
     app = Flask(__name__, static_folder='./asset/static')
-    app.json_encoder = CustomJSONEncoder
+    app.json_encoder = KqueenJSONEncoder
 
     app.register_blueprint(ui, url_prefix='/ui')
     app.register_blueprint(api, url_prefix='/api/v1')

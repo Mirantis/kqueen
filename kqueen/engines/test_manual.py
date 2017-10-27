@@ -1,5 +1,6 @@
 from .manual import ManualEngine
 from kqueen.models import Cluster
+from kqueen.models import Provisioner
 
 import yaml
 import pytest
@@ -7,15 +8,22 @@ import pytest
 
 class TestManualEngine:
     def setup(self):
+        create_kwargs_provisioner = {
+            'name': 'Testing manual',
+            'engine': 'kqueen.engines.ManualEngine'
+        }
 
-        create_kwargs = {
+        prov = Provisioner(**create_kwargs_provisioner)
+        prov.save(check_status=False)
+
+        create_kwargs_cluster = {
             'name': 'Testing cluster for manual provisioner',
-            'provisioner': 'Manual',
+            'provisioner': prov,
             'state': 'deployed',
             'kubeconfig': yaml.load(open('kubeconfig_localhost', 'r').read()),
         }
 
-        self.cluster = Cluster.create(**create_kwargs)
+        self.cluster = Cluster.create(**create_kwargs_cluster)
         self.engine = ManualEngine(cluster=self.cluster)
 
     def test_initialization(self):
