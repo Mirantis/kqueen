@@ -1,6 +1,4 @@
 from flask import Flask
-from flask import redirect
-from flask import url_for
 from flask_jwt import JWT
 from kqueen.auth import authenticate, identity
 from kqueen.blueprints.api.views import api

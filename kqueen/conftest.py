@@ -1,4 +1,3 @@
-from flask import url_for
 from flask_jwt import JWT
 from kqueen.auth import authenticate, identity
 from kqueen.models import Cluster
