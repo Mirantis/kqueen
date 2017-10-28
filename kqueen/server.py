@@ -4,28 +4,24 @@ from kqueen.auth import authenticate, identity
 from kqueen.blueprints.api.views import api
 from kqueen.serializers import KqueenJSONEncoder
 from werkzeug.contrib.cache import SimpleCache
+from kqueen.config import current_config
 
 import logging
-import os
 
 logger = logging.getLogger(__name__)
-
 cache = SimpleCache()
 
-config_file = os.environ.get('KQUEEN_CONFIG_FILE', 'config/dev.py')
 
-
-def create_app(config_file=config_file):
+def create_app(config_file=None):
     app = Flask(__name__, static_folder='./asset/static')
     app.json_encoder = KqueenJSONEncoder
 
     app.register_blueprint(api, url_prefix='/api/v1')
 
     # load configuration
-    if app.config.from_pyfile(config_file):
-        logger.info('Loading configuration from {}'.format(config_file))
-    else:
-        raise Exception('Config file {} could not be loaded.'.format(config_file))
+    config = current_config()
+    logger.info('Loading configuration from {}'.format(config.source_file))
+    app.config.from_object(config)
 
     return app
 

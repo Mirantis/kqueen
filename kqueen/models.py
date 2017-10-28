@@ -1,13 +1,13 @@
-from flask import current_app as app
 from importlib import import_module
+from kqueen.config import current_config
 from kqueen.kubeapi import KubernetesAPI
 from kqueen.storages.etcd import IdField
 from kqueen.storages.etcd import JSONField
 from kqueen.storages.etcd import Model
 from kqueen.storages.etcd import ModelMeta
 from kqueen.storages.etcd import RelationField
-from kqueen.storages.etcd import StringField
 from kqueen.storages.etcd import SecretField
+from kqueen.storages.etcd import StringField
 from tempfile import mkstemp
 
 import logging
@@ -16,6 +16,7 @@ import subprocess
 import yaml
 
 logger = logging.getLogger(__name__)
+config = current_config()
 
 #
 # Model definition
@@ -31,11 +32,11 @@ class Cluster(Model, metaclass=ModelMeta):
     metadata = JSONField()
 
     def get_state(self):
-        if self.state != app.config['CLUSTER_PROVISIONING_STATE']:
+        if self.state != config.CLUSTER_PROVISIONING_STATE:
             return self.state
         try:
             cluster = self.engine.cluster_get()
-            if cluster['state'] == app.config['CLUSTER_PROVISIONING_STATE']:
+            if cluster['state'] == config.CLUSTER_PROVISIONING_STATE:
                 return self.state
             self.state = cluster['state']
             self.save()
@@ -289,7 +290,7 @@ class Provisioner(Model, metaclass=ModelMeta):
         return getattr(self.get_engine_cls(), 'verbose_name', self.engine)
 
     def engine_status(self, save=True):
-        state = app.config['PROVISIONER_UNKNOWN_STATE']
+        state = config.PROVISIONER_UNKNOWN_STATE
         engine_class = self.get_engine_cls()
         if engine_class:
             state = engine_class.engine_status()
