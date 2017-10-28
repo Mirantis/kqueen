@@ -46,3 +46,18 @@ services:
       - controller-manager
       - --master=apiserver:8080
       - --v=2
+  kqueen_ui:
+    image: atengler/kqueen-ui
+    ports:
+      - 127.0.0.1:5080:5080
+    environment:
+      KQUEEN_API_URL: 'http://172.16.238.1:5000/api/v1/'
+      KQUEEN_AUTH_URL: 'http://172.16.238.1:5000/api/v1/auth'
+networks:
+  default:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+      - subnet: 172.16.238.0/24
+        gateway: 172.16.238.1
