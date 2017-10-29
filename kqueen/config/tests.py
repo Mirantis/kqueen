@@ -38,10 +38,13 @@ class TestCurrentConfig:
 class TestConfigFromEnv:
     @pytest.mark.parametrize('name,value', [
         ('KQUEEN_DUMMY', '123'),
+        ('KQUEEN_ETCD_HOST', '4001'),
     ])
     def test_env_var(self, monkeypatch, name, value):
         monkeypatch.setenv(name, value)
         config = current_config()
 
-        assert config.get(name) == value
-        assert config[name] == value
+        config_key_name = name[7:]
+
+        assert config.get(config_key_name) == value
+        assert config[config_key_name] == value

@@ -39,7 +39,8 @@ def apply_env_changes(config, prefix='KQUEEN_'):
 
     for name, value in os.environ.items():
         if name.startswith(prefix):
-            setattr(config, name, value)
+            config_key_name = name[len(prefix):]
+            setattr(config, config_key_name, value)
 
 
 def current_config(config_file=None):
