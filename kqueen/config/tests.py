@@ -34,3 +34,14 @@ class TestCurrentConfig:
 
         assert config.__name__ == 'Config'
         assert config.source_file == select_file(config_file)
+
+
+class TestConfigFromEnv:
+    @pytest.mark.parametrize('name,value', [
+        ('KQUEEN_DUMMY', '123'),
+    ])
+    def test_env_var(self, monkeypatch, name, value):
+        monkeypatch.setenv(name, value)
+        config = current_config()
+
+        assert getattr(config, name) == value

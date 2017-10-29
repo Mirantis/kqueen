@@ -25,7 +25,7 @@ etcdctl rm --recursive /kqueen
 
 ## Configuration
 
-We load configuration from file `config/dev.py` by default and this can be configured by `KQUEEN_CONFIG_FILE` environment varialbe.
+We load configuration from file `config/dev.py` by default and this can be configured by `KQUEEN_CONFIG_FILE` environment variable. Any environment variable matching name `KQUEEN_*` will be loaded and saved to configuration.
 
 | Configuration option | Type | Default value | Description |
 | --- | --- | --- | --- |
