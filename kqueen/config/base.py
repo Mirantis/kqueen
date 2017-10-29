@@ -4,6 +4,10 @@ from datetime import timedelta
 class BaseConfig:
     DEBUG = False
 
+    # etcd settings
+    # ETCD_HOST
+    # ETCD_PORT
+
     # JWT auth options
     JWT_DEFAULT_REALM = 'Login Required'
     JWT_AUTH_URL_RULE = '/api/v1/auth'
