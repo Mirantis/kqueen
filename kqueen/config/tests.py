@@ -32,7 +32,6 @@ class TestCurrentConfig:
     def test_current_config(self, config_file):
         config = current_config(config_file)
 
-        assert config.__name__ == 'Config'
         assert config.source_file == select_file(config_file)
 
 
@@ -44,4 +43,5 @@ class TestConfigFromEnv:
         monkeypatch.setenv(name, value)
         config = current_config()
 
-        assert getattr(config, name) == value
+        assert config.get(name) == value
+        assert config[name] == value

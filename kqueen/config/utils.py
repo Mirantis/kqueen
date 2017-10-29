@@ -1,5 +1,7 @@
-import os
+from flask.config import Config
+
 import importlib
+import os
 
 CONFIG_FILE_DEFAULT = 'config/dev.py'
 
@@ -46,9 +48,10 @@ def current_config(config_file=None):
 
     module = importlib.import_module('kqueen.{}'.format(module_name))
     config = getattr(module, 'Config')
-
-    setattr(config, 'source_file', read_file)
-
     apply_env_changes(config)
 
-    return config
+    flask_config = Config('./')
+    flask_config.from_object(config)
+    setattr(flask_config, 'source_file', read_file)
+
+    return flask_config
