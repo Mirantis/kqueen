@@ -5,10 +5,13 @@ from uuid import UUID
 def get_object(object_class, pk):
 
     # read uuid
-    try:
-        object_id = UUID(pk, version=4)
-    except ValueError:
-        abort(400)
+    if isinstance(pk, UUID):
+        object_id = pk
+    else:
+        try:
+            object_id = UUID(pk, version=4)
+        except ValueError:
+            abort(400)
 
     # load object
     try:

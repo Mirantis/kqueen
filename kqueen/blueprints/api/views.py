@@ -93,7 +93,7 @@ def cluster_create():
     return jsonify(output)
 
 
-@api.route('/clusters/<pk>', methods=['GET'])
+@api.route('/clusters/<uuid:pk>', methods=['GET'])
 @jwt_required()
 def cluster_get(pk):
     obj = get_object(Cluster, pk)
@@ -101,7 +101,7 @@ def cluster_get(pk):
     return jsonify(obj.get_dict(expand=True))
 
 
-@api.route('/clusters/<pk>', methods=['PATCH'])
+@api.route('/clusters/<uuid:pk>', methods=['PATCH'])
 @jwt_required()
 def cluster_update(pk):
     if not request.json:
@@ -122,7 +122,7 @@ def cluster_update(pk):
         abort(500)
 
 
-@api.route('/clusters/<pk>', methods=['DELETE'])
+@api.route('/clusters/<uuid:pk>', methods=['DELETE'])
 @jwt_required()
 def cluster_delete(pk):
     obj = get_object(Cluster, pk)
@@ -135,7 +135,7 @@ def cluster_delete(pk):
     return jsonify({'id': obj.id, 'state': 'deleted'})
 
 
-@api.route('/clusters/<pk>/status', methods=['GET'])
+@api.route('/clusters/<uuid:pk>/status', methods=['GET'])
 @jwt_required()
 def cluster_status(pk):
     obj = get_object(Cluster, pk)
@@ -143,14 +143,14 @@ def cluster_status(pk):
     return jsonify(obj.status())
 
 
-@api.route('/clusters/<pk>/topology-data', methods=['GET'])
+@api.route('/clusters/<uuid:pk>/topology-data', methods=['GET'])
 def cluster_topology_data(pk):
     obj = get_object(Cluster, pk)
 
     return jsonify(obj.topology_data())
 
 
-@api.route('/clusters/<pk>/kubeconfig', methods=['GET'])
+@api.route('/clusters/<uuid:pk>/kubeconfig', methods=['GET'])
 @jwt_required()
 def cluster_kubeconfig(pk):
     obj = get_object(Cluster, pk)
@@ -187,7 +187,7 @@ def provisioner_create():
     return jsonify(output)
 
 
-@api.route('/provisioners/<pk>', methods=['GET'])
+@api.route('/provisioners/<uuid:pk>', methods=['GET'])
 @jwt_required()
 def provisioner_get(pk):
     obj = get_object(Provisioner, pk)
@@ -195,7 +195,7 @@ def provisioner_get(pk):
     return jsonify(obj.get_dict(expand=True))
 
 
-@api.route('/provisioners/<pk>', methods=['PATCH'])
+@api.route('/provisioners/<uuid:pk>', methods=['PATCH'])
 @jwt_required()
 def provisioner_update(pk):
     if not request.json:
@@ -216,7 +216,7 @@ def provisioner_update(pk):
         abort(500)
 
 
-@api.route('/provisioners/<pk>', methods=['DELETE'])
+@api.route('/provisioners/<uuid:pk>', methods=['DELETE'])
 @jwt_required()
 def provisioner_delete(pk):
     obj = get_object(Provisioner, pk)
@@ -258,7 +258,7 @@ def organization_create():
     return jsonify(output)
 
 
-@api.route('/organizations/<pk>', methods=['GET'])
+@api.route('/organizations/<uuid:pk>', methods=['GET'])
 @jwt_required()
 def organization_get(pk):
     obj = get_object(Organization, pk)
@@ -266,7 +266,7 @@ def organization_get(pk):
     return jsonify(obj.get_dict(expand=True))
 
 
-@api.route('/organizations/<pk>', methods=['PATCH'])
+@api.route('/organizations/<uuid:pk>', methods=['PATCH'])
 @jwt_required()
 def organization_update(pk):
     if not request.json:
@@ -287,7 +287,7 @@ def organization_update(pk):
         abort(500)
 
 
-@api.route('/organizations/<pk>', methods=['DELETE'])
+@api.route('/organizations/<uuid:pk>', methods=['DELETE'])
 @jwt_required()
 def organization_delete(pk):
     obj = get_object(Organization, pk)
@@ -329,7 +329,7 @@ def user_create():
     return jsonify(output)
 
 
-@api.route('/users/<pk>', methods=['GET'])
+@api.route('/users/<uuid:pk>', methods=['GET'])
 @jwt_required()
 def user_get(pk):
     obj = get_object(User, pk)
@@ -337,7 +337,7 @@ def user_get(pk):
     return jsonify(obj.get_dict(expand=True))
 
 
-@api.route('/users/<pk>', methods=['PATCH'])
+@api.route('/users/<uuid:pk>', methods=['PATCH'])
 @jwt_required()
 def user_update(pk):
     if not request.json:
@@ -358,7 +358,7 @@ def user_update(pk):
         abort(500)
 
 
-@api.route('/users/<pk>', methods=['DELETE'])
+@api.route('/users/<uuid:pk>', methods=['DELETE'])
 @jwt_required()
 def user_delete(pk):
     obj = get_object(User, pk)
