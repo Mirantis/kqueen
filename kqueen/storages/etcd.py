@@ -3,13 +3,19 @@ import json
 import logging
 import uuid
 import importlib
+from kqueen.config import current_config
 
 logger = logging.getLogger(__name__)
 
 
 class EtcdOrm:
     def __init__(self, **kwargs):
-        self.client = etcd.Client()
+        config = current_config()
+
+        self.client = etcd.Client(
+            host=config.get('ETCD_HOST', 'localhost'),
+            port=int(config.get('ETCD_PORT', 4001)),
+        )
         self.namespace = kwargs.get('namespace', 'default')
         self.prefix = kwargs.get('prefix', '/kqueen/obj/')
 

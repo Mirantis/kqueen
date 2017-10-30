@@ -1,7 +1,5 @@
 from kqueen.server import create_app
 
-import pytest
-
 
 def test_main(monkeypatch):
     global started
@@ -33,5 +31,5 @@ def test_setup(monkeypatch):
 
 
 def test_app_config():
-    with pytest.raises(Exception):
-        create_app(config_file='nonexistent_file.py')
+    app = create_app(config_file='nonexistent_file.py')
+    assert hasattr(app, 'config')

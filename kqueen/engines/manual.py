@@ -1,15 +1,7 @@
 from .base import BaseEngine
-from flask import current_app as app
+from kqueen.config import current_config
 
-# Ugly patch to make this module importable outside app context to generate docs
-# TODO: fix this by globally importable config
-if not app:
-    import kqueen.config.dev as config_dev
-    app = type(
-        'app',
-        (object,),
-        {'config': {k: v for (k, v) in config_dev.__dict__.items() if not k.startswith("__")}}
-    )
+config = current_config()
 
 
 class ManualEngine(BaseEngine):
@@ -51,7 +43,7 @@ class ManualEngine(BaseEngine):
         Implementation of :func:`~kqueen.engines.base.BaseEngine.provision`
         """
 
-        self.cluster.state = app.config['CLUSTER_OK_STATE']
+        self.cluster.state = config.get('CLUSTER_OK_STATE')
         self.cluster.save()
 
         return (True, None)
@@ -95,7 +87,7 @@ class ManualEngine(BaseEngine):
         return {
             'response': 0,
             'progress': 100,
-            'result': app.config['CLUSTER_OK_STATE'],
+            'result': config.get('CLUSTER_OK_STATE'),
         }
 
     @staticmethod
@@ -104,4 +96,4 @@ class ManualEngine(BaseEngine):
 
         Implementation of :func:`~kqueen.engines.base.BaseEngine.engine_status`
         """
-        return app.config['PROVISIONER_OK_STATE']
+        return config.get('PROVISIONER_OK_STATE')

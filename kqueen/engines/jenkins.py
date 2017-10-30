@@ -1,6 +1,6 @@
-from flask import current_app as app
 from kqueen.engines.base import BaseEngine
 from kqueen.server import cache
+from kqueen.config import current_config
 
 import jenkins
 import logging
@@ -8,35 +8,27 @@ import requests
 import time
 import yaml
 
-# Ugly patch to make this module importable outside app context to generate docs
-if not app:
-    import kqueen.config.dev as config_dev
-    app = type(
-        'app',
-        (object,),
-        {'config': {k: v for (k, v) in config_dev.__dict__.items() if not k.startswith("__")}}
-    )
-
 logger = logging.getLogger(__name__)
+config = current_config()
 
 
 STATE_MAP = {
-    'ABORTED': app.config['CLUSTER_ERROR_STATE'],
-    'FAILURE': app.config['CLUSTER_ERROR_STATE'],
-    'NOT_BUILT': app.config['CLUSTER_UNKNOWN_STATE'],
-    'SUCCESS': app.config['CLUSTER_OK_STATE'],
-    'UNSTABLE': app.config['CLUSTER_UNKNOWN_STATE']
+    'ABORTED': config.get('CLUSTER_ERROR_STATE'),
+    'FAILURE': config.get('CLUSTER_ERROR_STATE'),
+    'NOT_BUILT': config.get('CLUSTER_UNKNOWN_STATE'),
+    'SUCCESS': config.get('CLUSTER_OK_STATE'),
+    'UNSTABLE': config.get('CLUSTER_UNKNOWN_STATE')
 }
 
 
 class JenkinsEngine(BaseEngine):
     name = 'jenkins'
     verbose_name = 'Jenkins'
-    jenkins_url = app.config['JENKINS_API_URL']
-    username = app.config['JENKINS_USERNAME']
-    password = app.config['JENKINS_PASSWORD']
-    provision_job_name = app.config['JENKINS_PROVISION_JOB_NAME']
-    anchor_parameter = app.config['JENKINS_ANCHOR_PARAMETER']
+    jenkins_url = config.get('JENKINS_API_URL')
+    username = config.get('JENKINS_USERNAME')
+    password = config.get('JENKINS_PASSWORD')
+    provision_job_name = config.get('JENKINS_PROVISION_JOB_NAME')
+    anchor_parameter = config.get('JENKINS_ANCHOR_PARAMETER')
     parameter_schema = {
         'username': {
             'type': 'text',
@@ -78,18 +70,18 @@ class JenkinsEngine(BaseEngine):
         Implementation of :func:`~kqueen.engines.base.BaseEngine.engine_status`
         """
         conn_kw = {
-            'username': app.config['JENKINS_USERNAME'],
-            'password': app.config['JENKINS_PASSWORD']
+            'username': config.get('JENKINS_USERNAME'),
+            'password': config.get('JENKINS_PASSWORD')
         }
-        status = app.config['PROVISIONER_UNKNOWN_STATE']
+        status = config.get('PROVISIONER_UNKNOWN_STATE')
         try:
-            client = jenkins.Jenkins(app.config['JENKINS_API_URL'], **conn_kw)
+            client = jenkins.Jenkins(config.get('JENKINS_API_URL'), **conn_kw)
             version = client.get_version()
             if version:
-                status = app.config['PROVISIONER_OK_STATE']
+                status = config.get('PROVISIONER_OK_STATE')
         except Exception as e:
             logger.error('Could not contact JenkinsEngine backend: {}'.format(repr(e)))
-            status = app.config['PROVISIONER_ERROR_STATE']
+            status = config.get('PROVISIONER_ERROR_STATE')
         return status
 
     def _get_client(self):
@@ -109,7 +101,7 @@ class JenkinsEngine(BaseEngine):
         Implementation of :func:`~kqueen.engines.base.BaseEngine.provision`
         """
         cluster_id = self.cluster.id
-        ctx = app.config['JENKINS_PROVISION_JOB_CTX']
+        ctx = config.get('JENKINS_PROVISION_JOB_CTX')
         # PATCH THE CTX TO CONTAIN ANCHOR WITH OBJ UUID
         ctx['STACK_NAME'] = 'KQUEEN__{}'.format(cluster_id)
         try:
@@ -234,9 +226,9 @@ class JenkinsEngine(BaseEngine):
                     state = STATE_MAP[build['result']]
                 except KeyError:
                     logger.warning('{} is not valid cluster state'.format(build['result']))
-                    state = app.config['CLUSTER_UNKNOWN_STATE']
+                    state = config.get('CLUSTER_UNKNOWN_STATE')
             else:
-                state = app.config['CLUSTER_PROVISIONING_STATE']
+                state = config.get('CLUSTER_PROVISIONING_STATE')
 
             cluster = {
                 'key': cluster_cache_key,
@@ -250,7 +242,7 @@ class JenkinsEngine(BaseEngine):
                 }
             }
 
-            if cluster['state'] != app.config['CLUSTER_PROVISIONING_STATE']:
+            if cluster['state'] != config.get('CLUSTER_PROVISIONING_STATE'):
                 cache.set(cluster_cache_key, cluster, timeout=self.cache_timeout)
 
         return cluster
@@ -275,11 +267,11 @@ class JenkinsEngine(BaseEngine):
         """
         response = 0
         progress = 1
-        result = app.config['CLUSTER_UNKNOWN_STATE']
+        result = config.get('CLUSTER_UNKNOWN_STATE')
         try:
             cluster = self.cluster_get()
             result = cluster['state']
-            if cluster['state'] == app.config['CLUSTER_PROVISIONING_STATE']:
+            if cluster['state'] == config.get('CLUSTER_PROVISIONING_STATE'):
                 # Determine approximate percentage of progress, it is based on estimation
                 # from Jenkins, so it can get above 99 percent without being done, so there
                 # is patch to hold it on 99 untill its actually done
