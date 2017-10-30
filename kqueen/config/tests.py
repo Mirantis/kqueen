@@ -1,5 +1,7 @@
 from .utils import current_config
 from .utils import select_file
+from kqueen.server import create_app
+from .base import BaseConfig
 
 import pytest
 
@@ -47,4 +49,27 @@ class TestConfigFromEnv:
         config_key_name = name[7:]
 
         assert config.get(config_key_name) == value
-        assert config[config_key_name] == value
+
+    def test_env_var_in_app(self, monkeypatch):
+        monkeypatch.setenv('KQUEEN_DUMMY', '123')
+
+        app = create_app()
+
+        assert app.config.get('DUMMY') == '123'
+
+class TestBaseFunction:
+    def setup(self):
+        self.cl = BaseConfig
+
+    def test_to_dict(self):
+        dicted = self.cl.to_dict()
+
+        assert isinstance(dicted, dict)
+        assert dicted['DEBUG'] == False
+
+    def test_get_regular(self):
+        assert self.cl.get('DEBUG') == False
+
+    def test_get_default(self):
+        assert self.cl.get('NONEXISTING', 123) == 123
+

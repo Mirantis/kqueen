@@ -51,8 +51,6 @@ def current_config(config_file=None):
     config = getattr(module, 'Config')
     apply_env_changes(config)
 
-    flask_config = Config('./')
-    flask_config.from_object(config)
-    setattr(flask_config, 'source_file', read_file)
+    setattr(config, 'source_file', read_file)
 
-    return flask_config
+    return config
