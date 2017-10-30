@@ -57,6 +57,7 @@ class TestConfigFromEnv:
 
         assert app.config.get('DUMMY') == '123'
 
+
 class TestBaseFunction:
     def setup(self):
         self.cl = BaseConfig
@@ -65,11 +66,10 @@ class TestBaseFunction:
         dicted = self.cl.to_dict()
 
         assert isinstance(dicted, dict)
-        assert dicted['DEBUG'] == False
+        assert dicted['DEBUG'] is False
 
     def test_get_regular(self):
-        assert self.cl.get('DEBUG') == False
+        assert self.cl.get('DEBUG') is False
 
     def test_get_default(self):
         assert self.cl.get('NONEXISTING', 123) == 123
-

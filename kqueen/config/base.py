@@ -45,4 +45,3 @@ class BaseConfig:
                 out[att_name] = getattr(cls, att_name)
 
         return out
-

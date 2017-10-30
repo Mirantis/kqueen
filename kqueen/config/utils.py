@@ -1,5 +1,3 @@
-from flask.config import Config
-
 import importlib
 import os
 
