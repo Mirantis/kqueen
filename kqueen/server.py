@@ -21,7 +21,7 @@ def create_app(config_file=None):
     # load configuration
     config = current_config()
     logger.info('Loading configuration from {}'.format(config.source_file))
-    app.config.from_object(config)
+    app.config.from_mapping(config.to_dict())
 
     return app
 

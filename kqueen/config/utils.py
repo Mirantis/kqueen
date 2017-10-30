@@ -1,5 +1,5 @@
-import os
 import importlib
+import os
 
 CONFIG_FILE_DEFAULT = 'config/dev.py'
 
@@ -37,7 +37,8 @@ def apply_env_changes(config, prefix='KQUEEN_'):
 
     for name, value in os.environ.items():
         if name.startswith(prefix):
-            setattr(config, name, value)
+            config_key_name = name[len(prefix):]
+            setattr(config, config_key_name, value)
 
 
 def current_config(config_file=None):
@@ -46,9 +47,8 @@ def current_config(config_file=None):
 
     module = importlib.import_module('kqueen.{}'.format(module_name))
     config = getattr(module, 'Config')
+    apply_env_changes(config)
 
     setattr(config, 'source_file', read_file)
-
-    apply_env_changes(config)
 
     return config

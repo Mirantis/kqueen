@@ -32,11 +32,11 @@ class Cluster(Model, metaclass=ModelMeta):
     metadata = JSONField()
 
     def get_state(self):
-        if self.state != config.CLUSTER_PROVISIONING_STATE:
+        if self.state != config.get('CLUSTER_PROVISIONING_STATE'):
             return self.state
         try:
             cluster = self.engine.cluster_get()
-            if cluster['state'] == config.CLUSTER_PROVISIONING_STATE:
+            if cluster['state'] == config.get('CLUSTER_PROVISIONING_STATE'):
                 return self.state
             self.state = cluster['state']
             self.save()
@@ -290,7 +290,7 @@ class Provisioner(Model, metaclass=ModelMeta):
         return getattr(self.get_engine_cls(), 'verbose_name', self.engine)
 
     def engine_status(self, save=True):
-        state = config.PROVISIONER_UNKNOWN_STATE
+        state = config.get('PROVISIONER_UNKNOWN_STATE')
         engine_class = self.get_engine_cls()
         if engine_class:
             state = engine_class.engine_status()

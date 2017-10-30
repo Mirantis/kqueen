@@ -43,7 +43,7 @@ class ManualEngine(BaseEngine):
         Implementation of :func:`~kqueen.engines.base.BaseEngine.provision`
         """
 
-        self.cluster.state = config.CLUSTER_OK_STATE
+        self.cluster.state = config.get('CLUSTER_OK_STATE')
         self.cluster.save()
 
         return (True, None)
@@ -87,7 +87,7 @@ class ManualEngine(BaseEngine):
         return {
             'response': 0,
             'progress': 100,
-            'result': config.CLUSTER_OK_STATE,
+            'result': config.get('CLUSTER_OK_STATE'),
         }
 
     @staticmethod
@@ -96,4 +96,4 @@ class ManualEngine(BaseEngine):
 
         Implementation of :func:`~kqueen.engines.base.BaseEngine.engine_status`
         """
-        return config.PROVISIONER_OK_STATE
+        return config.get('PROVISIONER_OK_STATE')
