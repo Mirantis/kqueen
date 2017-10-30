@@ -45,7 +45,7 @@ class TestClusterCRUD(BaseTestCRUD):
 
     @pytest.mark.parametrize('cluster_id,status_code', [
         (uuid4(), 404),
-        ('wrong-uuid', 400),
+        ('wrong-uuid', 404),
     ])
     def test_object_not_found(self, cluster_id, status_code):
         response = self.client.get(
@@ -76,7 +76,7 @@ class TestClusterCRUD(BaseTestCRUD):
 
     @pytest.mark.parametrize('cluster_id,status_code', [
         (uuid4(), 404),
-        ('sdfsdfabc123', 400),
+        ('sdfsdfabc123', 404),
     ])
     @pytest.mark.parametrize('url', [
         'cluster_status',
