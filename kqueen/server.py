@@ -20,14 +20,15 @@ def create_app(config_file=None):
 
     # load configuration
     config = current_config()
-    logger.info('Loading configuration from {}'.format(config.source_file))
     app.config.from_mapping(config.to_dict())
+    app.logger.setLevel(getattr(logging, app.config.get('LOG_LEVEL')))
+
+    app.logger.info('Loading configuration from {}'.format(config.source_file))
 
     return app
 
 
 app = create_app()
-app.logger.setLevel(logging.INFO)
 jwt = JWT(app, authenticate, identity)
 
 
