@@ -71,12 +71,38 @@ class KubernetesAPI:
 
         return out
 
+    def list_persistent_volumes(self):
+        out = []
+
+        try:
+            response = self.api_corev1.list_persistent_volume().items
+        except apiexception:
+            raise
+
+        for pv in response:
+            out.append(pv.to_dict())
+
+        return out
+
+    def list_persistent_volume_claims(self):
+        out = []
+
+        try:
+            response = self.api_corev1.list_persistent_volume_claim_for_all_namespaces().items
+        except apiexception:
+            raise
+
+        for pvc in response:
+            out.append(pvc.to_dict())
+
+        return out
+
     def list_namespaces(self):
         out = []
 
         try:
             response = self.api_corev1.list_namespace().items
-        except ApiException:
+        except apiexception:
             raise
 
         for namespace in response:
