@@ -3,6 +3,7 @@ from datetime import timedelta
 
 class BaseConfig:
     DEBUG = False
+    LOG_LEVEL = 'WARNING'
 
     # etcd settings
     # ETCD_HOST
