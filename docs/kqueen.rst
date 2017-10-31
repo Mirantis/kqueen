@@ -43,14 +43,6 @@ Serializers
     :show-inheritance:
 
 
-Wrappers
------------------------
-
-.. automodule:: kqueen.wrappers
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 Subpackages
 -----------
 
