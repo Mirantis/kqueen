@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-version = '0.1'
+version = '0.8'
 
 with open('README.md') as f:
     long_description = ''.join(f.readlines())
@@ -18,12 +18,14 @@ setup(
     packages=find_packages(),
     zip_safe=False,
     install_requires=[
-        'python-jenkins',
-        'requests',
+        'Flask==0.12.2',
+        'Flask-JWT',
+        'gunicorn',
         'kubernetes',
-        'flask',
-        'pyyaml',
         'python-etcd',
+        'python-jenkins',
+        'pyyaml',
+        'requests',
     ],
     classifiers=[
         'Operating System :: POSIX :: Linux',
@@ -34,7 +36,7 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'kqueen = server:run',
+            'kqueen = kqueen.server:run',
         ],
     },
 )

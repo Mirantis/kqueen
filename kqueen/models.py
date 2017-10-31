@@ -1,233 +1,328 @@
-import etcd
-import uuid
-import json
+from importlib import import_module
+from kqueen.config import current_config
+from kqueen.kubeapi import KubernetesAPI
+from kqueen.storages.etcd import IdField
+from kqueen.storages.etcd import JSONField
+from kqueen.storages.etcd import Model
+from kqueen.storages.etcd import ModelMeta
+from kqueen.storages.etcd import RelationField
+from kqueen.storages.etcd import SecretField
+from kqueen.storages.etcd import StringField
+from tempfile import mkstemp
+
 import logging
+import os
+import subprocess
+import yaml
 
-logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
-
-
-class EtcdOrm:
-    def __init__(self, **kwargs):
-        self.client = etcd.Client()
-        self.namespace = 'default'
-        self.prefix = kwargs.get('prefix', '/kqueen/obj/')
-
-
-class Model:
-    def __init__(self, *arfg, **kwargs):
-        logger.debug('Model __init__')
-
-        self._db = db
-
-        # loop fiels and set it
-        for a in self.get_field_names():
-            field = getattr(self, a).__class__
-            if hasattr(field, 'is_field') and kwargs.get(a):
-                field_object = field()
-                field_object.set_value(kwargs.get(a))
-                setattr(self, a, field_object)
-
-    @classmethod
-    def get_model_name(cls):
-        return cls.__name__.lower()
-
-    @classmethod
-    def get_db_prefix(cls):
-        return '{prefix}{namespace}/{model}/'.format(
-            prefix=db.prefix,
-            namespace=db.namespace,
-            model=cls.get_model_name(),
-        )
-
-    @classmethod
-    def create(cls, **kwargs):
-        """Create new object"""
-        logger.debug('Model create')
-        logger.debug(cls)
-        logger.debug(kwargs)
-
-        o = cls(**kwargs)
-
-        return o
-
-    @classmethod
-    def list(cls, return_objects=True):
-        """List objects in the database"""
-        output = {}
-
-        key = cls.get_db_prefix()
-
-        directory = db.client.get(key)
-        for result in directory.children:
-            if return_objects:
-                output[result.key.replace(key, '')] = cls.deserialize(result.value)
-            else:
-                output[result.key.replace(key, '')] = None
-
-        return output
-
-    @classmethod
-    def load(cls, object_id):
-        """Load object from database"""
-
-        key = '{}{}'.format(cls.get_db_prefix(), str(object_id))
-        try:
-            response = db.client.read(key)
-            value = response.value
-        except etcd.EtcdKeyNotFound:
-            raise NameError('Object not found')
-        except:
-            raise
-
-        return cls.deserialize(value, key=key)
-
-    @classmethod
-    def exists(cls, object_id):
-        """Check if object exists"""
-
-        try:
-            cls.load(object_id)
-            return True
-        except NameError:
-            return False
-
-    @classmethod
-    def deserialize(cls, serialized, **kwargs):
-        deser = json.loads(serialized)
-        o = cls(**deser)
-
-        if kwargs.get('key'):
-            o._key = kwargs.get('key')
-
-        return o
-
-    def get_field_names(self):
-        """Return fields"""
-        fields = []
-
-        for a in self.__class__.__dict__.keys():
-            field = getattr(self, a).__class__
-            if hasattr(field, 'is_field'):
-                fields.append(a)
-
-        return fields
-
-    def get_db_key(self):
-        if self.id and self.id.empty():
-            raise Exception('Missing object id')
-
-        return '{}{}'.format(self.__class__.get_db_prefix(), self.id.serialize())
-
-    def verify_id(self):
-        if hasattr(self, 'id') and self.id and not self.id.empty():
-            return self.id
-        else:
-            newid = uuid.uuid4()
-
-            # TODO check id doesn't exists
-
-            self.id.set_value(newid)
-            return self.id
-
-    def save(self):
-        """Save object"""
-
-        self.verify_id()
-
-        key = self.get_db_key()
-        logger.debug('Writing {} to {}'.format(self, key))
-
-        try:
-            self._db.client.write(key, self.serialize())
-
-            self._key = key
-            return True
-        except:
-            raise
-
-    def delete(self):
-        """Delete the object"""
-
-        self._db.client.delete(self.get_db_key())
-
-    def validate(self):
-        return True
-
-    def get_dict(self):
-        output = {}
-
-        for field_name in self.get_field_names():
-            field = getattr(self, field_name)
-            serialized = field.serialize()
-            if serialized:
-                output[field_name] = serialized
-
-        return output
-
-    def serialize(self):
-
-        return json.dumps(self.get_dict())
-
-    def __str__(self):
-        return '{} <{}>'.format(self.__class__.get_model_name(), self.id.serialize())
-
-    def __eq__(self, other):
-        return self.serialize() == other.serialize()
-
-
-class Field:
-    is_field = True
-
-    def __init__(self, *args, **kwargs):
-        self.value = None
-
-    def set_value(self, value):
-        self.value = value
-
-    def serialize(self):
-        if self.value:
-            return str(self.value)
-        else:
-            return None
-
-    def empty(self):
-        return self.value is None
-
-    def __str__(self):
-        return str(self.value)
-
-    def __eq__(self, other):
-        # second is field
-        if hasattr(other, 'is_field') and other.is_field:
-            return self.value == other.value
-        else:
-            return self.value == other
-
-
-class StringField(Field):
-    pass
-
-
-class IdField(Field):
-    pass
-
-
-db = EtcdOrm()
-
-# TODO: implement required fields
-# TODO: implement autogenerated fields (generete them if missing)
-# TODO: implement unique field:w
-# TODO: implement predefined values for fields
-# TODO: use validation
+config = current_config()
 
 #
 # Model definition
 #
 
 
-class Cluster(Model):
-    id = IdField()
-    name = StringField()
-    provisioner = StringField()
+class Cluster(Model, metaclass=ModelMeta):
+    id = IdField(required=True)
+    name = StringField(required=True)
+    provisioner = RelationField()
     state = StringField()
+    kubeconfig = JSONField()
+    metadata = JSONField()
+
+    def get_state(self):
+        if self.state != config.get('CLUSTER_PROVISIONING_STATE'):
+            return self.state
+        try:
+            cluster = self.engine.cluster_get()
+            if cluster['state'] == config.get('CLUSTER_PROVISIONING_STATE'):
+                return self.state
+            self.state = cluster['state']
+            self.save()
+        except:
+            pass
+        return self.state
+
+    @property
+    def engine(self):
+        if self.provisioner:
+            _class = self.provisioner.get_engine_cls()
+            if _class:
+                parameters = self.provisioner.parameters or {}
+                return _class(self, **parameters)
+        return None
+
+    def get_kubeconfig(self):
+        if self.kubeconfig:
+            return self.kubeconfig
+        kubeconfig = self.engine.get_kubeconfig()
+        self.kubeconfig = kubeconfig
+        self.save()
+        return kubeconfig
+
+    def status(self):
+        """Return information about Kubernetes cluster"""
+        try:
+            kubernetes = KubernetesAPI(cluster=self)
+
+            out = {
+                'addons': kubernetes.list_services(filter_addons=True),
+                'deployments': kubernetes.list_deployments(),
+                'nodes': kubernetes.list_nodes(),
+                'nodes_pods': kubernetes.count_pods_by_node(),
+                'pods': kubernetes.list_pods(),
+                'replica_sets': kubernetes.list_replica_sets(),
+                'services': kubernetes.list_services(),
+                'version': kubernetes.get_version(),
+            }
+
+        except:
+            out = {}
+
+        return out
+
+    def topology_data(self):
+        """
+        Return information about Kubernetes cluster in format used in
+        visual processing.
+        """
+        raw_data = []
+        kubernetes = KubernetesAPI(cluster=self)
+
+        nodes = kubernetes.list_nodes()
+        for node in nodes:
+            node['kind'] = 'Node'
+
+        pods = kubernetes.list_pods(False)
+        for pod in pods:
+            pod['kind'] = 'Pod'
+
+        namespaces = kubernetes.list_namespaces()
+        for namespace in namespaces:
+            namespace['kind'] = 'Namespace'
+
+        services = kubernetes.list_services(False)
+        for service in services:
+            service['kind'] = 'Service'
+
+        deployments = kubernetes.list_deployments(False)
+        for deployment in deployments:
+            deployment['kind'] = 'Deployment'
+
+        replica_sets = kubernetes.list_replica_sets(False)
+        replica_set_dict = {datum['metadata']['uid']: datum for datum in replica_sets}
+
+        raw_data = nodes + pods + services + deployments + namespaces
+
+        resources = {datum['metadata']['uid']: datum for datum in raw_data}
+        relations = []
+
+        namespace_name_2_uid = {}
+        node_name_2_uid = {}
+        service_select_run_2_uid = {}
+        service_select_app_2_uid = {}
+
+        for resource_id, resource in resources.items():
+            # Add node name to uid mapping
+            if resource['kind'] == 'Node':
+                node_name_2_uid[resource['metadata']['name']] = resource_id
+
+            # Add node name to uid mapping
+            if resource['kind'] == 'Namespace':
+                namespace_name_2_uid[resource['metadata']['name']] = resource_id
+
+            # Add service run selector to uid_mapping
+            if resource['kind'] == 'Service' and resource['spec'].get('selector', {}) is not None:
+                if resource['spec'].get('selector', {}).get('run', False):
+                    service_select_run_2_uid[resource['spec']['selector']['run']] = resource_id
+                if resource['spec'].get('selector', {}).get('app', False):
+                    service_select_app_2_uid[resource['spec']['selector']['app']] = resource_id
+
+            # Add Containers as top-level resource
+            """
+            if resource['kind'] == 'Pod':
+                for container in resource['spec']['containers']:
+                    container_id = "{1}-{2}".format(
+                        resource['metadata']['uid'], container['name'])
+                    resources[container_id] = {
+                        'metadata': container,
+                        'kind': 'Container'
+                    }
+                    relations.append({
+                        'source': resource_id,
+                        'target': container_id,
+                    })
+            """
+
+        for resource_id, resource in resources.items():
+            if resource['kind'] not in ('Node', 'Namespace'):
+                relations.append({
+                    'source': resource_id,
+                    'target': namespace_name_2_uid[resource['metadata']['namespace']]
+                })
+
+            if resource['kind'] == 'Pod':
+
+                # define relationship between pods and nodes
+                if resource['spec']['node_name'] is not None:
+                    relations.append({
+                        'source': resource_id,
+                        'target': node_name_2_uid[resource['spec']['node_name']]
+                    })
+
+                # define relationships between pods and rep sets and
+                # replication controllers
+                if resource['metadata'].get('owner_references', False):
+                    if resource['metadata']['owner_references'][0]['kind'] == 'ReplicaSet':
+                        rep_set_id = resource['metadata']['owner_references'][0]['uid']
+                        deploy_id = replica_set_dict[rep_set_id]['metadata']['owner_references'][0]['uid']
+                        relations.append({
+                            'source': deploy_id,
+                            'target': resource_id
+                        })
+
+                # rel'n between pods and services
+                if resource.get('metadata', {}).get('labels', {}).get('run', False):
+                    relations.append({
+                        'source': resource_id,
+                        'target': service_select_run_2_uid[resource['metadata']['labels']['run']]
+                    })
+
+                if resource.get('metadata', {}).get('labels', {}).get('app', False):
+                    try:
+                        relations.append({
+                            'source': resource_id,
+                            'target': service_select_app_2_uid[resource['metadata']['labels']['app']]
+                        })
+                    except:
+                        pass
+
+        out = {
+            'items': resources,
+            'relations': relations,
+            'kinds': {
+                'Pod': '',
+            }
+        }
+#        except:
+#            out = {
+#                'items': [],
+#                'relations': []
+#            }
+
+        return out
+
+    def get_kubeconfig_file(self):
+        """
+        Create file with kubeconfig and make this file available on filesystem.
+
+        Returns:
+            str: Filename (including path).
+
+        """
+
+        if hasattr(self, 'kubeconfig_path') and os.path.isfile(self.kubeconfig_path):
+            return self.kubeconfig_path
+
+        # create kubeconfig file
+        filehandle, file_path = mkstemp()
+        filehandle = open(filehandle, 'w')
+        filehandle.write(yaml.dump(self.kubeconfig))
+        self.kubeconfig_path = file_path
+
+        return file_path
+
+    def apply(self, resource_text):
+        """
+        Apply YAML file supplied as text
+
+        Args:
+            resource_text (text): Content of file to apply
+
+        Returns:
+            tuple: (return_code, stdout)
+
+
+        """
+        kubeconfig = self.get_kubeconfig_file()
+
+        # create temporary resource file
+        # TODO: create helper for this
+        filehandle, file_path = mkstemp()
+        filehandle = open(filehandle, 'w')
+        filehandle.write(resource_text)
+        filehandle.close()
+
+        # apply resource file
+        cmd = ['kubectl', '--kubeconfig', kubeconfig, 'apply', '-f', file_path]
+
+        # TODO: validate output
+        run = subprocess.run(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+
+        return run
+
+
+class Provisioner(Model, metaclass=ModelMeta):
+    id = IdField(required=True)
+    name = StringField(required=True)
+    engine = StringField(required=True)
+    state = StringField()
+    parameters = JSONField()
+
+    def get_engine_cls(self):
+        """Return engine class"""
+        try:
+            module_path = '.'.join(self.engine.split('.')[:-1])
+            class_name = self.engine.split('.')[-1]
+            module = import_module(module_path)
+            _class = getattr(module, class_name)
+        except:
+            _class = None
+        return _class
+
+    @property
+    def engine_name(self):
+        return getattr(self.get_engine_cls(), 'verbose_name', self.engine)
+
+    def engine_status(self, save=True):
+        state = config.get('PROVISIONER_UNKNOWN_STATE')
+        engine_class = self.get_engine_cls()
+        if engine_class:
+            state = engine_class.engine_status()
+        if save:
+            self.state = state
+            self.save()
+        return state
+
+    def alive(self):
+        """Test availability of provisioner and return bool"""
+        return True
+
+    def save(self, check_status=True):
+        if check_status:
+            self.state = self.engine_status(save=False)
+        return super(Provisioner, self).save()
+
+
+#
+# AUTHENTICATION
+#
+
+
+class Organization(Model, metaclass=ModelMeta):
+    id = IdField(required=True)
+    name = StringField(required=True)
+    namespace = StringField(required=True)
+
+
+class User(Model, metaclass=ModelMeta):
+    id = IdField(required=True)
+    username = StringField(required=True)
+    email = StringField(required=False)
+    password = SecretField(required=True)
+    organization = RelationField(required=True)

@@ -1,15 +1,54 @@
-language: python
-python:
-  - '3.5'
-  - '3.6'
 sudo: required
+language: python
+cache: pip
+python:
+- '3.6'
 service:
-  - docker
-before_install:
-  - docker-compose up -d
-install:
-  - pip3 install -r requirements.txt
-script:
-  - python3 -m flake8
-  - python -m pytest --cov=. --cov-fail-under=69 --cov-report=term-missing:skip-covered
-  - coveralls
+- docker
+
+
+stages:
+- name: test
+- name: publish
+  if: tag =~ ^v.*
+- name: verify
+  if: branch = master AND type = push
+
+jobs:
+  include:
+  - stage: test
+    before_install:
+    - docker-compose up -d
+    install:
+    - pip3 install -r requirements.txt
+    script:
+    - python3 -m flake8
+    - python3 -m pytest --cov=. --cov-report=term-missing:skip-covered
+    - coveralls
+
+    - pip3 install --editable .
+    - python3 -m kqueen &
+    - sleep 2
+    - wget -O - http://localhost:5000/api/v1/health
+
+  - stage: publish
+    script:
+    - /bin/true
+    deploy:
+      provider: pypi
+      user: tomkukral
+      password:
+        secure: Xfov5rO0PH40sBITF8TxfbnMJcRD9DZ5Bl1JNBwsk+dd56dpZUR5ZMAmjjGgMQTMk6JPfU1EDx/c4r8SS5gU3LErPI9cuHzggp59hhAMIjKdI7a42t6vLPc/fmymWBejhhcA2NAgDzc7p6B50ZiFJGchWADrvuVpDhzQIrokayv83FnKcB4cY31LKLJwu85o5CehUMQCRlvzCv/NuEstfJEdIhqzx2xnQI8qlLPNtMHtCJy5r/kauURFpx2IqgQ2WjMVWsfAtSlT+b5n7rZrhPCrCWD4C1VGWK5+LpxcuEhVb33oeaT1y2wpSo5+rg4c12/HP/HQXYPe0HoHJxKshT3Xw5YjcwQtoYpvkrmssHbEzY0l1QBkRqFVnuybXMcqLW2YSoUJ2M62U1ll0TyvFl/R9j1Jf+tXFxwANr+buaWSPW/FBsfMw//+EBXmNGAmwT+VfPdEysGP95bM1Ewl4w2OHLj1IDvA/V1d/Uf1NXOr0A8Q4MeiDT+PFngwoK+QKdVPO0hoErKJZ1QXXEALdBEbnuDM60a8gvJCD7D5sfygfUCVRxSvcQfFRULam5JvHcyH7JeWJzlBabKl9YNJbQgji1vkbLk1gEyyKl7SayLGngqVzdrCCLlfRbH8UsPR8pgIWW4LU5DS3AsWz3ln6mfyHV333DDj4r9ImZDMvhI=
+      on:
+        tags: true
+        repo: Mirantis/kqueen
+
+  - stage: verify
+    before_install:
+    - docker-compose up -d
+    install:
+    - pip3 install --upgrade kqueen
+    script:
+    - ./entrypoint.sh &
+    - sleep 2
+    - wget -O - http://localhost:5000/api/v1/health

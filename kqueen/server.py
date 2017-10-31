@@ -1,30 +1,37 @@
 from flask import Flask
-from kqueen.blueprints.api import api
-from kqueen.blueprints.user_views import user_views
+from flask_jwt import JWT
+from kqueen.auth import authenticate, identity
+from kqueen.blueprints.api.views import api
+from kqueen.serializers import KqueenJSONEncoder
+from werkzeug.contrib.cache import SimpleCache
+from kqueen.config import current_config
 
 import logging
 
-logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
+cache = SimpleCache()
 
 
-def create_app():
+def create_app(config_file=None):
     app = Flask(__name__, static_folder='./asset/static')
-    app.register_blueprint(user_views)
+    app.json_encoder = KqueenJSONEncoder
+
     app.register_blueprint(api, url_prefix='/api/v1')
 
-    # DEMO LOGIN
-    app.config.update(dict(
-        USERNAME='admin',
-        PASSWORD='default',
-        SECRET_KEY='secret'
-    ))
+    # load configuration
+    config = current_config()
+    app.config.from_mapping(config.to_dict())
+    app.logger.setLevel(getattr(logging, app.config.get('LOG_LEVEL')))
+
+    app.logger.info('Loading configuration from {}'.format(config.source_file))
 
     return app
 
 
+app = create_app()
+jwt = JWT(app, authenticate, identity)
+
+
 def run():
     logger.debug('kqueen starting')
-
-    app = create_app()
-    app.run(debug=True)
+    app.run()

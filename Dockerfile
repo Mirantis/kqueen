@@ -11,4 +11,4 @@ RUN pip install -r requirements.txt
 COPY . .
 
 # run app
-CMD python3 -m kqueen
+CMD ./entrypoint.sh

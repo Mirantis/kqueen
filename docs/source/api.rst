@@ -12,7 +12,7 @@ schemes:
 basePath: /api/v1
 
 definitions:
-  Cluster:
+  Service:
     type: object
     properties:
       id:
@@ -30,20 +30,8 @@ definitions:
           - "pending"
           - "failed"
           - "deleted"
-      kubeconfig:
-        type: "string"
-  ClusterNode:
-    type: object
-    properties:
-      name:
-        type: string
-      # TODO: more properties
-  ClusterService:
-    type: object
-    properties:
-      name:
-        type: string
-      # TODO: more properties
+  ServiceInstance:
+
   Provisioner:
     type: object
     properties:
@@ -52,14 +40,10 @@ definitions:
         format: "uuid"
       name:
         type: "string"
-      engine:
-        type: "string"
-      parameters:
-        description: "Engine-specific parameters"
+      metadata:
         type: "object"
 
 paths:
-  # clusters
   /clusters:
     get:
       summary: List all clusters
