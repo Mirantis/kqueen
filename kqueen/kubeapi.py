@@ -1,3 +1,6 @@
+"""Kubernetes client wrapper."""
+
+
 from kubernetes import config, client
 from kubernetes.client.rest import ApiException
 from kqueen.helpers import prefix_to_num
@@ -10,7 +13,15 @@ logger = logging.getLogger(__name__)
 
 
 class KubernetesAPI:
+    """Kubernetes API client."""
+
     def __init__(self, **kwargs):
+        """
+        Set cluster and prepare clients for all used resource types.
+
+        Args:
+            **kwargs: Keyword arguments (cluster is required)
+        """
         # load configuration
         try:
             self.cluster = kwargs['cluster']
@@ -27,6 +38,13 @@ class KubernetesAPI:
         self.api_version = client.VersionApi(api_client=api_client)
 
     def get_kubeconfig_file(self):
+        """
+        Write kubeconfig file on filesystem.
+
+        Returns:
+            str: Kubeconfig file path
+
+        """
         # TODO: make configfile name random
         configfile = '/tmp/kubernetes'
         f = open(configfile, 'w')
@@ -37,6 +55,7 @@ class KubernetesAPI:
         return configfile
 
     def get_version(self):
+        """Return Kubernetes version."""
         return self.api_version.get_code().to_dict()
 
     def list_nodes(self):
@@ -66,7 +85,7 @@ class KubernetesAPI:
         return out
 
     def list_pods(self, include_uninitialized=True):
-        """List pods in all namespaces"""
+        """List pods in all namespaces."""
         out = []
 
         try:
@@ -112,7 +131,7 @@ class KubernetesAPI:
         return out
 
     def resources_by_node(self):
-        """Read pods on each node, compute sum or requested and limited resources
+        """Read pods on each node, compute sum or requested and limited resources.
 
         Returns:
             Dict of nodes with allocated resources.
@@ -127,6 +146,7 @@ class KubernetesAPI:
                     'requests': {'cpu': 1.5, 'mem': 10098}
                 }
             }
+
         """
         out = {}
 
@@ -158,7 +178,7 @@ class KubernetesAPI:
         return out
 
     def _extract_annotation(self, service, prefix='kqueen/'):
-        """Read service and return kqueen annotations (if present)
+        """Read service and return kqueen annotations (if present).
 
         Args:
             service (dict)
@@ -167,7 +187,6 @@ class KubernetesAPI:
         Return:
             dict: Annotations matching prefix
         """
-
         out = {}
 
         annotations = service.get('metadata', {}).get('annotations', {})
@@ -180,7 +199,7 @@ class KubernetesAPI:
         return out
 
     def list_services(self, include_uninitialized=True, filter_addons=False):
-        """List services in all namespaces"""
+        """List services in all namespaces."""
         out = []
 
         try:
@@ -201,7 +220,7 @@ class KubernetesAPI:
         return out
 
     def list_deployments(self, include_uninitialized=True):
-        """List deployments in all namespaces"""
+        """List deployments in all namespaces."""
         out = []
 
         try:
@@ -217,7 +236,7 @@ class KubernetesAPI:
         return out
 
     def list_replica_sets(self, include_uninitialized=True):
-        """List replica sets in all namespaces"""
+        """List replica sets in all namespaces."""
         out = []
 
         try:

@@ -1,8 +1,21 @@
+"""Authentication methods for API."""
+
 from kqueen.models import User
 from werkzeug.security import safe_str_cmp
 
 
 def authenticate(username, password):
+    """
+    Authenticate user.
+
+    Args:
+        username (str): Username to login
+        password (str): Passwore
+
+    Returns:
+        user: authenticated user
+
+    """
     users = list(User.list(return_objects=True).values())
     username_table = {u.username: u for u in users}
     user = username_table.get(username, None)
@@ -11,6 +24,16 @@ def authenticate(username, password):
 
 
 def identity(payload):
+    """
+    Read user_id from payload and return User.
+
+    Args:
+        payload (dict): Request payload
+
+    Returns:
+        user: detected user
+
+    """
     user_id = payload['identity']
     try:
         user = User.load(user_id)
