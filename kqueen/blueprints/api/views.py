@@ -4,6 +4,7 @@ from flask import Blueprint
 from flask import jsonify
 from flask import make_response
 from flask import request
+from flask_jwt import current_identity
 from flask_jwt import jwt_required
 from kqueen.models import Cluster
 from kqueen.models import Organization
@@ -369,3 +370,11 @@ def user_delete(pk):
         abort(500)
 
     return jsonify({'id': obj.id, 'state': 'deleted'})
+
+
+@api.route('/users/whoami', methods=['GET'])
+@jwt_required()
+def user_whoami():
+    output = current_identity
+
+    return jsonify(output)
