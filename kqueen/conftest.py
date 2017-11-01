@@ -1,7 +1,8 @@
 """Configuration and fixtures for pytest."""
-
+from faker import Faker
 from flask_jwt import JWT
-from kqueen.auth import authenticate, identity
+from kqueen.auth import authenticate
+from kqueen.auth import identity
 from kqueen.models import Cluster
 from kqueen.models import Organization
 from kqueen.models import Provisioner
@@ -14,6 +15,7 @@ import uuid
 import yaml
 
 config_file = 'config/test.py'
+fake = Faker()
 
 
 @pytest.fixture
@@ -97,9 +99,10 @@ def organization():
 @pytest.fixture
 def user():
     """Prepare user object."""
+    profile = fake.simple_profile()
     user = User(
-        username='admin',
-        password='default',
+        username=profile['username'],
+        password=fake.password(),
         organization=organization(),
     )
     user.save()
