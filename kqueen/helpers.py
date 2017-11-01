@@ -1,3 +1,5 @@
+"""Helpers are providing elementary functions and wrappers."""
+
 BINARY_PREFIX = {
     # decimal
     'm': 1000 ** -1,
@@ -17,8 +19,7 @@ BINARY_PREFIX = {
 
 
 def prefix_to_num(st):
-    """Read string with prefix and return number
-
+    """Read string with prefix and return number.
 
     Args:
         st (string): String representation of value with prefix
@@ -32,7 +33,6 @@ def prefix_to_num(st):
         1000.0
 
     """
-
     num = ''
     prefix = ''
 
