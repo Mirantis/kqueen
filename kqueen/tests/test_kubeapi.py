@@ -141,3 +141,18 @@ class TestKubeApi:
         print(resources)
 
         assert resources == req
+
+
+@pytest.mark.usefixtures('cluster')
+class TestVolumes:
+    def test_persistent_volumes(self, cluster):
+        api = KubernetesAPI(cluster=cluster)
+        resources = api.list_persistent_volumes()
+
+        assert isinstance(resources, list)
+
+    def test_persistent_volume_claims(self, cluster):
+        api = KubernetesAPI(cluster=cluster)
+        resources = api.list_persistent_volume_claims()
+
+        assert isinstance(resources, list)
