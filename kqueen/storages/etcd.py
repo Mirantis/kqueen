@@ -8,7 +8,7 @@ from kqueen.config import current_config
 logger = logging.getLogger(__name__)
 
 
-class EtcdOrm:
+class EtcdBackend:
     def __init__(self, **kwargs):
         config = current_config()
 
@@ -20,7 +20,7 @@ class EtcdOrm:
         self.prefix = kwargs.get('prefix', '/kqueen/obj/')
 
 
-db = EtcdOrm()
+db = EtcdBackend()
 
 
 class Field:
