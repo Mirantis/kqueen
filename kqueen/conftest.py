@@ -15,9 +15,9 @@ config_file = 'config/test.py'
 fake = Faker()
 
 
-@pytest.fixture
+@pytest.fixture(autouse=True, scope='session')
 def app():
-    """Prepare app with JWT."""
+    """Prepare app."""
     app = create_app(config_file=config_file)
 
     return app

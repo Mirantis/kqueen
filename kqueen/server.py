@@ -5,6 +5,7 @@ from kqueen.blueprints.api.views import api
 from kqueen.serializers import KqueenJSONEncoder
 from werkzeug.contrib.cache import SimpleCache
 from kqueen.config import current_config
+from .storages.etcd import EtcdBackend
 
 import logging
 
@@ -23,6 +24,9 @@ def create_app(config_file=None):
     app.config.from_mapping(config.to_dict())
     app.logger.setLevel(getattr(logging, app.config.get('LOG_LEVEL')))
     app.logger.info('Loading configuration from {}'.format(config.source_file))
+
+    # setup database
+    app.db = EtcdBackend()
 
     # setup JWT
     JWT(app, authenticate, identity)
