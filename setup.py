@@ -21,7 +21,7 @@ setup(
     zip_safe=False,
     install_requires=[
         'Flask==0.12.2',
-        'Flask-JWT',
+        'Flask-JWT==0.3.2',
         'gunicorn',
         'kubernetes',
         'python-etcd',
