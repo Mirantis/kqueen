@@ -22,7 +22,7 @@ fake = Faker()
 def app():
     """Prepare app with JWT."""
     app = create_app(config_file=config_file)
-    JWT(app, authenticate, identity)
+
     return app
 
 
