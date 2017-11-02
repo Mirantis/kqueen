@@ -76,7 +76,7 @@ class KubernetesAPI:
 
         try:
             response = self.api_corev1.list_persistent_volume().items
-        except apiexception:
+        except ApiException:
             raise
 
         for pv in response:
@@ -89,7 +89,7 @@ class KubernetesAPI:
 
         try:
             response = self.api_corev1.list_persistent_volume_claim_for_all_namespaces().items
-        except apiexception:
+        except ApiException:
             raise
 
         for pvc in response:
@@ -102,7 +102,7 @@ class KubernetesAPI:
 
         try:
             response = self.api_corev1.list_namespace().items
-        except apiexception:
+        except ApiException:
             raise
 
         for namespace in response:
