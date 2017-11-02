@@ -1,4 +1,4 @@
-from .etcd import EtcdOrm
+from .etcd import EtcdBackend
 import pytest
 
 
@@ -14,6 +14,6 @@ class TestEtcdClient:
             monkeypatch.setenv(name, value)
 
     def test_config_fields(self):
-        orm = EtcdOrm()
+        orm = EtcdBackend()
         assert orm.client.host == self.set_vars['KQUEEN_ETCD_HOST']
         assert orm.client.port == int(self.set_vars['KQUEEN_ETCD_PORT'])
