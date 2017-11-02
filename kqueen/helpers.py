@@ -1,4 +1,5 @@
 """Helpers are providing elementary functions and wrappers."""
+import re
 
 BINARY_PREFIX = {
     # decimal
@@ -55,3 +56,15 @@ def prefix_to_num(st):
         raise ValueError('Prefix {} can not be parsed'.format(prefix))
 
     return num * BINARY_PREFIX[prefix]
+
+def camel_split(st):
+    """Split string by CamelCase.
+
+    Args:
+        st (string): Input string
+
+    Returns:
+        list: List of works splitted by camel case
+    """
+
+    return re.sub('(?!^)([A-Z][a-z]+)', r' \1', st).split()
