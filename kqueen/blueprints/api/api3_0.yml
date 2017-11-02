@@ -1,0 +1,776 @@
+openapi: "3.0.0"
+
+info:
+  version: "0.8"
+  title: "Kubernetes Queen API"
+  description: "A simple API to interact with Kubernetes clusters"
+
+servers:
+  - url: "http://localhost:5000/api/v1"
+    description: "Development server"
+
+components:
+  securitySchemes:
+    JWT:
+      type: "http"
+      scheme: "bearer"
+      bearerFormat: "JWT"
+  schemas:
+    # HTTP status responses
+    statusUnauthorized:
+      type: "object"
+      properties:
+        description:
+          type: "string"
+          description: "Error description"
+          example: "Invalid credentials"
+        error:
+          type: "string"
+          description: "HTTP error"
+          example: "Bad Request"
+        status_code:
+          type: "integer"
+          description: "HTTP error code"
+          example: 401
+    # Database objects
+    Organization:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+        name:
+          type: "string"
+        namespace:
+          type: "string"
+      required:
+        - "name"
+        - "namespace"
+    getUser:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+        username:
+          type: "string"
+        email:
+          type: "string"
+          format: "email"
+        password:
+          type: "string"
+          format: "password"
+        organization:
+          $ref: "#/components/schemas/Organization"
+    postUser:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+        username:
+          type: "string"
+        email:
+          type: "string"
+        password:
+          type: "string"
+        organization:
+          type: "string"
+          description: "Reference to related Organization"
+          example: "Organization:<uuid>"
+      required:
+        - "username"
+        - "email"
+        - "password"
+        - "organization"
+    getCluster:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+        name:
+          type: "string"
+        provisioner:
+          $ref: "#/components/schemas/Provisioner"
+        state:
+          type: "string"
+          enum:
+            - "OK"
+            - "Error"
+            - "Deploying"
+            - "Destroying"
+            - "Unknown"
+        kubeconfig:
+          type: "string"
+        metadata:
+          type: "string"
+    postCluster:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+        name:
+          type: "string"
+        provisioner:
+          type: "string"
+          description: "Reference to related Provisioner"
+          example: "Provisioner:<uuid>"
+        state:
+          type: "string"
+          enum:
+            - "OK"
+            - "Error"
+            - "Deploying"
+            - "Destroying"
+            - "Unknown"
+        kubeconfig:
+          description: "Kubeconfig file in JSON format"
+          type: "object"
+        metadata:
+          type: "object"
+      required:
+        - "name"
+        - "provisioner"
+    Provisioner:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+        name:
+          type: "string"
+        engine:
+          type: "string"
+        state:
+          type: "string"
+          enum:
+            - "OK"
+            - "Error"
+            - "Not Reachable"
+        parameters:
+          description: "Engine-specific parameters"
+          type: "object"
+      required:
+        - "name"
+        - "engine"
+    # Kubernetes resources
+    Addon:
+      type: "object"
+      properties:
+        name:
+          type: "string"
+          example: "Monocular"
+        link:
+          type: "string"
+          format: "url"
+          example: "http://monocular-load-balancer-or-ingress-url"
+        icon:
+          type: "string"
+          format: "url"
+          example: "https://www.modarmory.com/wp-content/uploads/2014/05/night-vision-monocular-icon.png"
+    nodePod:
+      description: "List of one-key dictionaries where key is name of Node and value is number of pods on the Node."
+      type: "object"
+      additionalProperties:
+        type: "integer"
+    clusterStatus:
+      type: "object"
+      properties:
+        addons:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/Addon"
+        deployments:
+          $ref: "https://raw.githubusercontent.com/kubernetes/kubernetes/master/api/openapi-spec/swagger.json#/definitions/io.k8s.api.apps.v1.DeploymentList"
+        nodes:
+          $ref: "https://raw.githubusercontent.com/kubernetes/kubernetes/master/api/openapi-spec/swagger.json#/definitions/io.k8s.api.core.v1.NodeList"
+        nodes_pods:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/nodePod"
+        persistent_volume_claims:
+          $ref: "https://raw.githubusercontent.com/kubernetes/kubernetes/master/api/openapi-spec/swagger.json#/definitions/io.k8s.api.core.v1.PersistentVolumeClaimList"
+        persistent_volumes:
+          $ref: "https://raw.githubusercontent.com/kubernetes/kubernetes/master/api/openapi-spec/swagger.json#/definitions/io.k8s.api.core.v1.PersistentVolumeList"
+        pods:
+          $ref: "https://raw.githubusercontent.com/kubernetes/kubernetes/master/api/openapi-spec/swagger.json#/definitions/io.k8s.api.core.v1.PodList"
+        replica_sets:
+          $ref: "https://raw.githubusercontent.com/kubernetes/kubernetes/master/api/openapi-spec/swagger.json#/definitions/io.k8s.api.apps.v1.ReplicaSetList"
+        services:
+          $ref: "https://raw.githubusercontent.com/kubernetes/kubernetes/master/api/openapi-spec/swagger.json#/definitions/io.k8s.api.core.v1.ServiceList"
+        version:
+          $ref: "https://raw.githubusercontent.com/kubernetes/kubernetes/master/api/openapi-spec/swagger.json#/definitions/io.k8s.apimachinery.pkg.version.Info"
+  responses:
+    Unauthorized:
+      description: "Authorization information is missing or invalid."
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/statusUnauthorized"
+
+security:
+  - JWT: []
+
+paths:
+  # auth
+  /auth:
+    post:
+      summary: "Authentication URL which returns JWT tokens"
+      tags:
+       - "Authentication"
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: "object"
+              properties:
+                username:
+                  type: "string"
+                  example: "admin"
+                password:
+                  type: "string"
+                  example: "default"
+      responses:
+        "200":
+          description: "Successful authentication"
+          content:
+            application/json:
+              schema:
+                type: "object"
+                properties:
+                  access_token:
+                    type: "string"
+                    description: "JWT token"
+        "400":
+          description: "Bad request"
+          content:
+            text/html:
+              schema:
+                type: "html"
+                example: "<html><body><title>400 Bad Request</title><h1>Bad Request</h1><p>Failed to decode JSON object: Expecting ',' delimiter: line 1 column 48 (char 47)</p></body></html>"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  # organizations
+  /organizations:
+    get:
+      summary: "List all Organizations"
+      tags:
+        - "Organizations"
+      responses:
+        "200":
+          description: "Successful operation"
+          content:
+            application/json:
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/Organization"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      summary: "Create new Organization"
+      tags:
+        - "Organizations"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Organization"
+      responses:
+        "200":
+          description: "Successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Organization"
+        "400":
+          description: "Request body is not valid JSON."
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /organizations/{id}:
+    get:
+      summary: "Get information about target Organization"
+      tags:
+        - "Organizations"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          type: "string"
+          format: "uuid"
+      responses:
+        "200":
+          description: "Successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Organization"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          description: "Invalid ID or Organization not found"
+    patch:
+      summary: "Update data of target Organization"
+      tags:
+        - "Organizations"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          type: "string"
+          format: "uuid"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Organization"
+      responses:
+        "200":
+          description: "Successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Organization"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          description: "Invalid ID or Organization not found"
+    delete:
+      summary: "Delete target Organization"
+      tags:
+        - "Organizations"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          type: "string"
+          format: "uuid"
+      responses:
+        "200":
+          description: "Successful operation"
+          content:
+            application/json:
+              schema:
+                type: "object"
+                properties:
+                  id:
+                    type: "string"
+                    format: "uuid"
+                  state:
+                    type: "string"
+                    example: "deleted"
+        "400":
+          description: "Invalid ID supplied"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          description: "Organization not found"
+        "500":
+          description: "Could not delete Organization"
+  # users
+  /users:
+    get:
+      summary: "List all Users"
+      tags:
+        - "Users"
+      responses:
+        "200":
+          description: "Successful operation"
+          content:
+            application/json:
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/getUser"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      summary: "Create new User"
+      tags:
+        - "Users"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/postUser"
+      responses:
+        "200":
+          description: "Successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/getUser"
+        "400":
+          description: "Request body is not valid JSON."
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /users/{id}:
+    get:
+      summary: "Get information about target User"
+      tags:
+        - "Users"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          type: "string"
+          format: "uuid"
+      responses:
+        "200":
+          description: "Successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/getUser"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          description: "Invalid ID or User not found"
+    patch:
+      summary: "Update data of target User"
+      tags:
+        - "Users"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          type: "string"
+          format: "uuid"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/postUser"
+      responses:
+        "200":
+          description: "Successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/getUser"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          description: "Invalid ID or User not found"
+    delete:
+      summary: "Delete target User"
+      tags:
+        - "Users"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          type: "string"
+          format: "uuid"
+      responses:
+        "200":
+          description: "Successful operation"
+          content:
+            application/json:
+              schema:
+                type: "object"
+                properties:
+                  id:
+                    type: "string"
+                    format: "uuid"
+                  state:
+                    type: "string"
+                    example: "deleted"
+        "400":
+          description: "Invalid ID supplied"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          description: "User not found"
+        "500":
+          description: "Could not delete User"
+  # clusters
+  /clusters:
+    get:
+      summary: "List all Clusters"
+      tags:
+        - "Clusters"
+      responses:
+        "200":
+          description: "Successful operation"
+          content:
+            application/json:
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/getCluster"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      summary: "Create new Cluster"
+      tags:
+        - "Clusters"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/postCluster"
+      responses:
+        "200":
+          description: "Successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/getCluster"
+        "400":
+          description: "Request body is not valid JSON."
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /clusters/{id}:
+    get:
+      summary: "Get information about target Cluster"
+      tags:
+        - "Clusters"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          type: "string"
+          format: "uuid"
+      responses:
+        "200":
+          description: "Successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/getCluster"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          description: "Invalid ID or Cluster not found"
+    patch:
+      summary: "Update data of target Cluster"
+      tags:
+        - "Clusters"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          type: "string"
+          format: "uuid"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/postCluster"
+      responses:
+        "200":
+          description: "Successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/getCluster"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          description: "Invalid ID or Cluster not found"
+    delete:
+      summary: "Delete target Cluster"
+      tags:
+        - "Clusters"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          type: "string"
+          format: "uuid"
+      responses:
+        "200":
+          description: "Successful operation"
+          content:
+            application/json:
+              schema:
+                type: "object"
+                properties:
+                  id:
+                    type: "string"
+                    format: "uuid"
+                  state:
+                    type: "string"
+                    example: "deleted"
+        "400":
+          description: "Invalid ID supplied"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          description: "Cluster not found"
+        "500":
+          description: "Could not delete Cluster"
+  /clusters/{id}/status:
+    get:
+      summary: "Get information about target Cluster directly from KubeAPI"
+      tags:
+        - "Clusters"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          type: "string"
+          format: "uuid"
+      responses:
+        "200":
+          description: "Successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/clusterStatus"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          description: "Invalid ID or Cluster not found"
+  /clusters/{id}/kubeconfig:
+    get:
+      summary: "Get Kubeconfig from target Cluster"
+      tags:
+        - "Clusters"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          type: "string"
+          format: "uuid"
+      responses:
+        "200":
+          description: "Successful operation"
+          content:
+            application/json:
+              schema:
+                type: "object"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          description: "Invalid ID or Cluster not found"
+  # provisioners
+  /provisioners:
+    get:
+      summary: "List all Provisioners"
+      tags:
+        - "Provisioners"
+      responses:
+        "200":
+          description: "Successful operation"
+          content:
+            application/json:
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/Provisioner"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      summary: "Create new Provisioner"
+      tags:
+        - "Provisioners"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Provisioner"
+      responses:
+        "200":
+          description: "Successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Provisioner"
+        "400":
+          description: "Request body is not valid JSON."
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /provisioners/{id}:
+    get:
+      summary: "Get information about target Provisioner"
+      tags:
+        - "Provisioners"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          type: "string"
+          format: "uuid"
+      responses:
+        "200":
+          description: "Successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Provisioner"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          description: "Invalid ID or Provisioner not found"
+    patch:
+      summary: "Update data of target Provisioner"
+      tags:
+        - "Provisioners"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          type: "string"
+          format: "uuid"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Provisioner"
+      responses:
+        "200":
+          description: "Successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Provisioner"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          description: "Invalid ID or Provisioner not found"
+    delete:
+      summary: "Delete target Provisioner"
+      tags:
+        - "Provisioners"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          type: "string"
+          format: "uuid"
+      responses:
+        "200":
+          description: "Successful operation"
+          content:
+            application/json:
+              schema:
+                type: "object"
+                properties:
+                  id:
+                    type: "string"
+                    format: "uuid"
+                  state:
+                    type: "string"
+                    example: "deleted"
+        "400":
+          description: "Invalid ID supplied"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          description: "Provisioner not found"
+        "500":
+          description: "Could not delete Provisioner"

@@ -65,7 +65,7 @@ def auth_header(client):
         client: Flask client
 
     Returns:
-        dict: {'Authorization': 'JWT access_token'}
+        dict: {'Authorization': 'Bearer access_token'}
 
     """
     _user = user()
@@ -78,7 +78,7 @@ def auth_header(client):
         data=json.dumps(data),
         content_type='application/json')
 
-    return {'Authorization': 'JWT {}'.format(response.json['access_token'])}
+    return {'Authorization': 'Bearer {}'.format(response.json['access_token'])}
 
 
 @pytest.fixture

@@ -1,5 +1,6 @@
 Flask==0.12.2
 Flask-JWT==0.3.2
+git+https://github.com/atengler/flask-swagger-ui.git@3.4.3-update#flask_swagger_ui
 kubernetes
 python-etcd
 python-jenkins
