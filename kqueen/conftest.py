@@ -1,8 +1,5 @@
 """Configuration and fixtures for pytest."""
 from faker import Faker
-from flask_jwt import JWT
-from kqueen.auth import authenticate
-from kqueen.auth import identity
 from kqueen.models import Cluster
 from kqueen.models import Organization
 from kqueen.models import Provisioner
