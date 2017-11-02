@@ -315,12 +315,16 @@ class Provisioner(Model, metaclass=ModelMeta):
 
 
 class Organization(Model, metaclass=ModelMeta):
+    global_namespace = True
+
     id = IdField(required=True)
     name = StringField(required=True)
     namespace = StringField(required=True)
 
 
 class User(Model, metaclass=ModelMeta):
+    global_namespace = True
+
     id = IdField(required=True)
     username = StringField(required=True)
     email = StringField(required=False)

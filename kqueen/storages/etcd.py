@@ -222,6 +222,19 @@ class Model:
         return cls.__name__.lower()
 
     @classmethod
+    def is_namespaced(cls):
+        """
+        Check if model is namespaced or global.
+
+        Returns:
+            bool: True for namespaced models, False for global models.
+        """
+        if hasattr(cls, 'global_namespace') and cls.global_namespace:
+            return False
+        else:
+            return True
+
+    @classmethod
     def get_db_prefix(cls):
         """Calculate prefix for writing DB objects
 

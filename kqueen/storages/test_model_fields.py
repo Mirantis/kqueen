@@ -9,8 +9,11 @@ from kqueen.storages.etcd import StringField
 import pytest
 
 
-def create_model(required=False):
+def create_model(required=False, global_ns=False):
     class TestModel(Model, metaclass=ModelMeta):
+        if global_ns:
+            global_namespace = global_ns
+
         id = IdField(required=required)
         string = StringField(required=required)
         json = JSONField(required=required)
@@ -257,3 +260,13 @@ class TestRelationField:
         assert isinstance(loaded, self.obj1.__class__)
         assert hasattr(loaded, 'relation')
         assert loaded.relation == self.obj2
+
+
+class TestGlobalNamespace:
+    def setup(self):
+        self.class_namespaced = create_model(False, False)
+        self.class_global = create_model(False, True)
+
+    def test_is_namespaced(self):
+        assert self.class_namespaced.is_namespaced()
+        assert not self.class_global.is_namespaced()
