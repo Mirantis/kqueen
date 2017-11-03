@@ -10,6 +10,7 @@ from kqueen.models import Cluster
 from kqueen.models import Organization
 from kqueen.models import Provisioner
 from kqueen.models import User
+from .generic_views import ListView, CreateView, GetView, UpdateView, UpdateView, DeleteView
 
 import logging
 
@@ -56,84 +57,34 @@ def index():
 
 
 # Clusters
+class ListClusters(ListView):
+    object_class = Cluster
 
-@api.route('/clusters', methods=['GET'])
-@jwt_required()
-def cluster_list():
-    output = []
+class CreateCluster(CreateView):
+    object_class = Cluster
 
-    for obj in list(Cluster.list(return_objects=True).values()):
-        output.append(obj.get_dict(expand=True))
+    def after_save(self):
+        # start provisioning
+        prov_status, prov_msg = self.obj.engine.provision()
 
-    return jsonify(output)
-
-
-@api.route('/clusters', methods=['POST'])
-@jwt_required()
-def cluster_create():
-    if not request.json:
-        abort(400)
-    else:
-        obj = Cluster(**request.json)
-        try:
-            # save cluster
-            obj.save()
-            output = obj.get_dict(expand=True)
-
-            # start provisioning
-            prov_status, prov_msg = obj.engine.provision()
-
-            if not prov_status:
-                logger.error('Provisioning failed: {}'.format(prov_msg))
-                abort(500)
-
-        except Exception as e:
-            logger.error(e)
+        if not prov_status:
+            logger.error('Provisioning failed: {}'.format(prov_msg))
             abort(500)
 
-    return jsonify(output)
+class GetCluster(GetView):
+    object_class = Cluster
 
+class UpdateCluster(UpdateView):
+    object_class = Cluster
 
-@api.route('/clusters/<uuid:pk>', methods=['GET'])
-@jwt_required()
-def cluster_get(pk):
-    obj = get_object(Cluster, pk)
+class DeleteCluster(DeleteView):
+    object_class = Cluster
 
-    return jsonify(obj.get_dict(expand=True))
-
-
-@api.route('/clusters/<uuid:pk>', methods=['PATCH'])
-@jwt_required()
-def cluster_update(pk):
-    if not request.json:
-        abort(400)
-
-    data = request.json
-    if not isinstance(data, dict):
-        abort(400)
-
-    obj = get_object(Cluster, pk)
-    for key, value in data.items():
-        setattr(obj, key, value)
-
-    try:
-        obj.save()
-        return jsonify(obj.get_dict(expand=True))
-    except:
-        abort(500)
-
-
-@api.route('/clusters/<uuid:pk>', methods=['DELETE'])
-@jwt_required()
-def cluster_delete(pk):
-    obj = get_object(Cluster, pk)
-
-    try:
-        obj.delete()
-    except:
-        abort(500)
-
-    return jsonify({'id': obj.id, 'state': 'deleted'})
+api.add_url_rule('/clusters', view_func=ListClusters.as_view('cluster_list'))
+api.add_url_rule('/clusters', view_func=CreateCluster.as_view('cluster_create'))
+api.add_url_rule('/clusters/<uuid:pk>', view_func=GetCluster.as_view('cluster_get'))
+api.add_url_rule('/clusters/<uuid:pk>', view_func=UpdateCluster.as_view('cluster_update'))
+api.add_url_rule('/clusters/<uuid:pk>', view_func=DeleteCluster.as_view('cluster_delete'))
 
 
 @api.route('/clusters/<uuid:pk>/status', methods=['GET'])
