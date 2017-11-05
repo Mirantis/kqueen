@@ -5,7 +5,6 @@ from flask_jwt import _jwt_required
 from flask import current_app
 from flask import request
 from .helpers import get_object
-from kqueen.helpers import camel_split
 
 
 class GenericView(View):
@@ -28,11 +27,13 @@ class GenericView(View):
 
         return jsonify(output)
 
+
 class GetView(GenericView):
     methods = ['GET']
 
     def get_content(self, *args, **kwargs):
         return get_object(self.get_class(), kwargs['pk'])
+
 
 class DeleteView(GenericView):
     methods = ['DELETE']
@@ -81,6 +82,7 @@ class ListView(GenericView):
 
     def get_content(self):
         return list(self.get_class().list(return_objects=True).values())
+
 
 class CreateView(GenericView):
     methods = ['POST']

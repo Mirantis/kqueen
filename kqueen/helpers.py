@@ -57,6 +57,7 @@ def prefix_to_num(st):
 
     return num * BINARY_PREFIX[prefix]
 
+
 def camel_split(st):
     """Split string by CamelCase.
 
