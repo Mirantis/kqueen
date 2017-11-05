@@ -71,6 +71,8 @@ class Cluster(Model, metaclass=ModelMeta):
                 'deployments': kubernetes.list_deployments(),
                 'nodes': kubernetes.list_nodes(),
                 'nodes_pods': kubernetes.count_pods_by_node(),
+                'persistent_volumes': kubernetes.list_persistent_volumes(),
+                'persistent_volume_claims': kubernetes.list_persistent_volume_claims(),
                 'pods': kubernetes.list_pods(),
                 'replica_sets': kubernetes.list_replica_sets(),
                 'services': kubernetes.list_services(),
