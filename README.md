@@ -23,6 +23,20 @@ etcdctl rm --recursive /kqueen
 ./devenv.py
 ```
 
+
+* Bootstrap for tests
+
+```
+docker-compose -f docker-compose.yml -f docker-compose.test.yml up
+```
+
+* Bootstrap for demo with unofficial images.
+
+```
+docker-compose -f docker-compose.yml -f docker-compose.demo.yml up
+```
+
+
 ## Configuration
 
 We load configuration from file `config/dev.py` by default and this can be configured by `KQUEEN_CONFIG_FILE` environment variable. Any environment variable matching name `KQUEEN_*` will be loaded and saved to configuration.
