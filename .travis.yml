@@ -18,7 +18,7 @@ jobs:
   include:
   - stage: test
     before_install:
-    - docker-compose -f docker-compose.yml -f docker-compose.test.yml up
+    - docker-compose -f docker-compose.yml -f docker-compose.test.yml up -d
     install:
     - pip3 install -r requirements.txt
     script:
@@ -45,7 +45,7 @@ jobs:
 
   - stage: verify
     before_install:
-    - docker-compose -f docker-compose.yml -f docker-compose.test.yml up
+    - docker-compose -f docker-compose.yml -f docker-compose.test.yml up -d
     install:
     - pip3 install --upgrade kqueen
     script:
