@@ -5,6 +5,7 @@ import uuid
 import importlib
 from kqueen.config import current_config
 from flask import current_app
+from .exceptions import BackendError
 
 logger = logging.getLogger(__name__)
 
@@ -205,17 +206,24 @@ class Model:
     # id field is required for all models
     id = IdField()
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, namespace=None, **kwargs):
         """
         Create model object.
 
         Args:
             namespace (str): Namespace for created object. Required for namespaced objects.
-            other model fields
+
+        Attributes:
+            **kwargs: Object attributes.
 
         """
 
-        # check for namespace for namepaced objects
+        # manage namespace
+        if self.__class__.is_namespaced():
+            self._object_namespace = namespace
+
+            if not self._object_namespace:
+                raise BackendError('Missing namespace for class {}'.format(self.__class__.__name__))
 
         # loop fields and set it
         for field_name, field in self.__class__.get_fields().items():
@@ -264,14 +272,15 @@ class Model:
         )
 
     @classmethod
-    def create(cls, **kwargs):
+    def create(cls, namespace=None, **kwargs):
         """Create new object"""
-        o = cls(**kwargs)
+
+        o = cls(namespace, **kwargs)
 
         return o
 
     @classmethod
-    def list(cls, return_objects=True, namespace=None):
+    def list(cls, namespace=None, return_objects=True):
         """List objects in the database"""
         output = {}
 
@@ -291,7 +300,7 @@ class Model:
         return output
 
     @classmethod
-    def load(cls, object_id, namespace=None):
+    def load(cls, namespace, object_id):
         """Load object from database"""
 
         key = '{}{}'.format(cls.get_db_prefix(), str(object_id))
@@ -306,7 +315,7 @@ class Model:
         return cls.deserialize(value, key=key)
 
     @classmethod
-    def exists(cls, object_id):
+    def exists(cls, namespace, object_id):
         """Check if object exists"""
 
         try:

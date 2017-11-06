@@ -5,6 +5,7 @@ from kqueen.storages.etcd import ModelMeta
 from kqueen.storages.etcd import RelationField
 from kqueen.storages.etcd import SecretField
 from kqueen.storages.etcd import StringField
+from kqueen.storages.exceptions import BackendError
 
 import pytest
 
@@ -262,7 +263,7 @@ class TestRelationField:
         assert loaded.relation == self.obj2
 
 
-class TestGlobalNamespace:
+class TestNamespaces:
     def setup(self):
         self.class_namespaced = create_model(False, False)
         self.class_global = create_model(False, True)
@@ -270,3 +271,17 @@ class TestGlobalNamespace:
     def test_is_namespaced(self):
         assert self.class_namespaced.is_namespaced()
         assert not self.class_global.is_namespaced()
+
+    def test_write_with_namespace(self):
+        namespace = 'test'
+        kw = model_kwargs
+        kw['_namespace'] = namespace
+
+        obj = self.class_namespaced(**kw)
+
+        assert obj.save()
+        assert obj._object_namespace == namespace
+
+    def test_raise_missing_namespace(self):
+        with pytest.raises(BackendError):
+            self.class_namespaced(**model_kwargs)
