@@ -206,6 +206,16 @@ class Model:
     id = IdField()
 
     def __init__(self, *args, **kwargs):
+        """
+        Create model object.
+
+        Args:
+            namespace (str): Namespace for created object. Required for namespaced objects.
+            other model fields
+
+        """
+
+        # check for namespace for namepaced objects
 
         # loop fields and set it
         for field_name, field in self.__class__.get_fields().items():
@@ -261,7 +271,7 @@ class Model:
         return o
 
     @classmethod
-    def list(cls, return_objects=True):
+    def list(cls, return_objects=True, namespace=None):
         """List objects in the database"""
         output = {}
 
@@ -281,7 +291,7 @@ class Model:
         return output
 
     @classmethod
-    def load(cls, object_id):
+    def load(cls, object_id, namespace=None):
         """Load object from database"""
 
         key = '{}{}'.format(cls.get_db_prefix(), str(object_id))

@@ -1,7 +1,7 @@
 from flask import jsonify
 from flask.views import View
 from flask import abort
-from flask_jwt import _jwt_required
+from flask_jwt import _jwt_required, current_identity
 from flask import current_app
 from flask import request
 from .helpers import get_object
@@ -32,7 +32,7 @@ class GetView(GenericView):
     methods = ['GET']
 
     def get_content(self, *args, **kwargs):
-        return get_object(self.get_class(), kwargs['pk'])
+        return get_object(self.get_class(), kwargs['pk'], current_identity)
 
 
 class DeleteView(GenericView):
@@ -41,7 +41,7 @@ class DeleteView(GenericView):
     def dispatch_request(self, *args, **kwargs):
         self.check_access()
 
-        obj = get_object(self.get_class(), kwargs['pk'])
+        obj = get_object(self.get_class(), kwargs['pk'], current_identity)
 
         try:
             obj.delete()
@@ -55,7 +55,7 @@ class UpdateView(GenericView):
     methods = ['PATCH']
 
     def get_content(self, *args, **kwargs):
-        return get_object(self.get_class(), kwargs['pk'])
+        return get_object(self.get_class(), kwargs['pk'], current_identity)
 
     def dispatch_request(self, *args, **kwargs):
         if not request.json:
@@ -65,7 +65,7 @@ class UpdateView(GenericView):
         if not isinstance(data, dict):
             abort(400)
 
-        obj = get_object(self.get_class(), kwargs['pk'])
+        obj = get_object(self.get_class(), kwargs['pk'], current_identity)
         for key, value in data.items():
             setattr(obj, key, value)
 
@@ -81,7 +81,12 @@ class ListView(GenericView):
     methods = ['GET']
 
     def get_content(self, *args, **kwargs):
-        return list(self.get_class().list(return_objects=True).values())
+        try:
+            namespace = current_identity.namespace
+        except AttributeError:
+            namespace = None
+
+        return list(self.get_class().list(return_objects=True, namespace=namespace).values())
 
 
 class CreateView(GenericView):
@@ -102,7 +107,14 @@ class CreateView(GenericView):
             abort(400)
         else:
             cls = self.get_class()
-            self.obj = cls(**request.json)
+            object_kwargs = request.json
+
+            try:
+                object_kwargs['_namespace'] = current_identity.namespace
+            except AttributeError:
+                object_kwargs['_namespace'] = None
+
+            self.obj = cls(**object_kwargs)
             try:
                 self.save_object()
                 self.after_save()

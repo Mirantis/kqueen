@@ -332,3 +332,14 @@ class User(Model, metaclass=ModelMeta):
     email = StringField(required=False)
     password = SecretField(required=True)
     organization = RelationField(required=True)
+
+    @property
+    def namespace(self):
+        """
+        Get namespace from organization.
+
+        Returns:
+            str: Namespace (from organization)
+        """
+
+        return self.organization.namespace

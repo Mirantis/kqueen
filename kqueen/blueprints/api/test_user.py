@@ -49,3 +49,8 @@ class TestUserCRUD(BaseTestCRUD):
         )
 
         assert response.json == self.obj.get_dict(expand=True)
+
+    def test_namespace(self):
+        user = self.get_object()
+
+        assert user.namespace == user.organization.namespace
