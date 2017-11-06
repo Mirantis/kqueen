@@ -206,7 +206,7 @@ class Model:
     # id field is required for all models
     id = IdField()
 
-    def __init__(self, namespace=None, **kwargs):
+    def __init__(self, ns=None, **kwargs):
         """
         Create model object.
 
@@ -220,7 +220,7 @@ class Model:
 
         # manage namespace
         if self.__class__.is_namespaced():
-            self._object_namespace = namespace
+            self._object_namespace = ns
 
             if not self._object_namespace:
                 raise BackendError('Missing namespace for class {}'.format(self.__class__.__name__))

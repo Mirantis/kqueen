@@ -27,8 +27,10 @@ def app():
 def cluster():
     """Create cluster with manual provisioner."""
     _uuid = uuid.uuid4()
+    _user = user()
 
     prov = Provisioner(
+        _user.namespace,
         name='Fixtured provisioner',
         engine='kqueen.engines.ManualEngine',
     )
@@ -42,18 +44,20 @@ def cluster():
         'kubeconfig': yaml.load(open('kubeconfig_localhost', 'r').read()),
     }
 
-    return Cluster.create(**create_kwargs)
+    return Cluster.create(_user.namespace, **create_kwargs)
 
 
 @pytest.fixture
 def provisioner():
     """Create dummy manual provisioner."""
+    _user = user()
+
     create_kwargs = {
         'name': 'Fixtured provisioner',
         'engine': 'kqueen.engines.ManualEngine',
     }
 
-    return Provisioner.create(**create_kwargs)
+    return Provisioner.create(_user.namespace, **create_kwargs)
 
 
 @pytest.fixture
@@ -85,9 +89,11 @@ def auth_header(client):
 def organization():
     """Prepare organization object."""
     organization = Organization(
+        None,
         name='DemoOrg',
         namespace='demoorg',
     )
+    print(organization.get_dict())
     organization.save()
 
     return organization
@@ -98,6 +104,7 @@ def user():
     """Prepare user object."""
     profile = fake.simple_profile()
     user = User(
+        None,
         username=profile['username'],
         password=fake.password(),
         organization=organization(),
