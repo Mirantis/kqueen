@@ -80,7 +80,7 @@ class UpdateView(GenericView):
 class ListView(GenericView):
     methods = ['GET']
 
-    def get_content(self):
+    def get_content(self, *args, **kwargs):
         return list(self.get_class().list(return_objects=True).values())
 
 
@@ -93,7 +93,7 @@ class CreateView(GenericView):
     def after_save(self):
         pass
 
-    def get_content(self):
+    def get_content(self, *args, **kwargs):
         return self.obj.get_dict(expand=True)
 
     def dispatch_request(self, *args, **kwargs):
