@@ -3,13 +3,13 @@ from flask import abort
 from flask import Blueprint
 from flask import jsonify
 from flask import make_response
-from flask import request
 from flask_jwt import current_identity
 from flask_jwt import jwt_required
 from kqueen.models import Cluster
 from kqueen.models import Organization
 from kqueen.models import Provisioner
 from kqueen.models import User
+from .generic_views import ListView, CreateView, GetView, UpdateView, DeleteView
 
 import logging
 
@@ -56,84 +56,39 @@ def index():
 
 
 # Clusters
-
-@api.route('/clusters', methods=['GET'])
-@jwt_required()
-def cluster_list():
-    output = []
-
-    for obj in list(Cluster.list(return_objects=True).values()):
-        output.append(obj.get_dict(expand=True))
-
-    return jsonify(output)
+class ListClusters(ListView):
+    object_class = Cluster
 
 
-@api.route('/clusters', methods=['POST'])
-@jwt_required()
-def cluster_create():
-    if not request.json:
-        abort(400)
-    else:
-        obj = Cluster(**request.json)
-        try:
-            # save cluster
-            obj.save()
-            output = obj.get_dict(expand=True)
+class CreateCluster(CreateView):
+    object_class = Cluster
 
-            # start provisioning
-            prov_status, prov_msg = obj.engine.provision()
+    def after_save(self):
+        # start provisioning
+        prov_status, prov_msg = self.obj.engine.provision()
 
-            if not prov_status:
-                logger.error('Provisioning failed: {}'.format(prov_msg))
-                abort(500)
-
-        except Exception as e:
-            logger.error(e)
+        if not prov_status:
+            logger.error('Provisioning failed: {}'.format(prov_msg))
             abort(500)
 
-    return jsonify(output)
+
+class GetCluster(GetView):
+    object_class = Cluster
 
 
-@api.route('/clusters/<uuid:pk>', methods=['GET'])
-@jwt_required()
-def cluster_get(pk):
-    obj = get_object(Cluster, pk)
-
-    return jsonify(obj.get_dict(expand=True))
+class UpdateCluster(UpdateView):
+    object_class = Cluster
 
 
-@api.route('/clusters/<uuid:pk>', methods=['PATCH'])
-@jwt_required()
-def cluster_update(pk):
-    if not request.json:
-        abort(400)
-
-    data = request.json
-    if not isinstance(data, dict):
-        abort(400)
-
-    obj = get_object(Cluster, pk)
-    for key, value in data.items():
-        setattr(obj, key, value)
-
-    try:
-        obj.save()
-        return jsonify(obj.get_dict(expand=True))
-    except:
-        abort(500)
+class DeleteCluster(DeleteView):
+    object_class = Cluster
 
 
-@api.route('/clusters/<uuid:pk>', methods=['DELETE'])
-@jwt_required()
-def cluster_delete(pk):
-    obj = get_object(Cluster, pk)
-
-    try:
-        obj.delete()
-    except:
-        abort(500)
-
-    return jsonify({'id': obj.id, 'state': 'deleted'})
+api.add_url_rule('/clusters', view_func=ListClusters.as_view('cluster_list'))
+api.add_url_rule('/clusters', view_func=CreateCluster.as_view('cluster_create'))
+api.add_url_rule('/clusters/<uuid:pk>', view_func=GetCluster.as_view('cluster_get'))
+api.add_url_rule('/clusters/<uuid:pk>', view_func=UpdateCluster.as_view('cluster_update'))
+api.add_url_rule('/clusters/<uuid:pk>', view_func=DeleteCluster.as_view('cluster_delete'))
 
 
 @api.route('/clusters/<uuid:pk>/status', methods=['GET'])
@@ -160,216 +115,87 @@ def cluster_kubeconfig(pk):
 
 
 # Provisioners
-
-@api.route('/provisioners', methods=['GET'])
-@jwt_required()
-def provisioner_list():
-    output = []
-
-    for obj in list(Provisioner.list(return_objects=True).values()):
-        output.append(obj.get_dict(expand=True))
-
-    return jsonify(output)
+class ListProvisioners(ListView):
+    object_class = Provisioner
 
 
-@api.route('/provisioners', methods=['POST'])
-@jwt_required()
-def provisioner_create():
-    if not request.json:
-        abort(400)
-    else:
-        obj = Provisioner(**request.json)
-        try:
-            obj.save()
-            output = obj.get_dict(expand=True)
-        except:
-            abort(500)
-
-    return jsonify(output)
+class CreateProvisioner(CreateView):
+    object_class = Provisioner
 
 
-@api.route('/provisioners/<uuid:pk>', methods=['GET'])
-@jwt_required()
-def provisioner_get(pk):
-    obj = get_object(Provisioner, pk)
-
-    return jsonify(obj.get_dict(expand=True))
+class GetProvisioner(GetView):
+    object_class = Provisioner
 
 
-@api.route('/provisioners/<uuid:pk>', methods=['PATCH'])
-@jwt_required()
-def provisioner_update(pk):
-    if not request.json:
-        abort(400)
-
-    data = request.json
-    if not isinstance(data, dict):
-        abort(400)
-
-    obj = get_object(Provisioner, pk)
-    for key, value in data.items():
-        setattr(obj, key, value)
-
-    try:
-        obj.save()
-        return jsonify(obj.get_dict(expand=True))
-    except:
-        abort(500)
+class UpdateProvisioner(UpdateView):
+    object_class = Provisioner
 
 
-@api.route('/provisioners/<uuid:pk>', methods=['DELETE'])
-@jwt_required()
-def provisioner_delete(pk):
-    obj = get_object(Provisioner, pk)
+class DeleteProvisioner(DeleteView):
+    object_class = Provisioner
 
-    try:
-        obj.delete()
-    except:
-        abort(500)
 
-    return jsonify({'id': obj.id, 'state': 'deleted'})
+api.add_url_rule('/provisioners', view_func=ListProvisioners.as_view('provisioner_list'))
+api.add_url_rule('/provisioners', view_func=CreateProvisioner.as_view('provisioner_create'))
+api.add_url_rule('/provisioners/<uuid:pk>', view_func=GetProvisioner.as_view('provisioner_get'))
+api.add_url_rule('/provisioners/<uuid:pk>', view_func=UpdateProvisioner.as_view('provisioner_update'))
+api.add_url_rule('/provisioners/<uuid:pk>', view_func=DeleteProvisioner.as_view('provisioner_delete'))
 
 
 # Organizations
-
-@api.route('/organizations', methods=['GET'])
-@jwt_required()
-def organization_list():
-    output = []
-
-    for obj in list(Organization.list(return_objects=True).values()):
-        output.append(obj.get_dict(expand=True))
-
-    return jsonify(output)
+class ListOrganizations(ListView):
+    object_class = Organization
 
 
-@api.route('/organizations', methods=['POST'])
-@jwt_required()
-def organization_create():
-    if not request.json:
-        abort(400)
-    else:
-        obj = Organization(**request.json)
-        try:
-            obj.save()
-            output = obj.get_dict(expand=True)
-        except:
-            abort(500)
-
-    return jsonify(output)
+class CreateOrganization(CreateView):
+    object_class = Organization
 
 
-@api.route('/organizations/<uuid:pk>', methods=['GET'])
-@jwt_required()
-def organization_get(pk):
-    obj = get_object(Organization, pk)
-
-    return jsonify(obj.get_dict(expand=True))
+class GetOrganization(GetView):
+    object_class = Organization
 
 
-@api.route('/organizations/<uuid:pk>', methods=['PATCH'])
-@jwt_required()
-def organization_update(pk):
-    if not request.json:
-        abort(400)
-
-    data = request.json
-    if not isinstance(data, dict):
-        abort(400)
-
-    obj = get_object(Organization, pk)
-    for key, value in data.items():
-        setattr(obj, key, value)
-
-    try:
-        obj.save()
-        return jsonify(obj.get_dict(expand=True))
-    except:
-        abort(500)
+class UpdateOrganization(UpdateView):
+    object_class = Organization
 
 
-@api.route('/organizations/<uuid:pk>', methods=['DELETE'])
-@jwt_required()
-def organization_delete(pk):
-    obj = get_object(Organization, pk)
+class DeleteOrganization(DeleteView):
+    object_class = Organization
 
-    try:
-        obj.delete()
-    except:
-        abort(500)
 
-    return jsonify({'id': obj.id, 'state': 'deleted'})
+api.add_url_rule('/organizations', view_func=ListOrganizations.as_view('organization_list'))
+api.add_url_rule('/organizations', view_func=CreateOrganization.as_view('organization_create'))
+api.add_url_rule('/organizations/<uuid:pk>', view_func=GetOrganization.as_view('organization_get'))
+api.add_url_rule('/organizations/<uuid:pk>', view_func=UpdateOrganization.as_view('organization_update'))
+api.add_url_rule('/organizations/<uuid:pk>', view_func=DeleteOrganization.as_view('organization_delete'))
 
 
 # Users
-
-@api.route('/users', methods=['GET'])
-@jwt_required()
-def user_list():
-    output = []
-
-    for obj in list(User.list(return_objects=True).values()):
-        output.append(obj.get_dict(expand=True))
-
-    return jsonify(output)
+class ListUsers(ListView):
+    object_class = User
 
 
-@api.route('/users', methods=['POST'])
-@jwt_required()
-def user_create():
-    if not request.json:
-        abort(400)
-    else:
-        obj = User(**request.json)
-        try:
-            obj.save()
-            output = obj.get_dict(expand=True)
-        except:
-            abort(500)
-
-    return jsonify(output)
+class CreateUser(CreateView):
+    object_class = User
 
 
-@api.route('/users/<uuid:pk>', methods=['GET'])
-@jwt_required()
-def user_get(pk):
-    obj = get_object(User, pk)
-
-    return jsonify(obj.get_dict(expand=True))
+class GetUser(GetView):
+    object_class = User
 
 
-@api.route('/users/<uuid:pk>', methods=['PATCH'])
-@jwt_required()
-def user_update(pk):
-    if not request.json:
-        abort(400)
-
-    data = request.json
-    if not isinstance(data, dict):
-        abort(400)
-
-    obj = get_object(User, pk)
-    for key, value in data.items():
-        setattr(obj, key, value)
-
-    try:
-        obj.save()
-        return jsonify(obj.get_dict(expand=True))
-    except:
-        abort(500)
+class UpdateUser(UpdateView):
+    object_class = User
 
 
-@api.route('/users/<uuid:pk>', methods=['DELETE'])
-@jwt_required()
-def user_delete(pk):
-    obj = get_object(User, pk)
+class DeleteUser(DeleteView):
+    object_class = User
 
-    try:
-        obj.delete()
-    except:
-        abort(500)
 
-    return jsonify({'id': obj.id, 'state': 'deleted'})
+api.add_url_rule('/users', view_func=ListUsers.as_view('user_list'))
+api.add_url_rule('/users', view_func=CreateUser.as_view('user_create'))
+api.add_url_rule('/users/<uuid:pk>', view_func=GetUser.as_view('user_get'))
+api.add_url_rule('/users/<uuid:pk>', view_func=UpdateUser.as_view('user_update'))
+api.add_url_rule('/users/<uuid:pk>', view_func=DeleteUser.as_view('user_delete'))
 
 
 @api.route('/users/whoami', methods=['GET'])

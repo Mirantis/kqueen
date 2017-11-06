@@ -1,5 +1,7 @@
-import pytest
+from kqueen.helpers import camel_split
 from kqueen.helpers import prefix_to_num
+
+import pytest
 
 
 @pytest.mark.parametrize('st,req', [
@@ -12,3 +14,11 @@ from kqueen.helpers import prefix_to_num
 ])
 def test_prefix_to_num(st, req):
     assert prefix_to_num(st) == req
+
+
+@pytest.mark.parametrize('st,req', [
+    ('CamelCase', ['Camel', 'Case']),
+    ('camelcase', ['camelcase']),
+])
+def test_camel_split(st, req):
+    assert camel_split(st) == req

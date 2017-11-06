@@ -1,8 +1,5 @@
 """Configuration and fixtures for pytest."""
 from faker import Faker
-from flask_jwt import JWT
-from kqueen.auth import authenticate
-from kqueen.auth import identity
 from kqueen.models import Cluster
 from kqueen.models import Organization
 from kqueen.models import Provisioner
@@ -18,11 +15,11 @@ config_file = 'config/test.py'
 fake = Faker()
 
 
-@pytest.fixture
+@pytest.fixture(autouse=True, scope='session')
 def app():
-    """Prepare app with JWT."""
+    """Prepare app."""
     app = create_app(config_file=config_file)
-    JWT(app, authenticate, identity)
+
     return app
 
 
