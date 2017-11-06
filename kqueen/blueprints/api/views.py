@@ -122,14 +122,6 @@ class ListProvisioners(ListView):
 class CreateProvisioner(CreateView):
     object_class = Provisioner
 
-    def after_save(self):
-        # start provisioning
-        prov_status, prov_msg = self.obj.engine.provision()
-
-        if not prov_status:
-            logger.error('Provisioning failed: {}'.format(prov_msg))
-            abort(500)
-
 
 class GetProvisioner(GetView):
     object_class = Provisioner
@@ -143,11 +135,11 @@ class DeleteProvisioner(DeleteView):
     object_class = Provisioner
 
 
-api.add_url_rule('/clusters', view_func=ListProvisioners.as_view('cluster_list'))
-api.add_url_rule('/clusters', view_func=CreateProvisioner.as_view('cluster_create'))
-api.add_url_rule('/clusters/<uuid:pk>', view_func=GetProvisioner.as_view('cluster_get'))
-api.add_url_rule('/clusters/<uuid:pk>', view_func=UpdateProvisioner.as_view('cluster_update'))
-api.add_url_rule('/clusters/<uuid:pk>', view_func=DeleteProvisioner.as_view('cluster_delete'))
+api.add_url_rule('/provisioners', view_func=ListProvisioners.as_view('provisioner_list'))
+api.add_url_rule('/provisioners', view_func=CreateProvisioner.as_view('provisioner_create'))
+api.add_url_rule('/provisioners/<uuid:pk>', view_func=GetProvisioner.as_view('provisioner_get'))
+api.add_url_rule('/provisioners/<uuid:pk>', view_func=UpdateProvisioner.as_view('provisioner_update'))
+api.add_url_rule('/provisioners/<uuid:pk>', view_func=DeleteProvisioner.as_view('provisioner_delete'))
 
 
 # Organizations
@@ -157,14 +149,6 @@ class ListOrganizations(ListView):
 
 class CreateOrganization(CreateView):
     object_class = Organization
-
-    def after_save(self):
-        # start provisioning
-        prov_status, prov_msg = self.obj.engine.provision()
-
-        if not prov_status:
-            logger.error('Provisioning failed: {}'.format(prov_msg))
-            abort(500)
 
 
 class GetOrganization(GetView):
@@ -179,11 +163,11 @@ class DeleteOrganization(DeleteView):
     object_class = Organization
 
 
-api.add_url_rule('/clusters', view_func=ListOrganizations.as_view('cluster_list'))
-api.add_url_rule('/clusters', view_func=CreateOrganization.as_view('cluster_create'))
-api.add_url_rule('/clusters/<uuid:pk>', view_func=GetOrganization.as_view('cluster_get'))
-api.add_url_rule('/clusters/<uuid:pk>', view_func=UpdateOrganization.as_view('cluster_update'))
-api.add_url_rule('/clusters/<uuid:pk>', view_func=DeleteOrganization.as_view('cluster_delete'))
+api.add_url_rule('/organizations', view_func=ListOrganizations.as_view('organization_list'))
+api.add_url_rule('/organizations', view_func=CreateOrganization.as_view('organization_create'))
+api.add_url_rule('/organizations/<uuid:pk>', view_func=GetOrganization.as_view('organization_get'))
+api.add_url_rule('/organizations/<uuid:pk>', view_func=UpdateOrganization.as_view('organization_update'))
+api.add_url_rule('/organizations/<uuid:pk>', view_func=DeleteOrganization.as_view('organization_delete'))
 
 
 # Users
@@ -193,14 +177,6 @@ class ListUsers(ListView):
 
 class CreateUser(CreateView):
     object_class = User
-
-    def after_save(self):
-        # start provisioning
-        prov_status, prov_msg = self.obj.engine.provision()
-
-        if not prov_status:
-            logger.error('Provisioning failed: {}'.format(prov_msg))
-            abort(500)
 
 
 class GetUser(GetView):
@@ -215,11 +191,11 @@ class DeleteUser(DeleteView):
     object_class = User
 
 
-api.add_url_rule('/clusters', view_func=ListUsers.as_view('cluster_list'))
-api.add_url_rule('/clusters', view_func=CreateUser.as_view('cluster_create'))
-api.add_url_rule('/clusters/<uuid:pk>', view_func=GetUser.as_view('cluster_get'))
-api.add_url_rule('/clusters/<uuid:pk>', view_func=UpdateUser.as_view('cluster_update'))
-api.add_url_rule('/clusters/<uuid:pk>', view_func=DeleteUser.as_view('cluster_delete'))
+api.add_url_rule('/users', view_func=ListUsers.as_view('user_list'))
+api.add_url_rule('/users', view_func=CreateUser.as_view('user_create'))
+api.add_url_rule('/users/<uuid:pk>', view_func=GetUser.as_view('user_get'))
+api.add_url_rule('/users/<uuid:pk>', view_func=UpdateUser.as_view('user_update'))
+api.add_url_rule('/users/<uuid:pk>', view_func=DeleteUser.as_view('user_delete'))
 
 
 @api.route('/users/whoami', methods=['GET'])
