@@ -38,7 +38,7 @@ class Field:
         self.value = kwargs.get('value', None)
         self.required = kwargs.get('required', False)
 
-    def set_value(self, value):
+    def set_value(self, value, **kwargs):
         self.value = value
 
     def get_value(self):
@@ -51,7 +51,7 @@ class Field:
         else:
             return None
 
-    def deserialize(self, serialized):
+    def deserialize(self, serialized, **kwargs):
         """
         This method is used for value deserialization. It is necessary to create instance first
         (with empty value) and then use `deserialize` method to fill the value.
@@ -63,7 +63,7 @@ class Field:
             serialized (string): Serialized value of the field.
         """
 
-        self.set_value(serialized)
+        self.set_value(serialized, **kwargs)
 
     def empty(self):
         return self.value is None
@@ -94,7 +94,7 @@ class StringField(Field):
 
 
 class IdField(Field):
-    def set_value(self, value):
+    def set_value(self, value, **kwargs):
         """Don't serialize None"""
         if value:
             self.value = str(value)
@@ -109,7 +109,7 @@ class SecretField(Field):
 class JSONField(Field):
     """JSON is stored as value"""
 
-    def set_value(self, value):
+    def set_value(self, value, **kwargs):
         if isinstance(value, str):
             self.value = json.loads(value)
         elif isinstance(value, dict):
@@ -140,15 +140,17 @@ class RelationField(Field):
         else:
             return None
 
-    def deserialize(self, serialized):
+    def deserialize(self, serialized, **kwargs):
         """Deserialize relation to real object"""
 
         if ':' in serialized:
             class_name, object_id = serialized.split(':')
 
             obj_class = self._get_related_class(class_name)
-            obj = obj_class.load(object_id)
-            self.set_value(obj)
+            # TODO: CRITICAL make namespaced and check it
+
+            obj = obj_class.load(kwargs.get('namespace'), object_id)
+            self.set_value(obj, **kwargs)
 
     def _get_related_class(self, class_name):
         module = importlib.import_module('kqueen.models')
@@ -164,13 +166,13 @@ class RelationField(Field):
 
         return class_name and selfid
 
-    def set_value(self, value):
+    def set_value(self, value, **kwargs):
         """Detect serialized format and deserialized according to format."""
         if isinstance(value, str) and ':' in value:
             # deserialize
-            self.deserialize(value)
+            self.deserialize(value, **kwargs)
         else:
-            super(RelationField, self).set_value(value)
+            super(RelationField, self).set_value(value, **kwargs)
 
 
 class ModelMeta(type):
@@ -211,7 +213,7 @@ class Model:
         Create model object.
 
         Args:
-            namespace (str): Namespace for created object. Required for namespaced objects.
+            ns (str): Namespace for created object. Required for namespaced objects.
 
         Attributes:
             **kwargs: Object attributes.
@@ -230,7 +232,7 @@ class Model:
             field_class = field.__class__
             if hasattr(field_class, 'is_field'):
                 field_object = field_class(**field.__dict__)
-                field_object.set_value(kwargs.get(field_name))
+                field_object.set_value(kwargs.get(field_name), namespace=ns)
                 setattr(self, '_{}'.format(field_name), field_object)
 
     @classmethod
@@ -272,7 +274,7 @@ class Model:
         )
 
     @classmethod
-    def create(cls, namespace=None, **kwargs):
+    def create(cls, namespace, **kwargs):
         """Create new object"""
 
         o = cls(namespace, **kwargs)
@@ -280,7 +282,7 @@ class Model:
         return o
 
     @classmethod
-    def list(cls, namespace=None, return_objects=True):
+    def list(cls, namespace, return_objects=True):
         """List objects in the database"""
         output = {}
 
@@ -293,7 +295,7 @@ class Model:
 
         for result in directory.children:
             if return_objects:
-                output[result.key.replace(key, '')] = cls.deserialize(result.value)
+                output[result.key.replace(key, '')] = cls.deserialize(result.value, namespace=namespace)
             else:
                 output[result.key.replace(key, '')] = None
 
@@ -312,14 +314,14 @@ class Model:
         except:
             raise
 
-        return cls.deserialize(value, key=key)
+        return cls.deserialize(value, key=key, namespace=namespace)
 
     @classmethod
     def exists(cls, namespace, object_id):
         """Check if object exists"""
 
         try:
-            cls.load(object_id)
+            cls.load(namespace, object_id)
             return True
         except NameError:
             return False
@@ -335,11 +337,11 @@ class Model:
             field_class = field.__class__
             if hasattr(field_class, 'is_field') and toplevel.get(field_name):
                 field_object = field_class(**field.__dict__)
-                field_object.deserialize(toplevel[field_name])
+                field_object.deserialize(toplevel[field_name], **kwargs)
 
                 object_kwargs[field_name] = field_object.get_value()
 
-        o = cls(**object_kwargs)
+        o = cls(kwargs.get('namespace'), **object_kwargs)
 
         if kwargs.get('key'):
             o._key = kwargs.get('key')

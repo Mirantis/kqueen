@@ -82,7 +82,10 @@ def auth_header(client):
         data=json.dumps(data),
         content_type='application/json')
 
-    return {'Authorization': 'JWT {}'.format(response.json['access_token'])}
+    return {
+        'Authorization': 'JWT {}'.format(response.json['access_token']),
+        'X-Test-Namespace': _user.namespace,
+    }
 
 
 @pytest.fixture
@@ -93,7 +96,6 @@ def organization():
         name='DemoOrg',
         namespace='demoorg',
     )
-    print(organization.get_dict())
     organization.save()
 
     return organization

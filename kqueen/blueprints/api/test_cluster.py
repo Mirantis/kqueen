@@ -1,7 +1,6 @@
 from flask import url_for
 from uuid import uuid4
 from kqueen.conftest import cluster
-from kqueen.conftest import provisioner
 from .test_crud import BaseTestCRUD
 
 import pytest
@@ -10,13 +9,9 @@ import json
 
 class TestClusterCRUD(BaseTestCRUD):
     def get_object(self):
-        clu = cluster()
-        prov = provisioner()
-        prov.save()
+        obj = cluster()
 
-        clu.provisioner = prov
-
-        return clu
+        return obj
 
     def get_edit_data(self):
         return {'name': 'patched cluster'}
@@ -34,6 +29,7 @@ class TestClusterCRUD(BaseTestCRUD):
         assert dicted['provisioner']['id'] == self.obj.provisioner.id
 
     def test_cluster_get(self):
+
         cluster_id = self.obj.id
 
         response = self.client.get(
@@ -150,7 +146,7 @@ class TestClusterCRUD(BaseTestCRUD):
         )
 
         object_id = response.json['id']
-        obj = self.obj.__class__.load(object_id)
+        obj = self.obj.__class__.load(self.namespace, object_id)
 
         assert response.status_code == 200
         assert obj.name == 'Provisioned'

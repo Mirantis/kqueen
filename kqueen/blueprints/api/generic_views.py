@@ -58,6 +58,8 @@ class UpdateView(GenericView):
         return get_object(self.get_class(), kwargs['pk'], current_identity)
 
     def dispatch_request(self, *args, **kwargs):
+        self.check_access()
+
         if not request.json:
             abort(400)
 
@@ -86,7 +88,7 @@ class ListView(GenericView):
         except AttributeError:
             namespace = None
 
-        return list(self.get_class().list(return_objects=True, namespace=namespace).values())
+        return list(self.get_class().list(namespace, return_objects=True).values())
 
 
 class CreateView(GenericView):
@@ -102,19 +104,19 @@ class CreateView(GenericView):
         return self.obj.get_dict(expand=True)
 
     def dispatch_request(self, *args, **kwargs):
+        self.check_access()
 
         if not request.json:
             abort(400)
         else:
             cls = self.get_class()
-            object_kwargs = request.json
 
             try:
-                object_kwargs['_namespace'] = current_identity.namespace
+                namespace = current_identity.namespace
             except AttributeError:
-                object_kwargs['_namespace'] = None
+                namespace = None
 
-            self.obj = cls(**object_kwargs)
+            self.obj = cls(namespace, **request.json)
             try:
                 self.save_object()
                 self.after_save()

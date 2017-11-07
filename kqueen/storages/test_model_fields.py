@@ -26,6 +26,7 @@ def create_model(required=False, global_ns=False):
 
 model_kwargs = {'string': 'abc123', 'json': {'a': 1, 'b': 2, 'c': 'tri'}, 'secret': 'pass'}
 model_fields = ['id', 'string', 'json', 'secret', 'relation']
+namespace = 'test'
 
 
 def model_serialized(related=None):
@@ -48,8 +49,8 @@ def model_serialized(related=None):
 def create_object():
     model = create_model()
 
-    obj1 = model(**model_kwargs)
-    obj2 = model(**model_kwargs)
+    obj1 = model(namespace, **model_kwargs)
+    obj2 = model(namespace, **model_kwargs)
 
     obj2.save()
 
@@ -61,14 +62,14 @@ def create_object():
 class TestModelInit:
     def setup(self):
         self.model = create_model()
-        self.obj = self.model(**model_kwargs)
+        self.obj = self.model(namespace, **model_kwargs)
 
     @pytest.mark.parametrize('field_name,field_value', model_kwargs.items())
     def test_init_string(self, field_name, field_value):
         """Initialization of new models is properly setting properties"""
 
         kwargs = {field_name: field_value}
-        obj = self.model(**kwargs)
+        obj = self.model(namespace, **kwargs)
 
         assert getattr(obj, field_name) == field_value
 
@@ -83,7 +84,7 @@ class TestModelInit:
 class TestSave:
     def setup(self):
         model = create_model(required=True)
-        self.obj = model()
+        self.obj = model(namespace)
 
     def test_model_invalid(self):
         assert not self.obj.validate()
@@ -99,7 +100,6 @@ class TestSave:
 class TestModelAddId:
     def test_id_added(self, create_object):
         obj = create_object
-        print(obj)
 
         assert obj.id is None
         assert obj.verify_id()
@@ -112,7 +112,7 @@ class TestRequiredFields:
     @pytest.mark.parametrize('required', [True, False])
     def test_required(self, required):
         model = create_model(required=required)
-        obj = model(**model_kwargs)
+        obj = model(namespace, **model_kwargs)
 
         assert obj.validate() != required
 
@@ -142,7 +142,7 @@ class TestFieldSetGet:
     @pytest.mark.parametrize('field_name', model_kwargs.keys())
     def test_set_fields(self, field_name):
         model_class = create_model()
-        obj = model_class()
+        obj = model_class(namespace)
         setattr(obj, field_name, model_kwargs[field_name])
 
         assert getattr(obj, field_name) == model_kwargs[field_name]
@@ -166,7 +166,7 @@ class TestSerialization:
 
         object_class = create_object.__class__
         create_object.save()
-        new_object = object_class.deserialize(create_object.serialize())
+        new_object = object_class.deserialize(create_object.serialize(), namespace=namespace)
 
         assert new_object.get_dict() == create_object.get_dict()
 
@@ -206,8 +206,8 @@ class TestDuplicateId:
 
     def test_with_save(self):
         """"Save object are not same"""
-        obj1 = self.model(**self.obj1_kwargs)
-        obj2 = self.model(**self.obj2_kwargs)
+        obj1 = self.model(namespace, **self.obj1_kwargs)
+        obj2 = self.model(namespace, **self.obj2_kwargs)
 
         assert obj1 != obj2
 
@@ -256,7 +256,7 @@ class TestRelationField:
         monkeypatch.setattr(RelationField, '_get_related_class', fake_related_class)
 
         self.obj1.save()
-        loaded = self.obj1.__class__.load(self.obj1.id)
+        loaded = self.obj1.__class__.load(namespace, self.obj1.id)
 
         assert isinstance(loaded, self.obj1.__class__)
         assert hasattr(loaded, 'relation')
@@ -273,11 +273,7 @@ class TestNamespaces:
         assert not self.class_global.is_namespaced()
 
     def test_write_with_namespace(self):
-        namespace = 'test'
-        kw = model_kwargs
-        kw['_namespace'] = namespace
-
-        obj = self.class_namespaced(**kw)
+        obj = self.class_namespaced(namespace, **model_kwargs)
 
         assert obj.save()
         assert obj._object_namespace == namespace

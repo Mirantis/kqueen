@@ -1,9 +1,9 @@
 from flask import abort
 from uuid import UUID
+from kqueen.models import User
 
 
 def get_object(object_class, pk, user=None):
-
     # read uuid
     if isinstance(pk, UUID):
         object_id = pk
@@ -21,7 +21,7 @@ def get_object(object_class, pk, user=None):
 
     # load object
     try:
-        obj = object_class.load(object_id, namespace)
+        obj = object_class.load(namespace, object_id)
     except NameError:
         abort(404)
 

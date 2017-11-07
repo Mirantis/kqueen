@@ -50,11 +50,11 @@ class BaseTestCRUD:
         self.obj.save()
 
         self.auth_header = auth_header(self.client)
+        self.namespace = self.auth_header['X-Test-Namespace']
         self.urls = self.get_urls()
 
     def test_crud_create(self):
         data = self.get_create_data()
-        print(data)
 
         response = self.client.post(
             self.urls['create'],
@@ -109,7 +109,10 @@ class BaseTestCRUD:
         data = response.json
 
         assert isinstance(data, list)
-        assert len(data) == len(self.obj.__class__.list(return_objects=False))
+        assert len(data) == len(self.obj.__class__.list(
+            self.namespace,
+            return_objects=False)
+        )
         assert self.obj.get_dict(expand=True) in data
 
     def test_crud_update(self):
@@ -123,7 +126,10 @@ class BaseTestCRUD:
         )
 
         assert response.status_code == 200
-        patched = self.obj.__class__.load(self.obj.id)
+        patched = self.obj.__class__.load(
+            self.namespace,
+            self.obj.id,
+        )
         for key, value in data.items():
             assert getattr(patched, key) == value
 
@@ -165,7 +171,10 @@ class BaseTestCRUD:
 
         assert response.status_code == 200
         with pytest.raises(NameError, message='Object not found'):
-            self.obj.__class__.load(self.obj.id)
+            self.obj.__class__.load(
+                self.namespace,
+                self.obj.id,
+            )
 
     def test_crud_delete_failed(self, monkeypatch):
         def fake_delete(self, *args, **kwargs):
