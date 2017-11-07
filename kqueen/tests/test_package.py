@@ -11,6 +11,9 @@ def test_main(monkeypatch):
 
     monkeypatch.setattr('kqueen.server.run', fake_run)
 
+    from kqueen import __main__
+    print(__main__)
+
     assert started, 'run() not executed'
 
 
