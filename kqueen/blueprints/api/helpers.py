@@ -1,6 +1,5 @@
 from flask import abort
 from uuid import UUID
-from kqueen.models import User
 
 
 def get_object(object_class, pk, user=None):
