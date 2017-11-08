@@ -6,13 +6,14 @@
 
 ## Development
 
-* Bootstrap environment
+* Bootstrap kqueen environment
 
 ```
 mkvirtualenv -p /usr/bin/python3 kqueen
 pip3 install -r requirements.txt
 pip3 install --editable .
-docker-compose up -d
+# start etcd in container
+docker-compose up -d # start
 kqueen
 ```
 
@@ -24,18 +25,27 @@ etcdctl rm --recursive /kqueen
 ```
 
 
-* Bootstrap for tests
+## Demo environment
 
-```
-docker-compose -f docker-compose.yml -f docker-compose.test.yml up
-```
-
-* Bootstrap for demo with unofficial images.
+* Without local Kubernetes
 
 ```
 docker-compose -f docker-compose.yml -f docker-compose.demo.yml up
 ```
 
+* Including local Kubernetes (without `kubelet`)
+
+```
+docker-compose -f docker-compose.yml -f docker-compose.demo.yml -f docker-compose.kubernetes.yml up
+```
+
+* You can add some example data by running
+
+```
+docker-compose -f docker-compose.yml -f docker-compose.demo.yml exec kqueen ./devenv.py
+```
+
+It will add user `admin` with password `default` and few of testing objects.
 
 ## Configuration
 
