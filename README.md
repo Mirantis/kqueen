@@ -39,11 +39,13 @@ docker-compose -f docker-compose.yml -f docker-compose.demo.yml up
 docker-compose -f docker-compose.yml -f docker-compose.demo.yml -f docker-compose.kubernetes.yml up
 ```
 
-* You can add some example data by running. It will add user `admin` with password `default` and few of testing objects.
+* You can add some example data by running
 
 ```
 docker-compose -f docker-compose.yml -f docker-compose.demo.yml exec kqueen ./devenv.py
 ```
+
+It will add user `admin` with password `default` and few of testing objects.
 
 ## Configuration
 
