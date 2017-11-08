@@ -1,11 +1,13 @@
 version: '2'
 services:
   kqueen:
-    image: tomkukral/kqueen
+    build: ./
     ports:
       - 127.0.0.1:5000:5000
     depends_on:
       - etcd
+    environment:
+      KQUEEN_ETCD_HOST: etcd
   kqueen_ui:
     image: atengler/kqueen-ui
     ports:
@@ -13,13 +15,5 @@ services:
     depends_on:
       - kqueen
     environment:
-      KQUEEN_API_URL: 'http://172.16.238.1:5000/api/v1/'
-      KQUEEN_AUTH_URL: 'http://172.16.238.1:5000/api/v1/auth'
-networks:
-  default:
-    driver: bridge
-    ipam:
-      driver: default
-      config:
-      - subnet: 172.16.238.0/24
-        gateway: 172.16.238.1
+      KQUEEN_API_URL: 'http://kqueen:5000/api/v1/'
+      KQUEEN_AUTH_URL: 'http://kqueen:5000/api/v1/auth'
