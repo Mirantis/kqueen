@@ -34,4 +34,3 @@ services:
       - controller-manager
       - --master=apiserver:8080
       - --v=2
-
