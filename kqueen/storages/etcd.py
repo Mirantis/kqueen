@@ -18,7 +18,6 @@ class EtcdBackend:
             host=config.get('ETCD_HOST', 'localhost'),
             port=int(config.get('ETCD_PORT', 4001)),
         )
-        self.namespace = kwargs.get('namespace', 'default')
         self.prefix = kwargs.get('prefix', '/kqueen/obj/')
 
 
@@ -255,7 +254,7 @@ class Model:
             return True
 
     @classmethod
-    def get_db_prefix(cls):
+    def get_db_prefix(cls, namespace=None):
         """Calculate prefix for writing DB objects
 
         Returns:
@@ -267,9 +266,12 @@ class Model:
 
         """
 
+        if not namespace:
+            namespace = 'global'
+
         return '{prefix}{namespace}/{model}/'.format(
             prefix=current_app.db.prefix,
-            namespace=current_app.db.namespace,
+            namespace=namespace,
             model=cls.get_model_name(),
         )
 
@@ -286,7 +288,7 @@ class Model:
         """List objects in the database"""
         output = {}
 
-        key = cls.get_db_prefix()
+        key = cls.get_db_prefix(namespace)
 
         try:
             directory = current_app.db.client.get(key)
@@ -305,7 +307,7 @@ class Model:
     def load(cls, namespace, object_id):
         """Load object from database"""
 
-        key = '{}{}'.format(cls.get_db_prefix(), str(object_id))
+        key = '{}{}'.format(cls.get_db_prefix(namespace), str(object_id))
         try:
             response = current_app.db.client.read(key)
             value = response.value
@@ -364,7 +366,12 @@ class Model:
         if not self.id:
             raise Exception('Missing object id')
 
-        return '{}{}'.format(self.__class__.get_db_prefix(), self.id)
+        if self.__class__.is_namespaced():
+            namespace = self._object_namespace
+        else:
+            namespace = None
+
+        return '{}{}'.format(self.__class__.get_db_prefix(namespace), self.id)
 
     def verify_id(self):
         if hasattr(self, 'id') and self.id is not None:

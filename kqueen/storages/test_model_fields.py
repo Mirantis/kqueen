@@ -281,3 +281,19 @@ class TestNamespaces:
     def test_raise_missing_namespace(self):
         with pytest.raises(BackendError):
             self.class_namespaced(**model_kwargs)
+
+    @pytest.mark.parametrize('ns,req_ns', [
+        (None, 'global'),
+        ('test', 'test')
+    ])
+    def test_get_db_prefix(self, ns, req_ns):
+        cls = self.class_namespaced
+        prefix = cls.get_db_prefix(ns)
+
+        req = '/{app_prefix}/obj/{namespace}/{class_name}/'.format(
+            app_prefix='kqueen',
+            namespace=req_ns,
+            class_name=cls.get_model_name(),
+        )
+
+        assert req == prefix
