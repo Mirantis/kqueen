@@ -39,6 +39,12 @@ docker-compose -f docker-compose.yml -f docker-compose.demo.yml up
 docker-compose -f docker-compose.yml -f docker-compose.demo.yml -f docker-compose.kubernetes.yml up
 ```
 
+* You can add some example data by running
+
+```
+docker-compose -f docker-compose.yml -f docker-compose.demo.yml exec kqueen ./devenv.py
+```
+
 ## Configuration
 
 We load configuration from file `config/dev.py` by default and this can be configured by `KQUEEN_CONFIG_FILE` environment variable. Any environment variable matching name `KQUEEN_*` will be loaded and saved to configuration.
