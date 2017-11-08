@@ -92,6 +92,8 @@ class BaseTestCRUD:
         assert response.status_code == 500
 
     def test_crud_get(self):
+        self.obj.save()
+
         response = self.client.get(
             self.urls['get'],
             headers=self.auth_header,

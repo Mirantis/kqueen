@@ -101,7 +101,7 @@ def organization():
     return organization
 
 
-@pytest.fixture
+@pytest.fixture(scope='class')
 def user():
     """Prepare user object."""
     profile = fake.simple_profile()

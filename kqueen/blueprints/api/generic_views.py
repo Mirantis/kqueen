@@ -22,7 +22,6 @@ class GenericView(View):
 
     def dispatch_request(self, *args, **kwargs):
         self.check_access()
-
         output = self.get_content(*args, **kwargs)
 
         return jsonify(output)

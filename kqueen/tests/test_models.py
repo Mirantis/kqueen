@@ -27,7 +27,6 @@ class TestClusterModel:
         cluster.save()
 
         get_id = cluster.id
-        print(get_id)
 
         loaded = Cluster.load(cluster._object_namespace, get_id)
         assert loaded == cluster

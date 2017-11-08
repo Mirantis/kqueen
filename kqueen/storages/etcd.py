@@ -266,7 +266,10 @@ class Model:
 
         """
 
-        if not namespace:
+        if cls.is_namespaced():
+            if not namespace:
+                raise BackendError('Missing namespace for class {}'.format(cls.__name__))
+        else:
             namespace = 'global'
 
         return '{prefix}{namespace}/{model}/'.format(

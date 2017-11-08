@@ -3,6 +3,7 @@ from flask import url_for
 from kqueen.conftest import user
 
 import json
+import pytest
 
 
 class TestUserCRUD(BaseTestCRUD):
@@ -54,3 +55,7 @@ class TestUserCRUD(BaseTestCRUD):
         user = self.get_object()
 
         assert user.namespace == user.organization.namespace
+
+    @pytest.mark.last
+    def test_crud_delete(self):
+        super(TestUserCRUD, self).test_crud_delete()

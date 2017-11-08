@@ -15,6 +15,7 @@ ipython
 pytest
 pytest-cov
 pytest-flask
+pytest-ordering
 sphinx
 sphinx-autobuild
 sphinx_rtd_theme
