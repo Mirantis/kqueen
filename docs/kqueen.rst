@@ -37,6 +37,10 @@ Example configuration files are located in `config/` directory. Default configur
     * - ETCD_PORT
       - 4001
       - Port for etcd server
+    * - ETCD_PREFIX
+      - /kqueen
+      - Prefix URL for objects in etcd
+
 
     * - JWT_DEFAULT_REALM
       - Login Required

@@ -11,16 +11,23 @@ import pytest
 import uuid
 import yaml
 
-config_file = 'config/test.py'
 fake = Faker()
 
 
 @pytest.fixture(autouse=True, scope='session')
 def app():
     """Prepare app."""
-    app = create_app(config_file=config_file)
+    app = create_app()
 
     return app
+
+
+@pytest.fixture(autouse=True, scope='session')
+def etcd_setup():
+    yield None
+
+    _app = app()
+    _app.db.client.delete(_app.config['ETCD_PREFIX'], recursive=True)
 
 
 @pytest.fixture

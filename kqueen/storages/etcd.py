@@ -18,7 +18,7 @@ class EtcdBackend:
             host=config.get('ETCD_HOST', 'localhost'),
             port=int(config.get('ETCD_PORT', 4001)),
         )
-        self.prefix = kwargs.get('prefix', '/kqueen/obj/')
+        self.prefix = '{}/obj/'.format(config.get('ETCD_PREFIX', '/kqueen'))
 
 
 class Field:

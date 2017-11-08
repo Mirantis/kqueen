@@ -20,7 +20,7 @@ def create_app(config_file=None):
     app.register_blueprint(api, url_prefix='/api/v1')
 
     # load configuration
-    config = current_config()
+    config = current_config(config_file)
     app.config.from_mapping(config.to_dict())
     app.logger.setLevel(getattr(logging, app.config.get('LOG_LEVEL')))
     app.logger.info('Loading configuration from {}'.format(config.source_file))
