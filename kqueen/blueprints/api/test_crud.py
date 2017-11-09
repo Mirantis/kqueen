@@ -1,5 +1,5 @@
 from flask import url_for
-from kqueen.conftest import auth_header
+from kqueen.conftest import auth_header, user_with_namespace, get_auth_token
 
 import json
 import pytest
@@ -22,7 +22,10 @@ class BaseTestCRUD:
 
         return data
 
-    def get_urls(self):
+    def get_urls(self, pk=None):
+
+        if not pk:
+            pk = self.obj.id
 
         return {
             'list': url_for(
@@ -33,15 +36,15 @@ class BaseTestCRUD:
             ),
             'get': url_for(
                 'api.{}_get'.format(self.get_resource_type()),
-                pk=self.obj.id
+                pk=pk
             ),
             'update': url_for(
                 'api.{}_update'.format(self.get_resource_type()),
-                pk=self.obj.id
+                pk=pk
             ),
             'delete': url_for(
                 'api.{}_delete'.format(self.get_resource_type()),
-                pk=self.obj.id
+                pk=pk
             ),
         }
 
@@ -190,3 +193,76 @@ class BaseTestCRUD:
         )
 
         assert response.status_code == 500
+
+    #
+    # namespacing tests
+    #
+    @pytest.fixture
+    def setup_namespace(self):
+        self.user1 = user_with_namespace()
+        self.user2 = user_with_namespace()
+
+    @pytest.mark.usefixtures('setup_namespace')
+    def test_namespacing(self, client):
+        obj = self.get_object()
+
+        # skip if object class isn't namespaced
+        if not obj.__class__.is_namespaced():
+            pytest.skip('Class {} isn\'t namespaced'.format(obj.__class__.__name__))
+
+        objs = {}
+
+        # create objects for both users
+        for u in [self.user1, self.user2]:
+            data = self.get_create_data()
+
+            auth_header = get_auth_token(self.client, u)
+            headers = {'Authorization': 'JWT {}'.format(auth_header)}
+
+            # TODO: fix this
+            # Dirty hack to make testing data namespaced.
+            if 'provisioner' in data:
+                provisioner_data = {
+                    'name': 'Test provisioner',
+                    'engine': 'kqueen.engines.ManualEngine',
+                }
+                response = self.client.post(
+                    url_for('api.provisioner_create'),
+                    data=json.dumps(provisioner_data),
+                    headers=headers,
+                    content_type='application/json',
+                )
+                data['provisioner'] = 'Provisioner:{}'.format(response.json['id'])
+
+            response = self.client.post(
+                self.urls['create'],
+                data=json.dumps(data),
+                headers=headers,
+                content_type='application/json',
+            )
+
+            objs[u.namespace] = response.json['id']
+
+            print(response.json)
+
+        # test use can't read other's object
+        for u in [self.user1, self.user2]:
+            auth_header = get_auth_token(self.client, u)
+            headers = {'Authorization': 'JWT {}'.format(auth_header)}
+
+            for ns, pk in objs.items():
+                url = self.get_urls(pk)['get']
+
+                if ns == u.namespace:
+                    req_code = 200
+                else:
+                    req_code = 404
+
+                response = self.client.get(
+                    url,
+                    headers=headers,
+                    content_type='application/json',
+                )
+
+                print(response.data.decode(response.charset))
+                assert response.status_code == req_code
