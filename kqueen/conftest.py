@@ -70,6 +70,31 @@ def provisioner():
     return Provisioner.create(_user.namespace, **create_kwargs)
 
 
+def get_auth_token(_client, _user):
+    """
+    Acquire token for given user
+
+    Args:
+        client: Client connection
+        user: User object
+
+    Returns:
+        dict: {'Authorization': 'JWT access_token'}
+    """
+
+    data = {
+        'username': _user.username,
+        'password': _user.password
+    }
+
+    response = _client.post(
+        '/api/v1/auth',
+        data=json.dumps(data),
+        content_type='application/json')
+
+    return response.json['access_token']
+
+
 @pytest.fixture
 def auth_header(client):
     """
@@ -83,18 +108,12 @@ def auth_header(client):
 
     """
     _user = user()
-    data = {
-        'username': _user.username,
-        'password': _user.password
-    }
-    response = client.post(
-        '/api/v1/auth',
-        data=json.dumps(data),
-        content_type='application/json')
+    token = get_auth_token(client, _user)
 
     return {
-        'Authorization': 'JWT {}'.format(response.json['access_token']),
+        'Authorization': 'JWT {}'.format(token),
         'X-Test-Namespace': _user.namespace,
+        'X-User': str(_user),
     }
 
 
@@ -124,3 +143,17 @@ def user():
     user.save()
 
     return user
+
+
+@pytest.fixture
+def user_with_namespace():
+
+    org = organization()
+    org.namespace = fake.user_name()
+    org.save()
+
+    _user = user()
+    _user.organization = org
+    _user.save()
+
+    return _user
