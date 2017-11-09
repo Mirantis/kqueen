@@ -6,6 +6,7 @@ from kqueen.models import Provisioner
 from kqueen.models import User
 from kqueen.server import create_app
 
+import etcd
 import json
 import pytest
 import uuid
@@ -24,10 +25,12 @@ def app():
 
 @pytest.fixture(autouse=True, scope='session')
 def etcd_setup():
-    yield None
+    _app = create_app()
 
-    _app = app()
-    _app.db.client.delete(_app.config['ETCD_PREFIX'], recursive=True)
+    try:
+        _app.db.client.delete(_app.config['ETCD_PREFIX'], recursive=True)
+    except etcd.EtcdKeyNotFound:
+        pass
 
 
 @pytest.fixture

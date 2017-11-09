@@ -290,7 +290,7 @@ class TestNamespaces:
         prefix = cls.get_db_prefix(ns)
 
         req = '/{app_prefix}/obj/{namespace}/{class_name}/'.format(
-            app_prefix='kqueen',
+            app_prefix='kqueen_test',
             namespace=req_ns,
             class_name=cls.get_model_name(),
         )

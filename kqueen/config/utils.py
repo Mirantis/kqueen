@@ -1,7 +1,9 @@
 import importlib
+import logging
 import os
 
 CONFIG_FILE_DEFAULT = 'config/dev.py'
+logger = logging.getLogger(__name__)
 
 
 def select_file(config_file=None):
@@ -15,11 +17,13 @@ def select_file(config_file=None):
         str: filename to be used as a configuration file
     """
 
-    if not config_file:
+    if not config_file or config_file == 'None':
         config_file = os.environ.get('KQUEEN_CONFIG_FILE')
+        logger.debug('Config file from env variable: {}'.format(config_file))
 
     if not config_file or config_file == 'None':
         config_file = CONFIG_FILE_DEFAULT
+        logger.debug('Config file, using default: {}'.format(config_file))
 
     return config_file
 
@@ -43,6 +47,8 @@ def apply_env_changes(config, prefix='KQUEEN_'):
 
 def current_config(config_file=None):
     read_file = select_file(config_file)
+    logger.debug('Loading config from {}'.format(read_file))
+
     module_name = read_file.replace('/', '.').replace('.py', '')
 
     module = importlib.import_module('kqueen.{}'.format(module_name))
