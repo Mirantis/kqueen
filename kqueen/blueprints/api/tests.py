@@ -20,6 +20,10 @@ def generate_arg(name):
         raise KeyError('Argument name {} not known'.format(name))
 
 
+def skip_rule(rule):
+    return not rule.endpoint.startswith('api.')
+
+
 def get_urls():
     """List all used urls, including pks."""
     app_instance = app()
@@ -27,6 +31,9 @@ def get_urls():
     urls = []
 
     for rule in app_instance.url_map.iter_rules():
+        if skip_rule(rule):
+            continue
+
         options = {'_external': False}
         for arg_name in rule.arguments:
             options[arg_name] = generate_arg(arg_name)
