@@ -1,8 +1,11 @@
 from flask import url_for
 from kqueen.conftest import auth_header, user_with_namespace, get_auth_token
+from kqueen.config import current_config
 
 import json
 import pytest
+
+config = current_config()
 
 
 @pytest.mark.usefixtures('client_class')
@@ -217,7 +220,12 @@ class BaseTestCRUD:
             data = self.get_create_data()
 
             auth_header = get_auth_token(self.client, u)
-            headers = {'Authorization': 'JWT {}'.format(auth_header)}
+            headers = {
+                'Authorization': '{} {}'.format(
+                    config.get('JWT_AUTH_HEADER_PREFIX'),
+                    auth_header
+                )
+            }
 
             # TODO: fix this
             # Dirty hack to make testing data namespaced.
@@ -241,6 +249,7 @@ class BaseTestCRUD:
                 content_type='application/json',
             )
 
+            print(response.data.decode(response.charset))
             objs[u.namespace] = response.json['id']
 
             print(response.json)
@@ -248,7 +257,12 @@ class BaseTestCRUD:
         # test use can't read other's object
         for u in [self.user1, self.user2]:
             auth_header = get_auth_token(self.client, u)
-            headers = {'Authorization': 'JWT {}'.format(auth_header)}
+            headers = {
+                'Authorization': '{} {}'.format(
+                    config.get('JWT_AUTH_HEADER_PREFIX'),
+                    auth_header
+                )
+            }
 
             for ns, pk in objs.items():
                 url = self.get_urls(pk)['get']
