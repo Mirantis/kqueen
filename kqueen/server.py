@@ -39,4 +39,5 @@ app = create_app()
 
 def run():
     logger.debug('kqueen starting')
-    app.run()
+    app.run(host=app.config.get('KQUEEN_HOST', '127.0.0.1'),
+            port=int(app.config.get('KQUEEN_PORT', 5000)))
