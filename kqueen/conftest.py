@@ -5,6 +5,7 @@ from kqueen.models import Organization
 from kqueen.models import Provisioner
 from kqueen.models import User
 from kqueen.server import create_app
+from kqueen.config import current_config
 
 import json
 import pytest
@@ -12,6 +13,7 @@ import uuid
 import yaml
 
 config_file = 'config/test.py'
+config = current_config()
 fake = Faker()
 
 
@@ -65,7 +67,7 @@ def auth_header(client):
         client: Flask client
 
     Returns:
-        dict: {'Authorization': 'JWT access_token'}
+        dict: {'Authorization': 'Bearer access_token'}
 
     """
     _user = user()
@@ -78,7 +80,10 @@ def auth_header(client):
         data=json.dumps(data),
         content_type='application/json')
 
-    return {'Authorization': 'JWT {}'.format(response.json['access_token'])}
+    return {'Authorization': '{token_prefix} {token}'.format(
+        token_prefix=config.get('JWT_AUTH_HEADER_PREFIX'),
+        token=response.json['access_token'],
+    )}
 
 
 @pytest.fixture
