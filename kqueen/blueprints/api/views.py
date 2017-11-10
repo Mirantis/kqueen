@@ -12,6 +12,8 @@ from kqueen.models import User
 from .generic_views import ListView, CreateView, GetView, UpdateView, DeleteView
 
 import logging
+import os
+import yaml
 
 logger = logging.getLogger(__name__)
 
@@ -204,3 +206,21 @@ def user_whoami():
     output = current_identity
 
     return jsonify(output)
+
+
+@api.route('/swagger', methods=['GET'])
+def swagger_json():
+    try:
+        base_path = os.path.abspath(os.path.dirname(__file__))
+        file_path = os.path.join(base_path, 'api.yml')
+        with open(file_path, 'r') as f:
+            _yaml = f.read()
+        data = yaml.safe_load(_yaml)
+    except FileNotFoundError:
+        logger.error('Swagger YAML not found on {}.'.format(file_path))
+        abort(404)
+    except Exception as e:
+        logger.error(e)
+        abort(500)
+
+    return jsonify(data)

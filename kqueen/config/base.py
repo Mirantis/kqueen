@@ -13,6 +13,7 @@ class BaseConfig:
     JWT_DEFAULT_REALM = 'Login Required'
     JWT_AUTH_URL_RULE = '/api/v1/auth'
     JWT_EXPIRATION_DELTA = timedelta(hours=1)
+    JWT_AUTH_HEADER_PREFIX = 'Bearer'
 
     # Cluster statuses
     CLUSTER_ERROR_STATE = 'Error'

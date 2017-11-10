@@ -1,5 +1,6 @@
 from flask import Flask
 from flask_jwt import JWT
+from flask_swagger_ui import get_swaggerui_blueprint
 from kqueen.auth import authenticate, identity
 from kqueen.blueprints.api.views import api
 from kqueen.serializers import KqueenJSONEncoder
@@ -11,6 +12,16 @@ import logging
 
 logger = logging.getLogger(__name__)
 cache = SimpleCache()
+swagger_url = '/api/docs'
+api_url = '/api/v1/swagger'
+
+swaggerui_blueprint = get_swaggerui_blueprint(
+    swagger_url,
+    api_url,
+    config={
+        'docExpansion': 'none'
+    }
+)
 
 
 def create_app(config_file=None):
@@ -18,6 +29,7 @@ def create_app(config_file=None):
     app.json_encoder = KqueenJSONEncoder
 
     app.register_blueprint(api, url_prefix='/api/v1')
+    app.register_blueprint(swaggerui_blueprint, url_prefix=swagger_url)
 
     # load configuration
     config = current_config()
