@@ -22,6 +22,7 @@ setup(
     install_requires=[
         'Flask==0.12.2',
         'Flask-JWT==0.3.2',
+        'flask-swagger-ui',
         'gunicorn',
         'kubernetes',
         'python-etcd',

@@ -1,9 +1,12 @@
 from .test_crud import BaseTestCRUD
 from flask import url_for
 from kqueen.conftest import user
+from kqueen.config import current_config
 
 import json
 import pytest
+
+config = current_config()
 
 
 class TestUserCRUD(BaseTestCRUD):
@@ -38,7 +41,10 @@ class TestUserCRUD(BaseTestCRUD):
             data=json.dumps(data),
             content_type='application/json')
 
-        return {'Authorization': 'JWT {}'.format(response.json['access_token'])}
+        return {'Authorization': '{header_prefix} {token}'.format(
+            header_prefix=config.get('JWT_AUTH_HEADER_PREFIX'),
+            token=response.json['access_token'],
+        )}
 
     def test_whoami(self):
         url = url_for('api.user_whoami')

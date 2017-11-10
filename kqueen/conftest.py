@@ -5,6 +5,7 @@ from kqueen.models import Organization
 from kqueen.models import Provisioner
 from kqueen.models import User
 from kqueen.server import create_app
+from kqueen.config import current_config
 
 import etcd
 import json
@@ -12,6 +13,8 @@ import pytest
 import uuid
 import yaml
 
+config_file = 'config/test.py'
+config = current_config()
 fake = Faker()
 
 
@@ -79,7 +82,7 @@ def get_auth_token(_client, _user):
         user: User object
 
     Returns:
-        dict: {'Authorization': 'JWT access_token'}
+        dict: {'Authorization': 'Bearer access_token'}
     """
 
     data = {
@@ -111,7 +114,10 @@ def auth_header(client):
     token = get_auth_token(client, _user)
 
     return {
-        'Authorization': 'JWT {}'.format(token),
+        'Authorization': '{token_prefix} {token}'.format(
+            token_prefix=config.get('JWT_AUTH_HEADER_PREFIX'),
+            token=token,
+        ),
         'X-Test-Namespace': _user.namespace,
         'X-User': str(_user),
     }
