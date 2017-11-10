@@ -5,6 +5,9 @@ class BaseConfig:
     DEBUG = False
     LOG_LEVEL = 'WARNING'
 
+    KQUEEN_HOST = '127.0.0.1'
+    KQUEEN_PORT = 5000
+
     # etcd settings
     # ETCD_HOST
     # ETCD_PORT
