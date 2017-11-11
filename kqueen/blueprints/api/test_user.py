@@ -40,8 +40,6 @@ class TestUserCRUD(BaseTestCRUD):
             data=json.dumps(data),
             content_type='application/json')
 
-        print(config)
-
         return {'Authorization': '{header_prefix} {token}'.format(
             header_prefix=config.get('JWT_AUTH_HEADER_PREFIX'),
             token=response.json['access_token'],
