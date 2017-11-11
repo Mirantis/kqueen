@@ -107,5 +107,5 @@ ENV/
 node_modules/
 
 # DO NOT COMMIT LOCAL CONFIG
-kqueen/config_local.py
+kqueen/config/local.py
 
