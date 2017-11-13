@@ -1,6 +1,7 @@
 from importlib import import_module
 from kqueen.config import current_config
 from kqueen.kubeapi import KubernetesAPI
+from kqueen.storages.etcd import DatetimeField
 from kqueen.storages.etcd import IdField
 from kqueen.storages.etcd import JSONField
 from kqueen.storages.etcd import Model
@@ -30,6 +31,8 @@ class Cluster(Model, metaclass=ModelMeta):
     state = StringField()
     kubeconfig = JSONField()
     metadata = JSONField()
+    created_at = DatetimeField()
+    deleted_at = DatetimeField()
 
     def get_state(self):
         if self.state != config.get('CLUSTER_PROVISIONING_STATE'):
