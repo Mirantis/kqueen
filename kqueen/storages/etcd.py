@@ -3,8 +3,11 @@ import json
 import logging
 import uuid
 import importlib
+from datetime import datetime
+from dateutil.parser import parse as parse_datetime
 from kqueen.config import current_config
 from flask import current_app
+from flask.ext.babel import format_datetime, get_timezone, to_utc
 from .exceptions import BackendError
 
 logger = logging.getLogger(__name__)
@@ -103,6 +106,47 @@ class IdField(Field):
 
 class SecretField(Field):
     pass
+
+
+class DatetimeField(Field):
+    """
+    Datetime is stored as UTC timestamp in DB and as naive datetime on instance.
+    Getter then adds tzinfo to the naive datetime in self.value and formats it
+    according to the configured locale.
+    """
+
+    def deserialize(self, serialized, **kwargs):
+        # Initialize datetime object from UTC timestamp
+        if isinstance(serialized, float):
+            value = datetime.utcfromtimestamp(serialized)
+            self.set_value(value, **kwargs)
+        # Return as is if value is already datetime
+        elif isinstance(serialized, datetime):
+            self.set_value(serialized, **kwargs)
+
+    def set_value(self, value, **kwargs):
+        # Deserialize value from DB
+        if isinstance(value, float):
+            self.deserialize(value)
+        # Convert value formatted by getter
+        elif isinstance(value, str):
+            self.value = parse_datetime(value)
+        # Save as is if value is already datetime
+        elif isinstance(value, datetime):
+            self.value = value
+
+    def get_value(self):
+        # Make datetime stored in value timezone aware and format it according
+        # to locale
+        if self.value:
+            return format_datetime(self.value)
+
+    def serialize(self):
+        if self.value and isinstance(self.value, datetime):
+            utc = to_utc(self.value)
+            return utc.timestamp()
+        else:
+            return None
 
 
 class JSONField(Field):

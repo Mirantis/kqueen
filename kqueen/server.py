@@ -1,4 +1,5 @@
 from flask import Flask
+from flask.ext.babel import Babel
 from flask_jwt import JWT
 from flask_swagger_ui import get_swaggerui_blueprint
 from kqueen.auth import authenticate, identity
@@ -42,6 +43,9 @@ def create_app(config_file=None):
 
     # setup JWT
     JWT(app, authenticate, identity)
+
+    # setup Babel
+    Babel(app)
 
     return app
 
