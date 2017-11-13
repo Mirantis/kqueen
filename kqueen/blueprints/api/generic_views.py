@@ -1,7 +1,7 @@
 from flask import jsonify
 from flask.views import View
 from flask import abort
-from flask_jwt import _jwt_required
+from flask_jwt import _jwt_required, current_identity
 from flask import current_app
 from flask import request
 from .helpers import get_object
@@ -22,7 +22,6 @@ class GenericView(View):
 
     def dispatch_request(self, *args, **kwargs):
         self.check_access()
-
         output = self.get_content(*args, **kwargs)
 
         return jsonify(output)
@@ -32,7 +31,7 @@ class GetView(GenericView):
     methods = ['GET']
 
     def get_content(self, *args, **kwargs):
-        return get_object(self.get_class(), kwargs['pk'])
+        return get_object(self.get_class(), kwargs['pk'], current_identity)
 
 
 class DeleteView(GenericView):
@@ -41,7 +40,7 @@ class DeleteView(GenericView):
     def dispatch_request(self, *args, **kwargs):
         self.check_access()
 
-        obj = get_object(self.get_class(), kwargs['pk'])
+        obj = get_object(self.get_class(), kwargs['pk'], current_identity)
 
         try:
             obj.delete()
@@ -55,9 +54,11 @@ class UpdateView(GenericView):
     methods = ['PATCH']
 
     def get_content(self, *args, **kwargs):
-        return get_object(self.get_class(), kwargs['pk'])
+        return get_object(self.get_class(), kwargs['pk'], current_identity)
 
     def dispatch_request(self, *args, **kwargs):
+        self.check_access()
+
         if not request.json:
             abort(400)
 
@@ -65,7 +66,7 @@ class UpdateView(GenericView):
         if not isinstance(data, dict):
             abort(400)
 
-        obj = get_object(self.get_class(), kwargs['pk'])
+        obj = get_object(self.get_class(), kwargs['pk'], current_identity)
         for key, value in data.items():
             setattr(obj, key, value)
 
@@ -81,7 +82,12 @@ class ListView(GenericView):
     methods = ['GET']
 
     def get_content(self, *args, **kwargs):
-        return list(self.get_class().list(return_objects=True).values())
+        try:
+            namespace = current_identity.namespace
+        except AttributeError:
+            namespace = None
+
+        return list(self.get_class().list(namespace, return_objects=True).values())
 
 
 class CreateView(GenericView):
@@ -97,12 +103,19 @@ class CreateView(GenericView):
         return self.obj.get_dict(expand=True)
 
     def dispatch_request(self, *args, **kwargs):
+        self.check_access()
 
         if not request.json:
             abort(400)
         else:
             cls = self.get_class()
-            self.obj = cls(**request.json)
+
+            try:
+                namespace = current_identity.namespace
+            except AttributeError:
+                namespace = None
+
+            self.obj = cls(namespace, **request.json)
             try:
                 self.save_object()
                 self.after_save()

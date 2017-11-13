@@ -7,6 +7,7 @@ from kqueen.models import User
 from kqueen.server import create_app
 from kqueen.config import current_config
 
+import etcd
 import json
 import pytest
 import uuid
@@ -20,17 +21,29 @@ fake = Faker()
 @pytest.fixture(autouse=True, scope='session')
 def app():
     """Prepare app."""
-    app = create_app(config_file=config_file)
+    app = create_app()
 
     return app
+
+
+@pytest.fixture(autouse=True, scope='session')
+def etcd_setup():
+    _app = create_app()
+
+    try:
+        _app.db.client.delete(_app.config['ETCD_PREFIX'], recursive=True)
+    except etcd.EtcdKeyNotFound:
+        pass
 
 
 @pytest.fixture
 def cluster():
     """Create cluster with manual provisioner."""
     _uuid = uuid.uuid4()
+    _user = user()
 
     prov = Provisioner(
+        _user.namespace,
         name='Fixtured provisioner',
         engine='kqueen.engines.ManualEngine',
     )
@@ -44,18 +57,45 @@ def cluster():
         'kubeconfig': yaml.load(open('kubeconfig_localhost', 'r').read()),
     }
 
-    return Cluster.create(**create_kwargs)
+    return Cluster.create(_user.namespace, **create_kwargs)
 
 
 @pytest.fixture
 def provisioner():
     """Create dummy manual provisioner."""
+    _user = user()
+
     create_kwargs = {
         'name': 'Fixtured provisioner',
         'engine': 'kqueen.engines.ManualEngine',
     }
 
-    return Provisioner.create(**create_kwargs)
+    return Provisioner.create(_user.namespace, **create_kwargs)
+
+
+def get_auth_token(_client, _user):
+    """
+    Acquire token for given user
+
+    Args:
+        client: Client connection
+        user: User object
+
+    Returns:
+        dict: {'Authorization': 'Bearer access_token'}
+    """
+
+    data = {
+        'username': _user.username,
+        'password': _user.password
+    }
+
+    response = _client.post(
+        '/api/v1/auth',
+        data=json.dumps(data),
+        content_type='application/json')
+
+    return response.json['access_token']
 
 
 @pytest.fixture
@@ -67,29 +107,27 @@ def auth_header(client):
         client: Flask client
 
     Returns:
-        dict: {'Authorization': 'Bearer access_token'}
+        dict: {'Authorization': 'JWT access_token'}
 
     """
     _user = user()
-    data = {
-        'username': _user.username,
-        'password': _user.password
-    }
-    response = client.post(
-        '/api/v1/auth',
-        data=json.dumps(data),
-        content_type='application/json')
+    token = get_auth_token(client, _user)
 
-    return {'Authorization': '{token_prefix} {token}'.format(
-        token_prefix=config.get('JWT_AUTH_HEADER_PREFIX'),
-        token=response.json['access_token'],
-    )}
+    return {
+        'Authorization': '{token_prefix} {token}'.format(
+            token_prefix=config.get('JWT_AUTH_HEADER_PREFIX'),
+            token=token,
+        ),
+        'X-Test-Namespace': _user.namespace,
+        'X-User': str(_user),
+    }
 
 
 @pytest.fixture
 def organization():
     """Prepare organization object."""
     organization = Organization(
+        None,
         name='DemoOrg',
         namespace='demoorg',
     )
@@ -98,11 +136,12 @@ def organization():
     return organization
 
 
-@pytest.fixture
+@pytest.fixture(scope='class')
 def user():
     """Prepare user object."""
     profile = fake.simple_profile()
     user = User(
+        None,
         username=profile['username'],
         password=fake.password(),
         organization=organization(),
@@ -110,3 +149,17 @@ def user():
     user.save()
 
     return user
+
+
+@pytest.fixture
+def user_with_namespace():
+
+    org = organization()
+    org.namespace = fake.user_name()
+    org.save()
+
+    _user = user()
+    _user.organization = org
+    _user.save()
+
+    return _user

@@ -35,6 +35,7 @@ with app.app_context():
 
     try:
         user = User(
+            None,
             username='admin',
             password='default',
             organization=organization,
@@ -46,6 +47,7 @@ with app.app_context():
     # AWS + Jenkins
     try:
         provisioner = Provisioner(
+            user.namespace,
             id=uuid_provisioner_jenkins,
             name='Jenkins provisioner to AWS',
             state='OK',
@@ -62,6 +64,7 @@ with app.app_context():
 
     try:
         cluster = Cluster(
+            user.namespace,
             id=uuid_jenkins,
             name='AWS Calico SM 33',
             state='OK',
@@ -76,6 +79,7 @@ with app.app_context():
     # Local cluster
     try:
         provisioner = Provisioner(
+            user.namespace,
             id=uuid_provisioner_local,
             name='Manual provisioner',
             state='OK',
@@ -89,6 +93,7 @@ with app.app_context():
 
     try:
         cluster = Cluster(
+            user.namespace,
             id=uuid_local,
             name='local_cluster',
             state='OK',
@@ -102,6 +107,7 @@ with app.app_context():
     # Dummy Kubespray provisioner
     try:
         provisioner = Provisioner(
+            user.namespace,
             id=uuid_provisioner_kubespray,
             name='Kubespray',
             state='OK',

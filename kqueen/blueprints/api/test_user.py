@@ -4,6 +4,7 @@ from kqueen.conftest import user
 from kqueen.config import current_config
 
 import json
+import pytest
 
 config = current_config()
 
@@ -55,3 +56,12 @@ class TestUserCRUD(BaseTestCRUD):
         )
 
         assert response.json == self.obj.get_dict(expand=True)
+
+    def test_namespace(self):
+        user = self.get_object()
+
+        assert user.namespace == user.organization.namespace
+
+    @pytest.mark.last
+    def test_crud_delete(self):
+        super(TestUserCRUD, self).test_crud_delete()

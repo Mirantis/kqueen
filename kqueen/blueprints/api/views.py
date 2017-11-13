@@ -104,14 +104,15 @@ api.add_url_rule('/clusters/<uuid:pk>', view_func=DeleteCluster.as_view('cluster
 @api.route('/clusters/<uuid:pk>/status', methods=['GET'])
 @jwt_required()
 def cluster_status(pk):
-    obj = get_object(Cluster, pk)
+    obj = get_object(Cluster, pk, current_identity)
 
     return jsonify(obj.status())
 
 
 @api.route('/clusters/<uuid:pk>/topology-data', methods=['GET'])
+@jwt_required()
 def cluster_topology_data(pk):
-    obj = get_object(Cluster, pk)
+    obj = get_object(Cluster, pk, current_identity)
 
     return jsonify(obj.topology_data())
 
@@ -119,7 +120,7 @@ def cluster_topology_data(pk):
 @api.route('/clusters/<uuid:pk>/kubeconfig', methods=['GET'])
 @jwt_required()
 def cluster_kubeconfig(pk):
-    obj = get_object(Cluster, pk)
+    obj = get_object(Cluster, pk, current_identity)
 
     return jsonify(obj.kubeconfig)
 
