@@ -4,11 +4,13 @@ import logging
 import uuid
 import importlib
 from kqueen.config import current_config
+from flask import current_app
+from .exceptions import BackendError
 
 logger = logging.getLogger(__name__)
 
 
-class EtcdOrm:
+class EtcdBackend:
     def __init__(self, **kwargs):
         config = current_config()
 
@@ -16,11 +18,7 @@ class EtcdOrm:
             host=config.get('ETCD_HOST', 'localhost'),
             port=int(config.get('ETCD_PORT', 4001)),
         )
-        self.namespace = kwargs.get('namespace', 'default')
-        self.prefix = kwargs.get('prefix', '/kqueen/obj/')
-
-
-db = EtcdOrm()
+        self.prefix = '{}/obj/'.format(config.get('ETCD_PREFIX', '/kqueen'))
 
 
 class Field:
@@ -39,7 +37,7 @@ class Field:
         self.value = kwargs.get('value', None)
         self.required = kwargs.get('required', False)
 
-    def set_value(self, value):
+    def set_value(self, value, **kwargs):
         self.value = value
 
     def get_value(self):
@@ -52,7 +50,7 @@ class Field:
         else:
             return None
 
-    def deserialize(self, serialized):
+    def deserialize(self, serialized, **kwargs):
         """
         This method is used for value deserialization. It is necessary to create instance first
         (with empty value) and then use `deserialize` method to fill the value.
@@ -64,7 +62,7 @@ class Field:
             serialized (string): Serialized value of the field.
         """
 
-        self.set_value(serialized)
+        self.set_value(serialized, **kwargs)
 
     def empty(self):
         return self.value is None
@@ -95,7 +93,7 @@ class StringField(Field):
 
 
 class IdField(Field):
-    def set_value(self, value):
+    def set_value(self, value, **kwargs):
         """Don't serialize None"""
         if value:
             self.value = str(value)
@@ -110,7 +108,7 @@ class SecretField(Field):
 class JSONField(Field):
     """JSON is stored as value"""
 
-    def set_value(self, value):
+    def set_value(self, value, **kwargs):
         if isinstance(value, str):
             self.value = json.loads(value)
         elif isinstance(value, dict):
@@ -141,15 +139,17 @@ class RelationField(Field):
         else:
             return None
 
-    def deserialize(self, serialized):
+    def deserialize(self, serialized, **kwargs):
         """Deserialize relation to real object"""
 
         if ':' in serialized:
             class_name, object_id = serialized.split(':')
 
             obj_class = self._get_related_class(class_name)
-            obj = obj_class.load(object_id)
-            self.set_value(obj)
+            # TODO: CRITICAL make namespaced and check it
+
+            obj = obj_class.load(kwargs.get('namespace'), object_id)
+            self.set_value(obj, **kwargs)
 
     def _get_related_class(self, class_name):
         module = importlib.import_module('kqueen.models')
@@ -165,13 +165,13 @@ class RelationField(Field):
 
         return class_name and selfid
 
-    def set_value(self, value):
+    def set_value(self, value, **kwargs):
         """Detect serialized format and deserialized according to format."""
         if isinstance(value, str) and ':' in value:
             # deserialize
-            self.deserialize(value)
+            self.deserialize(value, **kwargs)
         else:
-            super(RelationField, self).set_value(value)
+            super(RelationField, self).set_value(value, **kwargs)
 
 
 class ModelMeta(type):
@@ -207,15 +207,31 @@ class Model:
     # id field is required for all models
     id = IdField()
 
-    def __init__(self, *args, **kwargs):
-        self._db = db
+    def __init__(self, ns=None, **kwargs):
+        """
+        Create model object.
+
+        Args:
+            ns (str): Namespace for created object. Required for namespaced objects.
+
+        Attributes:
+            **kwargs: Object attributes.
+
+        """
+
+        # manage namespace
+        if self.__class__.is_namespaced():
+            self._object_namespace = ns
+
+            if not self._object_namespace:
+                raise BackendError('Missing namespace for class {}'.format(self.__class__.__name__))
 
         # loop fields and set it
         for field_name, field in self.__class__.get_fields().items():
             field_class = field.__class__
             if hasattr(field_class, 'is_field'):
                 field_object = field_class(**field.__dict__)
-                field_object.set_value(kwargs.get(field_name))
+                field_object.set_value(kwargs.get(field_name), namespace=ns)
                 setattr(self, '_{}'.format(field_name), field_object)
 
     @classmethod
@@ -225,7 +241,20 @@ class Model:
         return cls.__name__.lower()
 
     @classmethod
-    def get_db_prefix(cls):
+    def is_namespaced(cls):
+        """
+        Check if model is namespaced or global.
+
+        Returns:
+            bool: True for namespaced models, False for global models.
+        """
+        if hasattr(cls, 'global_namespace') and cls.global_namespace:
+            return False
+        else:
+            return True
+
+    @classmethod
+    def get_db_prefix(cls, namespace=None):
         """Calculate prefix for writing DB objects
 
         Returns:
@@ -237,60 +266,67 @@ class Model:
 
         """
 
+        if cls.is_namespaced():
+            if not namespace:
+                raise BackendError('Missing namespace for class {}'.format(cls.__name__))
+        else:
+            namespace = 'global'
+
         return '{prefix}{namespace}/{model}/'.format(
-            prefix=db.prefix,
-            namespace=db.namespace,
+            prefix=current_app.db.prefix,
+            namespace=namespace,
             model=cls.get_model_name(),
         )
 
     @classmethod
-    def create(cls, **kwargs):
+    def create(cls, namespace, **kwargs):
         """Create new object"""
-        o = cls(**kwargs)
+
+        o = cls(namespace, **kwargs)
 
         return o
 
     @classmethod
-    def list(cls, return_objects=True):
+    def list(cls, namespace, return_objects=True):
         """List objects in the database"""
         output = {}
 
-        key = cls.get_db_prefix()
+        key = cls.get_db_prefix(namespace)
 
         try:
-            directory = db.client.get(key)
+            directory = current_app.db.client.get(key)
         except etcd.EtcdKeyNotFound:
             return output
 
         for result in directory.children:
             if return_objects:
-                output[result.key.replace(key, '')] = cls.deserialize(result.value)
+                output[result.key.replace(key, '')] = cls.deserialize(result.value, namespace=namespace)
             else:
                 output[result.key.replace(key, '')] = None
 
         return output
 
     @classmethod
-    def load(cls, object_id):
+    def load(cls, namespace, object_id):
         """Load object from database"""
 
-        key = '{}{}'.format(cls.get_db_prefix(), str(object_id))
+        key = '{}{}'.format(cls.get_db_prefix(namespace), str(object_id))
         try:
-            response = db.client.read(key)
+            response = current_app.db.client.read(key)
             value = response.value
         except etcd.EtcdKeyNotFound:
             raise NameError('Object not found')
         except:
             raise
 
-        return cls.deserialize(value, key=key)
+        return cls.deserialize(value, key=key, namespace=namespace)
 
     @classmethod
-    def exists(cls, object_id):
+    def exists(cls, namespace, object_id):
         """Check if object exists"""
 
         try:
-            cls.load(object_id)
+            cls.load(namespace, object_id)
             return True
         except NameError:
             return False
@@ -306,11 +342,11 @@ class Model:
             field_class = field.__class__
             if hasattr(field_class, 'is_field') and toplevel.get(field_name):
                 field_object = field_class(**field.__dict__)
-                field_object.deserialize(toplevel[field_name])
+                field_object.deserialize(toplevel[field_name], **kwargs)
 
                 object_kwargs[field_name] = field_object.get_value()
 
-        o = cls(**object_kwargs)
+        o = cls(kwargs.get('namespace'), **object_kwargs)
 
         if kwargs.get('key'):
             o._key = kwargs.get('key')
@@ -333,7 +369,12 @@ class Model:
         if not self.id:
             raise Exception('Missing object id')
 
-        return '{}{}'.format(self.__class__.get_db_prefix(), self.id)
+        if self.__class__.is_namespaced():
+            namespace = self._object_namespace
+        else:
+            namespace = None
+
+        return '{}{}'.format(self.__class__.get_db_prefix(namespace), self.id)
 
     def verify_id(self):
         if hasattr(self, 'id') and self.id is not None:
@@ -369,7 +410,7 @@ class Model:
         logger.debug('Writing {} to {}'.format(self, key))
 
         try:
-            self._db.client.write(key, self.serialize())
+            current_app.db.client.write(key, self.serialize())
 
             self._key = key
             return True
@@ -379,7 +420,7 @@ class Model:
     def delete(self):
         """Delete the object"""
 
-        self._db.client.delete(self.get_db_key())
+        current_app.db.client.delete(self.get_db_key())
 
     def validate(self):
         """Validate the model object pass all requirements
@@ -447,7 +488,6 @@ class Model:
         else:
             return False
 
-# TODO: implement required fields
 # TODO: implement autogenerated fields (generete them if missing)
 # TODO: implement unique field:w
 # TODO: implement predefined values for fields

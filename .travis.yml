@@ -5,35 +5,36 @@ python:
 - '3.6'
 service:
 - docker
-
-
+notifications:
+  slack:
+    secure: imXU/zt9IjKk5OvjZkTICTmxOTKGaZIej2kf7m5iSAKrdM7Lsjhj1m464qOViH3AMjMMZeprC1SL/jFF5azu2DNkQe5j1UlUu1ZxQpwnpmXJaLyTznDZSa76LPoY/R4sqJYozZLzfMQivnIUe6NGTP5vDX8CXpndaOgfAulDzks6xXDTw8q1dyKTtqFx8aPbAFAYRPagaNpy62j09aeNXDY8OVUSJsx8xylRmbHY+t1AH5AMkDPY5AeI0D/CJH1Hnbq88MmvdgUn8OqjvWMgiXsrDFAPZ4WdZCgJZuP2D4jrDuAsnchrOrVi6wKJWA9rNqJD8TqqF8Q8JhdeVAJ098GXAyhkJlDtfeEbh8TYIkLNgpW7e/auh5rzHk5MvH7kTVzyZjGMb7Vo+7c7nypFoWeom1m8Pg5rCT7vx7+0NhQjg1moMQ2kPWzaZkITDdblxuf6rpraEx2ydqPh6pAAto+VWXRrdbJJTGSTVIfPFDHYeqkCq+QVGfdCi2BucnnQVZJLUqEdGxnn86ICwhjJ5uC4Ah7Czd/pZOrdgFMWTT6DS9fjRiIHOnAAp1wKYzAoRBKQkhltDFMrayDxN5dp+IXDnnlQWPm14mwAyNd/zt8pWCue5hT2oK7oeuQsNfSemSPg92DCZRZNZ684UbJGKn0RJlSpXLyQRjja0IjA+Kk=
+    on_success: change
+    on_failure: change
+    on_pull_requests: false
 stages:
 - name: test
 - name: publish
   if: tag =~ ^v.*
 - name: verify
   if: branch = master AND type = push
-
 jobs:
   include:
   - stage: test
     before_install:
-    - docker-compose up -d
+    - docker-compose -f docker-compose.yml -f docker-compose.kubernetes.yml up -d
     install:
     - pip3 install -r requirements.txt
     script:
     - python3 -m flake8
     - python3 -m pytest --cov=. --cov-report=term-missing:skip-covered
     - coveralls
-
     - pip3 install --editable .
     - python3 -m kqueen &
     - sleep 2
     - wget -O - http://localhost:5000/api/v1/health
-
   - stage: publish
     script:
-    - /bin/true
+    - "/bin/true"
     deploy:
       provider: pypi
       user: tomkukral
@@ -42,13 +43,12 @@ jobs:
       on:
         tags: true
         repo: Mirantis/kqueen
-
   - stage: verify
     before_install:
-    - docker-compose up -d
+    - docker-compose -f docker-compose.yml -f docker-compose.kubernetes.yml up -d
     install:
     - pip3 install --upgrade kqueen
     script:
-    - ./entrypoint.sh &
+    - "./entrypoint.sh &"
     - sleep 2
     - wget -O - http://localhost:5000/api/v1/health

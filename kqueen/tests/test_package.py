@@ -12,7 +12,7 @@ def test_main(monkeypatch):
     monkeypatch.setattr('kqueen.server.run', fake_run)
 
     from kqueen import __main__
-    print(dir(__main__))
+    print(__main__)
 
     assert started, 'run() not executed'
 
@@ -24,12 +24,12 @@ def test_setup(monkeypatch):
 
     monkeypatch.setattr('setuptools.setup', fake_setup)
 
-    filename = 'README.md'
+    filename = 'README.rst'
 
     from setup import long_description
     assert open(filename, 'r').read() == long_description
 
 
 def test_app_config():
-    app = create_app(config_file='nonexistent_file.py')
+    app = create_app()
     assert hasattr(app, 'config')

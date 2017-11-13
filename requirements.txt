@@ -1,5 +1,6 @@
 Flask==0.12.2
-Flask-JWT
+Flask-JWT==0.3.2
+flask-swagger-ui
 kubernetes
 python-etcd
 python-jenkins
@@ -13,11 +14,14 @@ python-heatclient
 
 # dev
 coveralls
+faker
 flake8
 ipython
 pytest
 pytest-cov
+pytest-env
 pytest-flask
+pytest-ordering
 sphinx
 sphinx-autobuild
 sphinx_rtd_theme

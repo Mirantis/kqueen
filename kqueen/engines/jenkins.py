@@ -106,12 +106,12 @@ class JenkinsEngine(BaseEngine):
         ctx['STACK_NAME'] = 'KQUEEN__{}'.format(cluster_id)
         try:
             self.client.build_job(self.provision_job_name, ctx)
-            return (True, None)
+            return True, None
         except Exception as e:
             msg = 'Creating cluster {} failed with following reason: {}'.format(cluster_id, repr(e))
             logger.error(msg)
-            return (False, msg)
-        return (None, None)
+            return False, msg
+        return None, None
 
     def deprovision(self, **kwargs):
         """

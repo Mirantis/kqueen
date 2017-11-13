@@ -71,6 +71,8 @@ class Cluster(Model, metaclass=ModelMeta):
                 'deployments': kubernetes.list_deployments(),
                 'nodes': kubernetes.list_nodes(),
                 'nodes_pods': kubernetes.count_pods_by_node(),
+                'persistent_volumes': kubernetes.list_persistent_volumes(),
+                'persistent_volume_claims': kubernetes.list_persistent_volume_claims(),
                 'pods': kubernetes.list_pods(),
                 'replica_sets': kubernetes.list_replica_sets(),
                 'services': kubernetes.list_services(),
@@ -315,14 +317,29 @@ class Provisioner(Model, metaclass=ModelMeta):
 
 
 class Organization(Model, metaclass=ModelMeta):
+    global_namespace = True
+
     id = IdField(required=True)
     name = StringField(required=True)
     namespace = StringField(required=True)
 
 
 class User(Model, metaclass=ModelMeta):
+    global_namespace = True
+
     id = IdField(required=True)
     username = StringField(required=True)
     email = StringField(required=False)
     password = SecretField(required=True)
     organization = RelationField(required=True)
+
+    @property
+    def namespace(self):
+        """
+        Get namespace from organization.
+
+        Returns:
+            str: Namespace (from organization)
+        """
+
+        return self.organization.namespace

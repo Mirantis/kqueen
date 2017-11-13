@@ -17,12 +17,6 @@ class TestModelMethods:
 
         assert model_name == req
 
-    def test_get_db_prefix(self):
-        model_class = Cluster
-        req = '/kqueen/obj/default/cluster/'
-
-        assert model_class.get_db_prefix() == req
-
 
 class TestClusterModel:
     def test_create(self, cluster):
@@ -33,16 +27,15 @@ class TestClusterModel:
         cluster.save()
 
         get_id = cluster.id
-        print(get_id)
 
-        loaded = Cluster.load(get_id)
+        loaded = Cluster.load(cluster._object_namespace, get_id)
         assert loaded == cluster
         assert hasattr(loaded, '_key'), 'Loaded object is missing _key'
 
     def test_id_generation(self, provisioner):
         provisioner.save(check_status=False)
 
-        empty = Cluster(name='test', provisioner=provisioner)
+        empty = Cluster(provisioner._object_namespace, name='test', provisioner=provisioner)
         empty.save()
 
     def test_added_key(self, cluster):
@@ -55,9 +48,10 @@ class TestClusterModel:
         assert hasattr(cluster, '_key'), 'Saved object is missing _key'
 
     def test_exists(self, cluster):
-        assert not Cluster.exists(cluster.id)
+        assert not Cluster.exists(cluster._object_namespace, cluster.id)
+
         cluster.save()
-        assert Cluster.exists(cluster.id)
+        assert Cluster.exists(cluster._object_namespace, cluster.id)
 
     def test_get_db_key_missing(self, cluster):
         cluster.id = None
@@ -68,13 +62,13 @@ class TestClusterModel:
     def test_list_with_objects(self, cluster):
         cluster.save()
 
-        loaded = Cluster.list()
+        loaded = Cluster.list(cluster._object_namespace)
         assert str(cluster.id) in loaded
 
     def test_list_without_objects(self, cluster):
         cluster.save()
 
-        loaded = Cluster.list(return_objects=False)
+        loaded = Cluster.list(cluster._object_namespace, return_objects=False)
         assert str(cluster.id) in loaded
         for o_name, o in loaded.items():
             assert o is None
@@ -95,7 +89,7 @@ class TestClusterModel:
     def test_kubeconfig_load_is_dict(self, cluster):
         cluster.save()
 
-        loaded = Cluster.load(cluster.id)
+        loaded = Cluster.load(cluster._object_namespace, cluster.id)
         assert isinstance(loaded.kubeconfig, dict), 'Loaded kubeconfig is not dict'
 
 

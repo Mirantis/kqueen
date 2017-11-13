@@ -1,0 +1,2 @@
+class BackendError(Exception):
+    pass

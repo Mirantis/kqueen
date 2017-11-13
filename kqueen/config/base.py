@@ -5,6 +5,9 @@ class BaseConfig:
     DEBUG = False
     LOG_LEVEL = 'WARNING'
 
+    KQUEEN_HOST = '127.0.0.1'
+    KQUEEN_PORT = 5000
+
     # etcd settings
     # ETCD_HOST
     # ETCD_PORT
@@ -13,6 +16,7 @@ class BaseConfig:
     JWT_DEFAULT_REALM = 'Login Required'
     JWT_AUTH_URL_RULE = '/api/v1/auth'
     JWT_EXPIRATION_DELTA = timedelta(hours=1)
+    JWT_AUTH_HEADER_PREFIX = 'Bearer'
 
     # Cluster statuses
     CLUSTER_ERROR_STATE = 'Error'

@@ -1,8 +1,10 @@
+"""Setup for kqueen package."""
+
 from setuptools import setup, find_packages
 
-version = '0.8'
+version = '0.9'
 
-with open('README.md') as f:
+with open('README.rst') as f:
     long_description = ''.join(f.readlines())
 
 setup(
@@ -19,7 +21,8 @@ setup(
     zip_safe=False,
     install_requires=[
         'Flask==0.12.2',
-        'Flask-JWT',
+        'Flask-JWT==0.3.2',
+        'flask-swagger-ui',
         'gunicorn',
         'kubernetes',
         'python-etcd',

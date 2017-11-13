@@ -1,11 +1,18 @@
 Engines
 =======
 
-Submodules
-----------
+BaseEngine
+-------------
+
+.. automodule:: kqueen.engines.base
+    :members:
+    :undoc-members:
+    :show-inheritance:
+    :exclude-members: app
+
 
 JenkinsEngine
--------------
+--------------
 
 .. automodule:: kqueen.engines.jenkins
     :members:
@@ -14,9 +21,11 @@ JenkinsEngine
     :exclude-members: app
 
 
-Module contents
----------------
+ManualEngine
+-------------
 
-.. automodule:: kqueen.engines.base
+.. automodule:: kqueen.engines.manual
     :members:
     :undoc-members:
+    :show-inheritance:
+    :exclude-members: app
