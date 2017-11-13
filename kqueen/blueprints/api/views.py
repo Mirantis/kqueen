@@ -71,11 +71,19 @@ class CreateCluster(CreateView):
 
         if not prov_status:
             logger.error('Provisioning failed: {}'.format(prov_msg))
-            abort(500)
+            abort(500, description=prov_msg)
 
 
 class GetCluster(GetView):
     object_class = Cluster
+
+    def dispatch_request(self, *args, **kwargs):
+        self.check_access()
+
+        cluster = self.get_content(*args, **kwargs)
+        cluster.get_state()
+
+        return jsonify(cluster)
 
 
 class UpdateCluster(UpdateView):
