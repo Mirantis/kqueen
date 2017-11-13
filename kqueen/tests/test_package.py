@@ -24,7 +24,7 @@ def test_setup(monkeypatch):
 
     monkeypatch.setattr('setuptools.setup', fake_setup)
 
-    filename = 'README.md'
+    filename = 'README.rst'
 
     from setup import long_description
     assert open(filename, 'r').read() == long_description
