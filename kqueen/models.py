@@ -32,7 +32,6 @@ class Cluster(Model, metaclass=ModelMeta):
     kubeconfig = JSONField()
     metadata = JSONField()
     created_at = DatetimeField()
-    deleted_at = DatetimeField()
 
     def get_state(self):
         if self.state != config.get('CLUSTER_PROVISIONING_STATE'):
@@ -278,6 +277,7 @@ class Provisioner(Model, metaclass=ModelMeta):
     engine = StringField(required=True)
     state = StringField()
     parameters = JSONField()
+    created_at = DatetimeField()
 
     def get_engine_cls(self):
         """Return engine class"""
@@ -325,6 +325,7 @@ class Organization(Model, metaclass=ModelMeta):
     id = IdField(required=True)
     name = StringField(required=True)
     namespace = StringField(required=True)
+    created_at = DatetimeField()
 
 
 class User(Model, metaclass=ModelMeta):
@@ -335,6 +336,7 @@ class User(Model, metaclass=ModelMeta):
     email = StringField(required=False)
     password = SecretField(required=True)
     organization = RelationField(required=True)
+    created_at = DatetimeField()
 
     @property
     def namespace(self):
