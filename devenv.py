@@ -8,6 +8,7 @@ from kqueen.models import User
 
 import requests
 import yaml
+import os
 
 uuid_organization = '22d8df64-4ac9-4be0-89a7-c45ea0fc85da'
 
@@ -19,6 +20,7 @@ uuid_provisioner_local = '203c50d6-3d09-4789-8b8b-1ecb00814436'
 uuid_provisioner_kubespray = '689de9a2-50e0-4fcd-b6a6-96930b5fadc9'
 
 kubeconfig_url = 'https://ci.mcp.mirantis.net/job/deploy-aws-k8s_ha_calico_sm/33/artifact/kubeconfig'
+kubeconfig_file = 'kubeconfig_remote'
 
 app = create_app()
 with app.app_context():
@@ -63,13 +65,21 @@ with app.app_context():
 
 
     try:
+        # load kubeconfig file
+        if os.path.isfile(kubeconfig_file):
+            print('Loading remote kubeconfig from {}'.format(kubeconfig_file))
+            kubeconfig = yaml.load(open(kubeconfig_file).read())
+        else:
+            print('Loading remote kubeconfig from {}'.format(kubeconfig_url))
+            kubeconfig = yaml.load(requests.get(kubeconfig_url).text)
+
         cluster = Cluster(
             user.namespace,
             id=uuid_jenkins,
             name='AWS Calico SM 33',
             state='OK',
             provisioner=provisioner,
-            kubeconfig=yaml.load(requests.get(kubeconfig_url).text),
+            kubeconfig=kubeconfig,
         )
         cluster.save()
     except:
