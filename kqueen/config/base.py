@@ -8,10 +8,6 @@ class BaseConfig:
     KQUEEN_HOST = '127.0.0.1'
     KQUEEN_PORT = 5000
 
-    # Babel default settings
-    BABEL_DEFAULT_TIMEZONE = 'UTC'
-    BABEL_DEFAULT_LOCALE = 'en'
-
     # etcd settings
     # ETCD_HOST
     # ETCD_PORT
