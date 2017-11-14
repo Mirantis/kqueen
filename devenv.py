@@ -19,7 +19,7 @@ uuid_provisioner_jenkins = 'e8de24b0-43d1-4a3c-af55-7b1d3f700554'
 uuid_provisioner_local = '203c50d6-3d09-4789-8b8b-1ecb00814436'
 uuid_provisioner_kubespray = '689de9a2-50e0-4fcd-b6a6-96930b5fadc9'
 
-kubeconfig_url = 'https://ci.mcp.mirantis.net/job/deploy-aws-k8s_ha_calico_sm/33/artifact/kubeconfig'
+kubeconfig_url = 'https://ci.mcp.mirantis.net/job/deploy-aws-k8s_ha_calico_sm/17/artifact/kubeconfig'
 kubeconfig_file = 'kubeconfig_remote'
 
 app = create_app()
@@ -76,7 +76,7 @@ with app.app_context():
         cluster = Cluster(
             user.namespace,
             id=uuid_jenkins,
-            name='AWS Calico SM 33',
+            name='AWS kqueen testing',
             state='OK',
             provisioner=provisioner,
             kubeconfig=kubeconfig,
