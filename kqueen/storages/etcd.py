@@ -4,7 +4,6 @@ import logging
 import uuid
 import importlib
 from datetime import datetime
-from dateutil.parser import parse as parse_datetime
 from kqueen.config import current_config
 from flask import current_app
 from .exceptions import BackendError
