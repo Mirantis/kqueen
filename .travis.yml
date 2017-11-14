@@ -24,8 +24,9 @@ jobs:
     before_install:
     - docker-compose -f docker-compose.yml -f docker-compose.kubernetes.yml up -d
     install:
-    - pip3 install -r requirements.txt
+    - pip install -e ".[dev]"
     script:
+    - export prometheus_multiproc_dir=$(mktemp -d)
     - python3 -m flake8
     - python3 -m pytest --cov=. --cov-report=term-missing:skip-covered
     - coveralls

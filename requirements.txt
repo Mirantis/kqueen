@@ -4,6 +4,7 @@ flask-swagger-ui
 kubernetes
 python-etcd
 python-jenkins
+prometheus_client
 pyyaml
 requests
 gunicorn

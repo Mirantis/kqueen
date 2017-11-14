@@ -1,3 +1,5 @@
 #!/bin/bash
 
-exec gunicorn --bind 0.0.0.0:5000 --workers 4 kqueen.wsgi
+export prometheus_multiproc_dir="$(mktemp -d)"
+
+exec gunicorn --config kqueen/gunicorn.py kqueen.wsgi

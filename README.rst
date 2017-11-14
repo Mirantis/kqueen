@@ -20,7 +20,7 @@ Development
 ::
 
     mkvirtualenv -p /usr/bin/python3 kqueen
-    pip3 install -r requirements.txt
+    pip install -e ".[dev]"
     pip3 install --editable .
     # start etcd in container
     docker-compose up -d # start

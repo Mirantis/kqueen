@@ -2,10 +2,21 @@
 
 from setuptools import setup, find_packages
 
-version = '0.9'
+version = '0.10'
 
 with open('README.rst') as f:
     long_description = ''.join(f.readlines())
+
+test_require = [
+    'coveralls',
+    'faker',
+    'flake8',
+    'pytest',
+    'pytest-cov',
+    'pytest-env',
+    'pytest-flask',
+    'pytest-ordering',
+]
 
 setup(
     name='kqueen',
@@ -25,6 +36,7 @@ setup(
         'flask-swagger-ui',
         'gunicorn',
         'kubernetes',
+        'prometheus_client',
         'python-etcd',
         'python-jenkins',
         'pyyaml',
@@ -33,6 +45,18 @@ setup(
         'google-auth==1.2.1',
         'google-auth-httplib2==0.0.3',
     ],
+    setup_requires=[
+        'pytest-runner',
+    ],
+    tests_require=test_require,
+    extras_require={
+        'dev': test_require + [
+            'ipython',
+            'sphinx',
+            'sphinx-autobuild',
+            'sphinx_rtd_theme',
+        ]
+    },
     classifiers=[
         'Operating System :: POSIX :: Linux',
         'Programming Language :: Python',
