@@ -28,6 +28,8 @@ Development
 
 -  Clean etcd storage and prepare examples
 
+`devenv.py` will create few objects to provides basic developer environment. It will also try to download `kubeconfig` file for real cluster but it requires access to Mirantis VPN. However, it can be workarounded by creating file `kubeconfig_remote` in repository root and this file will be used instead of downloading it.
+
 ::
 
     etcdctl rm --recursive /kqueen
