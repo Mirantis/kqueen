@@ -44,6 +44,11 @@ class Field:
     def get_value(self):
         return self.value
 
+    def dict_value(self):
+        """Return field representation for API"""
+
+        return self.get_value()
+
     def serialize(self):
 
         if self.value:
@@ -111,28 +116,20 @@ class DatetimeField(Field):
     Datetime is stored as UTC timestamp in DB and as naive datetime on instance.
     """
 
-    def deserialize(self, serialized, **kwargs):
-        # Initialize datetime object from UTC timestamp
-        if isinstance(serialized, float):
-            value = datetime.fromtimestamp(serialized)
-            self.set_value(value, **kwargs)
-        # Return as is if value is already datetime
-        elif isinstance(serialized, datetime):
-            self.set_value(serialized, **kwargs)
-
-    def set_value(self, value, **kwargs):
-        if not value:
-            value = datetime.utcnow()
-        # Deserialize value from DB
-        if isinstance(value, float):
-            self.deserialize(value)
-        # Save as is if value is already datetime
-        elif isinstance(value, datetime):
-            self.value = value
-
     def serialize(self):
         if self.value and isinstance(self.value, datetime):
-            return self.value.timestamp()
+            return int(self.value.timestamp())
+        else:
+            return None
+
+    def deserialize(self, serialized, **kwargs):
+        self.value = datetime.fromtimestamp(serialized)
+
+    def dict_value(self):
+        """Return API representation of value"""
+
+        if self.value and isinstance(self.value, datetime):
+            return self.value.isoformat()
         else:
             return None
 
@@ -496,6 +493,8 @@ class Model:
 
             if expand and hasattr(field.value, 'get_dict'):
                 wr = field.value.get_dict()
+            elif hasattr(field, 'dict_value'):
+                wr = field.dict_value()
             else:
                 wr = field.get_value()
 

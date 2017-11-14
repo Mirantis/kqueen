@@ -1,12 +1,13 @@
 """Configuration and fixtures for pytest."""
 from faker import Faker
+from kqueen.config import current_config
 from kqueen.models import Cluster
 from kqueen.models import Organization
 from kqueen.models import Provisioner
 from kqueen.models import User
 from kqueen.server import create_app
-from kqueen.config import current_config
 
+import datetime
 import etcd
 import json
 import pytest
@@ -55,6 +56,7 @@ def cluster():
         'provisioner': prov,
         'state': 'deployed',
         'kubeconfig': yaml.load(open('kubeconfig_localhost', 'r').read()),
+        'created_at': datetime.datetime(2017, 11, 15, 13, 36, 24),
     }
 
     return Cluster.create(_user.namespace, **create_kwargs)

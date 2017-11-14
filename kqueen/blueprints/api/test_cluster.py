@@ -37,6 +37,9 @@ class TestClusterCRUD(BaseTestCRUD):
             headers=self.auth_header
         )
 
+        print('JSON response:', response.json, sep='\n')
+        print('get_dict:', self.obj.get_dict(expand=True), sep='\n')
+
         assert response.json == self.obj.get_dict(expand=True)
 
     @pytest.mark.parametrize('cluster_id,status_code', [

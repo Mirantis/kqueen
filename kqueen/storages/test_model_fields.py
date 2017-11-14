@@ -1,3 +1,4 @@
+from kqueen.storages.etcd import DatetimeField
 from kqueen.storages.etcd import IdField
 from kqueen.storages.etcd import JSONField
 from kqueen.storages.etcd import Model
@@ -7,6 +8,7 @@ from kqueen.storages.etcd import SecretField
 from kqueen.storages.etcd import StringField
 from kqueen.storages.exceptions import BackendError
 
+import datetime
 import pytest
 
 
@@ -302,3 +304,26 @@ class TestNamespaces:
 
         with pytest.raises(BackendError, match='Missing namespace'):
             cls.get_db_prefix(None)
+
+
+class TestDateTimeField:
+    def setup(self):
+        self.datetime = datetime.datetime(2007, 12, 6, 16, 29, 43)
+        self.field = DatetimeField()
+
+    def test_serialization(self):
+        req = int(self.datetime.timestamp())
+        self.field.set_value(self.datetime)
+
+        assert self.field.serialize() == req
+
+    def test_deserialization(self):
+        serialized = int(self.datetime.timestamp())
+        self.field.deserialize(serialized)
+
+        assert self.field.value == self.datetime
+
+    def test_get_value_returns_serialized(self):
+        self.field.set_value(self.datetime)
+
+        assert self.field.dict_value() == self.field.value.isoformat()
