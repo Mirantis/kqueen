@@ -9,7 +9,7 @@ services:
     environment:
       KQUEEN_ETCD_HOST: etcd
   kqueen_ui:
-    image: atengler/kqueen-ui
+    build: ../ui/
     ports:
       - 127.0.0.1:5080:5080
     depends_on:
