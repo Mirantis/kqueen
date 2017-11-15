@@ -122,9 +122,10 @@ class DatetimeField(Field):
         value = None
         if isinstance(serialized, (float, int)):
             value = datetime.fromtimestamp(serialized)
+            self.set_value(value, **kwargs)
         elif isinstance(serialized, six.string_types):
             value = du_parse(serialized)
-        self.set_value(value, **kwargs)
+            self.set_value(value, **kwargs)
 
     def set_value(self, value, **kwargs):
         if value and isinstance(value, datetime):
