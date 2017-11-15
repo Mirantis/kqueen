@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from datetime import datetime
 from kqueen.server import create_app
 from kqueen.models import Cluster
 from kqueen.models import Organization
@@ -29,7 +30,8 @@ with app.app_context():
         organization = Organization(
             id=uuid_organization,
             name='DemoOrg',
-            namespace='demoorg'
+            namespace='demoorg',
+            created_at=datetime.utcnow()
         )
         organization.save()
     except:
@@ -41,6 +43,7 @@ with app.app_context():
             username='admin',
             password='default',
             organization=organization,
+            created_at=datetime.utcnow()
         )
         user.save()
     except:
@@ -57,7 +60,8 @@ with app.app_context():
             parameters={
                 'username': 'demo',
                 'password': 'Demo123'
-            }
+            },
+            created_at=datetime.utcnow()
         )
         provisioner.save(check_status=False)
     except:
@@ -80,6 +84,7 @@ with app.app_context():
             state='OK',
             provisioner=provisioner,
             kubeconfig=kubeconfig,
+            created_at=datetime.utcnow()
         )
         cluster.save()
     except:
@@ -94,7 +99,8 @@ with app.app_context():
             name='Manual provisioner',
             state='OK',
             engine='kqueen.engines.ManualEngine',
-            parameters={}
+            parameters={},
+            created_at=datetime.utcnow()
         )
         provisioner.save(check_status=False)
     except:
@@ -109,6 +115,7 @@ with app.app_context():
             state='OK',
             provisioner=provisioner,
             kubeconfig=yaml.load(open('kubeconfig_localhost', 'r').read()),
+            created_at=datetime.utcnow()
         )
         cluster.save()
     except:
@@ -122,7 +129,8 @@ with app.app_context():
             name='Kubespray',
             state='OK',
             engine='kqueen.engines.ManualEngine',
-            parameters={}
+            parameters={},
+            created_at=datetime.utcnow()
         )
         provisioner.save(check_status=False)
     except:
