@@ -127,10 +127,10 @@ class DatetimeField(Field):
         self.set_value(value, **kwargs)
 
     def set_value(self, value, **kwargs):
-        if value and not isinstance(value, datetime):
-            self.deserialize(value)
-        else:
+        if value and isinstance(value, datetime):
             self.value = value
+        else:
+            self.deserialize(value)
 
     def serialize(self):
         if self.value and isinstance(self.value, datetime):
