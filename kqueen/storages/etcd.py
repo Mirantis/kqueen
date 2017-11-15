@@ -3,7 +3,9 @@ import json
 import logging
 import uuid
 import importlib
+import six
 from datetime import datetime
+from dateutil.parser import parse as du_parse
 from kqueen.config import current_config
 from flask import current_app
 from .exceptions import BackendError
@@ -116,14 +118,25 @@ class DatetimeField(Field):
     Datetime is stored as UTC timestamp in DB and as naive datetime on instance.
     """
 
+    def deserialize(self, serialized, **kwargs):
+        value = None
+        if isinstance(serialized, (float, int)):
+            value = datetime.fromtimestamp(serialized)
+        elif isinstance(serialized, six.string_types):
+            value = du_parse(serialized)
+        self.set_value(value, **kwargs)
+
+    def set_value(self, value, **kwargs):
+        if value and not isinstance(value, datetime):
+            self.deserialize(value)
+        else:
+            self.value = value
+
     def serialize(self):
         if self.value and isinstance(self.value, datetime):
             return int(self.value.timestamp())
         else:
             return None
-
-    def deserialize(self, serialized, **kwargs):
-        self.value = datetime.fromtimestamp(serialized)
 
     def dict_value(self):
         """Return API representation of value"""
