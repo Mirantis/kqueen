@@ -134,7 +134,7 @@ class DatetimeField(Field):
             self.deserialize(value)
 
     def serialize(self):
-        if self.value and isinstance(self.value, datetime):
+        if isinstance(self.value, datetime):
             return int(self.value.timestamp())
         else:
             return None
