@@ -3,6 +3,9 @@ import json
 import logging
 import uuid
 import importlib
+import six
+from datetime import datetime
+from dateutil.parser import parse as du_parse
 from kqueen.config import current_config
 from flask import current_app
 from .exceptions import BackendError
@@ -42,6 +45,11 @@ class Field:
 
     def get_value(self):
         return self.value
+
+    def dict_value(self):
+        """Return field representation for API"""
+
+        return self.get_value()
 
     def serialize(self):
 
@@ -103,6 +111,41 @@ class IdField(Field):
 
 class SecretField(Field):
     pass
+
+
+class DatetimeField(Field):
+    """
+    Datetime is stored as UTC timestamp in DB and as naive datetime on instance.
+    """
+
+    def deserialize(self, serialized, **kwargs):
+        value = None
+        if isinstance(serialized, (float, int)):
+            value = datetime.fromtimestamp(serialized)
+            self.set_value(value, **kwargs)
+        elif isinstance(serialized, six.string_types):
+            value = du_parse(serialized)
+            self.set_value(value, **kwargs)
+
+    def set_value(self, value, **kwargs):
+        if value and isinstance(value, datetime):
+            self.value = value
+        else:
+            self.deserialize(value)
+
+    def serialize(self):
+        if isinstance(self.value, datetime):
+            return int(self.value.timestamp())
+        else:
+            return None
+
+    def dict_value(self):
+        """Return API representation of value"""
+
+        if self.value and isinstance(self.value, datetime):
+            return self.value.isoformat()
+        else:
+            return None
 
 
 class JSONField(Field):
@@ -464,6 +507,8 @@ class Model:
 
             if expand and hasattr(field.value, 'get_dict'):
                 wr = field.value.get_dict()
+            elif hasattr(field, 'dict_value'):
+                wr = field.dict_value()
             else:
                 wr = field.get_value()
 
