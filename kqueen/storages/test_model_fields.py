@@ -313,9 +313,12 @@ class TestNamespaces:
             cls.get_db_prefix(None)
 
 
+datetime_sample = datetime.datetime(2007, 12, 6, 16, 29, 43)
+
+
 class TestDateTimeField:
     def setup(self):
-        self.datetime = datetime.datetime(2007, 12, 6, 16, 29, 43)
+        self.datetime = datetime_sample
         self.field = DatetimeField()
 
     def test_serialization(self):
@@ -324,13 +327,22 @@ class TestDateTimeField:
 
         assert self.field.serialize() == req
 
-    def test_deserialization(self):
-        serialized = int(self.datetime.timestamp())
+    def test_serialization_none(self):
+        self.field.set_value(None)
+
+        assert self.field.serialize() is None
+
+    @pytest.mark.parametrize('serialized, req', [
+        (datetime_sample.timestamp(), datetime_sample),
+        (int(datetime_sample.timestamp()), datetime_sample),
+        (datetime_sample.isoformat(), datetime_sample),
+    ])
+    def test_deserialization(self, serialized, req):
         self.field.deserialize(serialized)
 
-        assert self.field.value == self.datetime
+        assert self.field.value == req
 
-    def test_get_value_returns_serialized(self):
+    def test_dict_value_returns_isoformat(self):
         self.field.set_value(self.datetime)
 
         assert self.field.dict_value() == self.field.value.isoformat()

@@ -104,6 +104,7 @@ def get_auth_token(_client, _user):
 
     return token
 
+
 @pytest.fixture
 def auth_header(client):
     """
