@@ -84,7 +84,7 @@ def get_auth_token(_client, _user):
         user: User object
 
     Returns:
-        dict: {'Authorization': 'Bearer access_token'}
+        str: Auth token.
     """
 
     data = {
@@ -97,8 +97,12 @@ def get_auth_token(_client, _user):
         data=json.dumps(data),
         content_type='application/json')
 
-    return response.json['access_token']
+    try:
+        token = response.json['access_token']
+    except KeyError as e:
+        raise KeyError('Unable to read access token from response: {}'.format(response.data))
 
+    return token
 
 @pytest.fixture
 def auth_header(client):
