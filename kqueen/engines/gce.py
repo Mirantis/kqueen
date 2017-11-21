@@ -74,57 +74,69 @@ class GceEngine(BaseEngine):
         """
         Implementation of :func:`~kqueen.engines.base.BaseEngine.deprovision`
         """
-
-        pass
+        try:
+            delete_cluster = self.client.projects().zones().clusters().delete(projectId=self.project, zone=self.zone, clusterId=self.cluster_id).execute()
+            return (delete_cluster, None)
+        except Exception as e:
+            msg = 'Deleting cluster {} failed with following reason: {}'.format(self.cluster_id, repr(e))
+            logger.error(msg)
+            return (False, msg)
+        return (None, None)
 
     def get_kubeconfig(self):
         """
         Implementation of :func:`~kqueen.engines.base.BaseEngine.get_kubeconfig`
         """
+        if not self.cluster.kubeconfig:
+            cluster = self.client.projects().zones().clusters().get(projectId=self.project, zone=self.zone, clusterId=self.cluster_id).execute()
 
-        cluster = self.client.projects().zones().clusters().get(projectId=self.project, zone=self.zone, clusterId=self.cluster_id).execute()
+            kubeconfig = {}
 
-        kubeconfig = {}
+            if cluster["status"] != "RUNNING":
+                print("cluster is not ready")
+                return self.cluster.kubeconfig
 
-        # Get cluster section in KubeConfig
-        kubeconfig_cluster_detail = {
-            'server': "https://" + cluster["endpoint"],
-            'certificate-authority-data': cluster["masterAuth"]["clusterCaCertificate"]
-        }
+            # Get cluster section in KubeConfig
+            kubeconfig_cluster_detail = {
+                'server': "https://" + cluster["endpoint"],
+                'certificate-authority-data': cluster["masterAuth"]["clusterCaCertificate"]
+            }
 
-        kubeconfig_cluster = {
-            'name': cluster["name"],
-            'cluster': kubeconfig_cluster_detail
-        }
+            kubeconfig_cluster = {
+                'name': cluster["name"],
+                'cluster': kubeconfig_cluster_detail
+            }
 
-        user = {}
-        user['username'] = cluster["masterAuth"]["username"]
-        user['password'] = cluster["masterAuth"]["password"]
+            user = {}
+            user['username'] = cluster["masterAuth"]["username"]
+            user['password'] = cluster["masterAuth"]["password"]
 
-        kubeconfig_user = {
-            'name': 'admin',
-            'user': user
-        }
+            kubeconfig_user = {
+                'name': 'admin',
+                'user': user
+            }
 
-        kubeconfig_context = {
-            'name': cluster["name"],
-            'context': {
-                'cluster': cluster["name"],
-                'user': kubeconfig_user["name"],
-            },
-        }
+            kubeconfig_context = {
+                'name': cluster["name"],
+                'context': {
+                    'cluster': cluster["name"],
+                    'user': kubeconfig_user["name"],
+                },
+            }
 
-        kubeconfig = {
-            'apiVersion': 'v1',
-            'contexts': [kubeconfig_context],
-            'clusters': [kubeconfig_cluster],
-            'current-context': cluster["name"],
-            'kind': 'Config',
-            'preferences': {},
-            'users': [kubeconfig_user],
-        }
+            kubeconfig = {
+                'apiVersion': 'v1',
+                'contexts': [kubeconfig_context],
+                'clusters': [kubeconfig_cluster],
+                'current-context': cluster["name"],
+                'kind': 'Config',
+                'preferences': {},
+                'users': [kubeconfig_user],
+            }
 
-        return kubeconfig
+            self.cluster.kubeconfig = kubeconfig
+
+        return self.cluster.kubeconfig
 
     def cluster_get(self):
         """
