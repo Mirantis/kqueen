@@ -5,7 +5,6 @@ from kqueen.config import current_config
 from google.oauth2 import service_account
 import googleapiclient.discovery
 
-import os
 import logging
 import yaml
 
@@ -83,12 +82,7 @@ class GceEngine(BaseEngine):
         Implementation of :func:`~kqueen.engines.base.BaseEngine.get_kubeconfig`
         """
 
-        clusters = self.client.projects().zones().clusters().list(projectId=self.project, zone=self.zone).execute()
-
-        cluster = None
-        for i in clusters["clusters"]:
-            if self.cluster_id in i["name"]:
-                cluster = i
+        cluster = self.client.projects().zones().clusters().get(projectId=self.project, zone=self.zone, clusterId=self.cluster_id).execute()
 
         kubeconfig = {}
 
