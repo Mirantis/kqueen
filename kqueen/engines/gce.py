@@ -1,5 +1,4 @@
 from kqueen.engines.base import BaseEngine
-from kqueen.server import cache
 from kqueen.config import current_config
 
 
@@ -8,8 +7,6 @@ import googleapiclient.discovery
 
 import os
 import logging
-import requests
-import time
 import yaml
 
 logger = logging.getLogger(__name__)
@@ -45,6 +42,7 @@ class GceEngine(BaseEngine):
         self.zone = kwargs.get('zone', self.zone)
         self.cluster_config = yaml.load(kwargs.get('cluster_config', self.cluster_config))
         self.client = self._get_client()
+        self.cluster_id = "a" + self.cluster.id.replace("-", "")
         # Cache settings
         self.cache_timeout = 5 * 60
 
@@ -54,7 +52,6 @@ class GceEngine(BaseEngine):
         Construct service account credentials using the service account key file
 
         """
-        print(os.listdir("./"))
         credentials = service_account.Credentials.from_service_account_file(self.service_account_file)
         client = googleapiclient.discovery.build('container', 'v1', credentials=credentials)
 
@@ -64,13 +61,12 @@ class GceEngine(BaseEngine):
         """
         Implementation of :func:`~kqueen.engines.base.BaseEngine.provision`
         """
-        cluster_id = self.cluster.id
-        self.cluster["name"] = cluster_id
+        self.cluster_config["cluster"]["name"] = self.cluster_id
         try:
             create_cluster = self.client.projects().zones().clusters().create(projectId=self.project, zone=self.zone, body=self.cluster_config).execute()
             return (create_cluster, None)
         except Exception as e:
-            msg = 'Creating cluster {} failed with following reason: {}'.format(cluster_id, repr(e))
+            msg = 'Creating cluster {} failed with following reason: {}'.format(self.cluster_id, repr(e))
             logger.error(msg)
             return (False, msg)
         return (None, None)
@@ -89,9 +85,9 @@ class GceEngine(BaseEngine):
 
         clusters = self.client.projects().zones().clusters().list(projectId=self.project, zone=self.zone).execute()
 
+        cluster = None
         for i in clusters["clusters"]:
-            if self.cluster.id in i["name"]:
-                global cluster
+            if self.cluster_id in i["name"]:
                 cluster = i
 
         kubeconfig = {}

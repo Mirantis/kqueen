@@ -9,4 +9,7 @@ with app.app_context():
     print(cluster)
     print(cluster.get_dict())
 
+    print(cluster.engine)
+    print(cluster.provisioner.get_engine_cls())
     cluster.engine.provision()
+    print(cluster.engine.get_kubeconfig())
