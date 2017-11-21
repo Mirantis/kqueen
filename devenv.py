@@ -19,6 +19,7 @@ uuid_local = '2d51891a-adac-4bbc-a725-eed20cc67849'
 uuid_provisioner_jenkins = 'e8de24b0-43d1-4a3c-af55-7b1d3f700554'
 uuid_provisioner_local = '203c50d6-3d09-4789-8b8b-1ecb00814436'
 uuid_provisioner_kubespray = '689de9a2-50e0-4fcd-b6a6-96930b5fadc9'
+uuid_provisioner_gke = '516e3a8c-6c4d-49f1-8178-c6f802836618'
 
 kubeconfig_url = 'https://ci.mcp.mirantis.net/job/deploy-aws-k8s_ha_calico_sm/17/artifact/kubeconfig'
 kubeconfig_file = 'kubeconfig_remote'
@@ -67,6 +68,19 @@ with app.app_context():
     except:
         raise Exception('Adding AWS provisioner failed')
 
+    # GKE provisioner
+    try:
+        provisioner = Provisioner(
+            user.namespace,
+            id=uuid_provisioner_gke,
+            name='Goole Kubernetes engine',
+            state='OK',
+            engine='kqueen.engines.GceEngine',
+            created_at=datetime.utcnow()
+        )
+        provisioner.save(check_status=False)
+    except:
+        raise Exception('Adding AWS provisioner failed')
 
     try:
         # load kubeconfig file
