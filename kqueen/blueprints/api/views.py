@@ -1,10 +1,12 @@
 from .helpers import get_object
 from flask import abort
 from flask import Blueprint
+from flask import current_app as app
 from flask import jsonify
 from flask import make_response
 from flask_jwt import current_identity
 from flask_jwt import jwt_required
+from importlib import import_module
 from kqueen.models import Cluster
 from kqueen.models import Organization
 from kqueen.models import Provisioner
@@ -215,6 +217,31 @@ def user_whoami():
     output = current_identity
 
     return jsonify(output)
+
+
+@api.route('/engines', methods=['GET'])
+def engine_list():
+    engines = app.config.get('KQUEEN_ENGINES', [])
+    engine_cls = []
+    for engine in engines:
+        try:
+            module_path = '.'.join(engine.split('.')[:-1])
+            class_name = engine.split('.')[-1]
+            module = import_module(module_path)
+            _class = getattr(module, class_name)
+            engine_cls.append({
+                'name': engine,
+                'parameters': _class.get_parameter_schema()
+            })
+        except NotImplementedError:
+            engine_cls.append({
+                'name': engine,
+                'parameters': {}
+            })
+        except Exception:
+            pass
+
+    return jsonify(engine_cls)
 
 
 @api.route('/swagger', methods=['GET'])
