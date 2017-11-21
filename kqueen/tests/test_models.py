@@ -1,6 +1,7 @@
 from kqueen.models import Cluster
 from kqueen.storages.etcd import Field
 from kqueen.storages.etcd import Model
+from kqueen.engines.__init__ import __all__ as all_engines
 
 import pytest
 import yaml
@@ -159,3 +160,15 @@ spec:
         run = cluster.apply(text)
         cmd = ' '.join(run.cmd)
         assert cmd.startswith(req_cmd)
+
+
+class TestProvisioner:
+    @pytest.mark.parametrize('engine', all_engines)
+    def test_get_engine_cls(self, provisioner, engine):
+        provisioner.engine = 'kqueen.engines.{}'.format(engine)
+        provisioner.save(check_status=False)
+
+        engine_class = provisioner.get_engine_cls()
+        print(engine_class)
+
+        assert engine_class is not None

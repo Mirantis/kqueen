@@ -12,6 +12,7 @@ gunicorn
 coveralls
 faker
 flake8
+flask-shell-ipython
 ipython
 pytest
 pytest-cov
