@@ -169,6 +169,5 @@ class TestProvisioner:
         provisioner.save(check_status=False)
 
         engine_class = provisioner.get_engine_cls()
-        print(engine_class)
 
         assert engine_class is not None
