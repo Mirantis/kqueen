@@ -44,9 +44,9 @@ jobs:
     - docker-compose -f docker-compose.etcd-volume.yml up -d
     - docker-compose -f docker-compose.etcd-volume.yml exec etcd etcdctl ls --recursive /travis/
     - |
-      if [ "$(docker-compose -f docker-compose.etcd-volume.yml exec etcd etcdctl get /travis/commit)" != "$TRAVIS_COMMIT" ]; then
-        exit 1
-      fi
+        export VALUE="$(docker-compose -f docker-compose.etcd-volume.yml exec -T etcd etcdctl get /travis/commit)";
+        echo "$VALUE == $TRAVIS_COMMIT";
+        [ "$VALUE" == "$TRAVIS_COMMIT" ] && exit 0 || exit 1
   - stage: publish
     script:
     - "/bin/true"
