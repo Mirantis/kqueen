@@ -32,6 +32,21 @@ jobs:
     - python3 -m kqueen &
     - sleep 2
     - wget -O - http://localhost:5000/api/v1/health
+  - stage: test
+    script:
+    - docker-compose -f docker-compose.etcd-volume.yml up -d
+    - docker-compose -f docker-compose.etcd-volume.yml exec etcd etcdctl mkdir /travis/
+    - docker-compose -f docker-compose.etcd-volume.yml exec etcd etcdctl set /travis/commit $TRAVIS_COMMIT
+    - docker-compose -f docker-compose.etcd-volume.yml exec etcd etcdctl backup --data-dir /0.etcd/ --backup-dir /root/backup/
+    - docker-compose -f docker-compose.etcd-volume.yml stop
+    - docker-compose -f docker-compose.etcd-volume.yml rm -fv
+    - sed -i 's/#//g' docker-compose.etcd-volume.yml
+    - docker-compose -f docker-compose.etcd-volume.yml up -d
+    - docker-compose -f docker-compose.etcd-volume.yml exec etcd etcdctl ls --recursive /travis/
+    - |
+        export VALUE="$(docker-compose -f docker-compose.etcd-volume.yml exec -T etcd etcdctl get /travis/commit)";
+        echo "$VALUE == $TRAVIS_COMMIT";
+        [ "$VALUE" == "$TRAVIS_COMMIT" ] && exit 0 || exit 1
   - stage: publish
     script:
     - "/bin/true"
@@ -52,3 +67,4 @@ jobs:
     - "./entrypoint.sh &"
     - sleep 2
     - wget -O - http://localhost:5000/api/v1/health
+
