@@ -166,7 +166,7 @@ def engine_list():
             module = import_module(module_path)
             _class = getattr(module, class_name)
             engine_cls.append({
-                'name': engine,
+                'name': '.'.join([module_path, engine]),
                 'parameters': _class.get_parameter_schema()
             })
         except NotImplementedError:
