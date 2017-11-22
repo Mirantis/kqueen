@@ -32,13 +32,17 @@ class JenkinsEngine(BaseEngine):
     parameter_schema = {
         'username': {
             'type': 'text',
-            'required': True,
-            'initial': None
+            'label': 'Username',
+            'validators': {
+                'required': True
+            }
         },
         'password': {
             'type': 'password',
-            'required': True,
-            'initial': None
+            'label': 'Password',
+            'validators': {
+                'required': True
+            }
         }
     }
 
@@ -287,8 +291,9 @@ class JenkinsEngine(BaseEngine):
             response = 1
         return {'response': response, 'progress': progress, 'result': result}
 
-    def get_parameter_schema(self):
+    @classmethod
+    def get_parameter_schema(cls):
         """
         Implementation of :func:`~kqueen.engines.base.BaseEngine.get_parameter_schema`
         """
-        return self.parameter_schema
+        return cls.parameter_schema
