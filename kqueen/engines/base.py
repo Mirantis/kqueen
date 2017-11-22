@@ -113,7 +113,8 @@ class BaseEngine:
         """
         raise NotImplementedError
 
-    def get_parameter_schema(self):
+    @classmethod
+    def get_parameter_schema(cls):
         """Return parameters specific for this Provisioner implementation.
 
         This method should return parameters specific to the Provisioner implementation,
@@ -126,13 +127,15 @@ class BaseEngine:
                 {
                     'username': {
                         'type': 'text',
-                        'required': True,
-                        'initial': None
-                    }
+                        'validators': {
+                            'required': True
+                        }
+                    },
                     'password': {
                         'type': 'password',
-                        'required': True,
-                        'initial': None
+                        'validators': {
+                            'required': True
+                        }
                     }
                 }
         """

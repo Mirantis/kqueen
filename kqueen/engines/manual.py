@@ -68,7 +68,8 @@ class ManualEngine(BaseEngine):
 
         return self.cluster.kubeconfig
 
-    def get_parameter_schema(self):
+    @classmethod
+    def get_parameter_schema(cls):
         """Return parameters specific for this Provisioner implementation.
 
         Implementation of :func:`~kqueen.engines.base.BaseEngine.get_parameter_schema`
