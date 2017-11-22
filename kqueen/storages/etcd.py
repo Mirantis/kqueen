@@ -100,6 +100,25 @@ class StringField(Field):
     pass
 
 
+class BoolField(Field):
+
+    def deserialize(self, serialized, **kwargs):
+        if isinstance(serialized, six.string_types):
+            value = json.loads(serialized)
+            self.set_value(value, **kwargs)
+
+    def set_value(self, value, **kwargs):
+        if value is not None:
+            if isinstance(value, bool):
+                self.value = value
+            else:
+                self.deserialize(value)
+
+    def serialize(self):
+        if isinstance(self.value, bool):
+            return json.dumps(self.value)
+
+
 class IdField(Field):
     def set_value(self, value, **kwargs):
         """Don't serialize None"""
@@ -383,7 +402,7 @@ class Model:
 
         for field_name, field in cls.get_fields().items():
             field_class = field.__class__
-            if hasattr(field_class, 'is_field') and toplevel.get(field_name):
+            if hasattr(field_class, 'is_field') and toplevel.get(field_name) is not None:
                 field_object = field_class(**field.__dict__)
                 field_object.deserialize(toplevel[field_name], **kwargs)
 
@@ -512,7 +531,7 @@ class Model:
             else:
                 wr = field.get_value()
 
-            if wr:
+            if wr is not None:
                 output[field_name] = wr
 
         return output
