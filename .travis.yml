@@ -13,6 +13,7 @@ notifications:
     on_pull_requests: false
 stages:
 - name: test
+- name: build
 - name: publish
   if: tag =~ ^v.*
 - name: verify
@@ -32,6 +33,14 @@ jobs:
     - python3 -m kqueen &
     - sleep 2
     - wget -O - http://localhost:5000/api/v1/health
+  - stage: build
+    script:
+    - export IMAGE="kqueen/api:${TRAVIS_BRANCH}"
+    - echo "Building image $IMAGE"
+    - docker build -t $IMAGE .
+    - docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD"
+    - docker push $IMAGE
+    - docker logout
   - stage: test
     script:
     - docker-compose -f docker-compose.etcd-volume.yml up -d
@@ -67,4 +76,3 @@ jobs:
     - "./entrypoint.sh &"
     - sleep 2
     - wget -O - http://localhost:5000/api/v1/health
-
