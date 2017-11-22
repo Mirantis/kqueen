@@ -106,6 +106,9 @@ ENV/
 # NPM asset dir
 node_modules/
 
-# DO NOT COMMIT LOCAL CONFIG
+# Local configuration
 kqueen/config/local.py
+
+# Remote kubeconfig
+kubeconfig_remote
 

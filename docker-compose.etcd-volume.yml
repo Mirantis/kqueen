@@ -1,0 +1,26 @@
+version: '2'
+networks:
+  default:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.16.238.0/24
+          gateway: 172.16.238.1
+services:
+  etcd:
+    image: quay.io/coreos/etcd:latest
+    ports:
+      - 127.0.0.1:4001:4001
+    volumes:
+      - /tmp/backup/:/root/backup/
+    environment:
+      ETCD_NAME: 0
+      ETCD_INITIAL_ADVERTISE_PEER_URLS: http://etcd:2380
+      ETCD_INITIAL_CLUSTER_STATE: new
+      ETCD_INITIAL_CLUSTER_TOKEN: etcd-cluster-1
+      ETCD_LISTEN_CLIENT_URLS: http://0.0.0.0:4001
+      ETCD_LISTEN_PEER_URLS: http://0.0.0.0:2380
+      ETCD_ADVERTISE_CLIENT_URLS: http://127.0.0.1:4001,http://etcd:4001
+      #ETCD_DATA_DIR: /root/backup/
+      #ETCD_FORCE_NEW_CLUSTER: 1

@@ -1,3 +1,4 @@
+from kqueen.storages.etcd import DatetimeField
 from kqueen.storages.etcd import IdField
 from kqueen.storages.etcd import JSONField
 from kqueen.storages.etcd import Model
@@ -7,6 +8,7 @@ from kqueen.storages.etcd import SecretField
 from kqueen.storages.etcd import StringField
 from kqueen.storages.exceptions import BackendError
 
+import datetime
 import pytest
 
 
@@ -20,12 +22,16 @@ def create_model(required=False, global_ns=False):
         json = JSONField(required=required)
         secret = SecretField(required=required)
         relation = RelationField(required=required)
+        datetime = DatetimeField(required=required)
 
     return TestModel
 
 
-model_kwargs = {'string': 'abc123', 'json': {'a': 1, 'b': 2, 'c': 'tri'}, 'secret': 'pass'}
-model_fields = ['id', 'string', 'json', 'secret', 'relation']
+utcnow = datetime.datetime(1989, 11, 17)
+
+model_kwargs = {'string': 'abc123', 'json': {'a': 1, 'b': 2, 'c': 'tri'}, 'secret': 'pass', 'datetime': utcnow}
+model_kwargs_dict = {'string': 'abc123', 'json': {'a': 1, 'b': 2, 'c': 'tri'}, 'secret': 'pass', 'datetime': utcnow.isoformat()}
+model_fields = ['id', 'string', 'json', 'secret', 'relation', 'datetime']
 namespace = 'test'
 
 
@@ -33,15 +39,18 @@ def model_serialized(related=None):
     if related:
         return (
             '{{"string": "abc123", "json": "{{\\"a\\": 1, \\"b\\": 2, \\"c\\": \\"tri\\"}}", '
-            '"secret": "pass", "relation": "{}:{}"}}'.format(
-                related.__class__.__name__,
-                related.id,
+            '"secret": "pass", "relation": "{related_class}:{related_id}", "datetime": {date_timestamp}}}'.format(
+                related_class=related.__class__.__name__,
+                related_id=related.id,
+                date_timestamp=int(utcnow.timestamp())
             )
         )
     else:
         return (
-            '{"string": "abc123", "json": "{\\"a\\": 1, \\"b\\": 2, \\"c\\": \\"tri\\"}", '
-            '"secret": "pass"}'
+            '{{"string": "abc123", "json": "{\\"a\\": 1, \\"b\\": 2, \\"c\\": \\"tri\\"}", '
+            '"secret": "pass", "datetime": {date_timestamp}}}'.format(
+                date_timestamp=int(utcnow.timestamp()),
+            )
         )
 
 
@@ -146,7 +155,7 @@ class TestFieldSetGet:
         setattr(obj, field_name, model_kwargs[field_name])
 
         assert getattr(obj, field_name) == model_kwargs[field_name]
-        assert obj.get_dict()[field_name] == model_kwargs[field_name]
+        assert obj.get_dict()[field_name] == model_kwargs_dict[field_name]
         assert getattr(obj, '_{}'.format(field_name)).get_value() == model_kwargs[field_name]
 
 
@@ -302,3 +311,38 @@ class TestNamespaces:
 
         with pytest.raises(BackendError, match='Missing namespace'):
             cls.get_db_prefix(None)
+
+
+datetime_sample = datetime.datetime(2007, 12, 6, 16, 29, 43)
+
+
+class TestDateTimeField:
+    def setup(self):
+        self.datetime = datetime_sample
+        self.field = DatetimeField()
+
+    def test_serialization(self):
+        req = int(self.datetime.timestamp())
+        self.field.set_value(self.datetime)
+
+        assert self.field.serialize() == req
+
+    def test_serialization_none(self):
+        self.field.set_value(None)
+
+        assert self.field.serialize() is None
+
+    @pytest.mark.parametrize('serialized, req', [
+        (datetime_sample.timestamp(), datetime_sample),
+        (int(datetime_sample.timestamp()), datetime_sample),
+        (datetime_sample.isoformat(), datetime_sample),
+    ])
+    def test_deserialization(self, serialized, req):
+        self.field.deserialize(serialized)
+
+        assert self.field.value == req
+
+    def test_dict_value_returns_isoformat(self):
+        self.field.set_value(self.datetime)
+
+        assert self.field.dict_value() == self.field.value.isoformat()

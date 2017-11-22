@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from datetime import datetime
 from kqueen.server import create_app
 from kqueen.models import Cluster
 from kqueen.models import Organization
@@ -8,6 +9,7 @@ from kqueen.models import User
 
 import requests
 import yaml
+import os
 
 uuid_organization = '22d8df64-4ac9-4be0-89a7-c45ea0fc85da'
 
@@ -18,7 +20,8 @@ uuid_provisioner_jenkins = 'e8de24b0-43d1-4a3c-af55-7b1d3f700554'
 uuid_provisioner_local = '203c50d6-3d09-4789-8b8b-1ecb00814436'
 uuid_provisioner_kubespray = '689de9a2-50e0-4fcd-b6a6-96930b5fadc9'
 
-kubeconfig_url = 'https://ci.mcp.mirantis.net/job/deploy-aws-k8s_ha_calico_sm/33/artifact/kubeconfig'
+kubeconfig_url = 'https://ci.mcp.mirantis.net/job/deploy-aws-k8s_ha_calico_sm/17/artifact/kubeconfig'
+kubeconfig_file = 'kubeconfig_remote'
 
 app = create_app()
 with app.app_context():
@@ -27,7 +30,8 @@ with app.app_context():
         organization = Organization(
             id=uuid_organization,
             name='DemoOrg',
-            namespace='demoorg'
+            namespace='demoorg',
+            created_at=datetime.utcnow()
         )
         organization.save()
     except:
@@ -39,6 +43,7 @@ with app.app_context():
             username='admin',
             password='default',
             organization=organization,
+            created_at=datetime.utcnow()
         )
         user.save()
     except:
@@ -55,7 +60,8 @@ with app.app_context():
             parameters={
                 'username': 'demo',
                 'password': 'Demo123'
-            }
+            },
+            created_at=datetime.utcnow()
         )
         provisioner.save(check_status=False)
     except:
@@ -63,13 +69,22 @@ with app.app_context():
 
 
     try:
+        # load kubeconfig file
+        if os.path.isfile(kubeconfig_file):
+            print('Loading remote kubeconfig from {}'.format(kubeconfig_file))
+            kubeconfig = yaml.load(open(kubeconfig_file).read())
+        else:
+            print('Loading remote kubeconfig from {}'.format(kubeconfig_url))
+            kubeconfig = yaml.load(requests.get(kubeconfig_url).text)
+
         cluster = Cluster(
             user.namespace,
             id=uuid_jenkins,
-            name='AWS Calico SM 33',
+            name='AWS kqueen testing',
             state='OK',
             provisioner=provisioner,
-            kubeconfig=yaml.load(requests.get(kubeconfig_url).text),
+            kubeconfig=kubeconfig,
+            created_at=datetime.utcnow()
         )
         cluster.save()
     except:
@@ -84,7 +99,8 @@ with app.app_context():
             name='Manual provisioner',
             state='OK',
             engine='kqueen.engines.ManualEngine',
-            parameters={}
+            parameters={},
+            created_at=datetime.utcnow()
         )
         provisioner.save(check_status=False)
     except:
@@ -99,6 +115,7 @@ with app.app_context():
             state='OK',
             provisioner=provisioner,
             kubeconfig=yaml.load(open('kubeconfig_localhost', 'r').read()),
+            created_at=datetime.utcnow()
         )
         cluster.save()
     except:
@@ -112,7 +129,8 @@ with app.app_context():
             name='Kubespray',
             state='OK',
             engine='kqueen.engines.ManualEngine',
-            parameters={}
+            parameters={},
+            created_at=datetime.utcnow()
         )
         provisioner.save(check_status=False)
     except:
