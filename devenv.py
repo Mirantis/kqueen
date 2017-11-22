@@ -45,7 +45,8 @@ with app.app_context():
             username='admin',
             password='default',
             organization=organization,
-            created_at=datetime.utcnow()
+            created_at=datetime.utcnow(),
+            active=True
         )
         user.save()
     except:
