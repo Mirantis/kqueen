@@ -1,7 +1,6 @@
 from .helpers import get_object
 from flask import abort
 from flask import Blueprint
-from flask import current_app as app
 from flask import jsonify
 from flask import make_response
 from flask_jwt import current_identity
@@ -155,6 +154,32 @@ api.add_url_rule('/provisioners/<uuid:pk>', view_func=UpdateProvisioner.as_view(
 api.add_url_rule('/provisioners/<uuid:pk>', view_func=DeleteProvisioner.as_view('provisioner_delete'))
 
 
+@api.route('/provisioners/engines', methods=['GET'])
+@jwt_required()
+def engine_list():
+    from kqueen.engines import __all__ as ENGINES
+    engine_cls = []
+    module_path = 'kqueen.engines'
+    for engine in ENGINES:
+        try:
+            class_name = engine.split('.')[-1]
+            module = import_module(module_path)
+            _class = getattr(module, class_name)
+            engine_cls.append({
+                'name': engine,
+                'parameters': _class.get_parameter_schema()
+            })
+        except NotImplementedError:
+            engine_cls.append({
+                'name': engine,
+                'parameters': {}
+            })
+        except Exception:
+            pass
+
+    return jsonify(engine_cls)
+
+
 # Organizations
 class ListOrganizations(ListView):
     object_class = Organization
@@ -217,31 +242,6 @@ def user_whoami():
     output = current_identity
 
     return jsonify(output)
-
-
-@api.route('/engines', methods=['GET'])
-def engine_list():
-    engines = app.config.get('KQUEEN_ENGINES', [])
-    engine_cls = []
-    for engine in engines:
-        try:
-            module_path = '.'.join(engine.split('.')[:-1])
-            class_name = engine.split('.')[-1]
-            module = import_module(module_path)
-            _class = getattr(module, class_name)
-            engine_cls.append({
-                'name': engine,
-                'parameters': _class.get_parameter_schema()
-            })
-        except NotImplementedError:
-            engine_cls.append({
-                'name': engine,
-                'parameters': {}
-            })
-        except Exception:
-            pass
-
-    return jsonify(engine_cls)
 
 
 @api.route('/swagger', methods=['GET'])

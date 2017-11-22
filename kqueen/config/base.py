@@ -7,10 +7,6 @@ class BaseConfig:
 
     KQUEEN_HOST = '127.0.0.1'
     KQUEEN_PORT = 5000
-    KQUEEN_ENGINES = [
-        'kqueen.engines.JenkinsEngine',
-        'kqueen.engines.ManualEngine'
-    ]
 
     # etcd settings
     # ETCD_HOST
