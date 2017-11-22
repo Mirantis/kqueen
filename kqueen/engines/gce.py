@@ -18,8 +18,6 @@ class GceEngine(BaseEngine):
     """
     name = 'gce'
     verbose_name = 'gce'
-#    client_id = config.get('GCE_CLIENT_ID')
-#    client_secret = config.get('GCE_CLIENT_SECRET')
     service_account_file = 'service_account.json'
     project = 'kqueen-186209'
     zone = 'us-central1-a'
@@ -93,7 +91,6 @@ class GceEngine(BaseEngine):
             kubeconfig = {}
 
             if cluster["status"] != "RUNNING":
-                print("cluster is not ready")
                 return self.cluster.kubeconfig
 
             # Get cluster section in KubeConfig
@@ -135,6 +132,7 @@ class GceEngine(BaseEngine):
             }
 
             self.cluster.kubeconfig = kubeconfig
+            self.cluster.save()
 
         return self.cluster.kubeconfig
 
