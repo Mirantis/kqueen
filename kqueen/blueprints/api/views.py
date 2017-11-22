@@ -162,9 +162,8 @@ def engine_list():
     module_path = 'kqueen.engines'
     for engine in ENGINES:
         try:
-            class_name = engine.split('.')[-1]
             module = import_module(module_path)
-            _class = getattr(module, class_name)
+            _class = getattr(module, engine)
             engine_cls.append({
                 'name': '.'.join([module_path, engine]),
                 'parameters': _class.get_parameter_schema()
