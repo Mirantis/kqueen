@@ -35,7 +35,7 @@ jobs:
     - wget -O - http://localhost:5000/api/v1/health
   - stage: build
     script:
-    - export IMAGE="kqueen/api:${TRAVIS_BRANCH}"
+    - export IMAGE="kqueen/api:${TRAVIS_BRANCH/\//-}"
     - echo "Building image $IMAGE"
     - docker build -t $IMAGE .
     - docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD"
