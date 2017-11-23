@@ -1,10 +1,8 @@
-from kqueen.engines.base import BaseEngine
-from kqueen.config import current_config
-
-
 from google.oauth2 import service_account
-import googleapiclient.discovery
+from kqueen.config import current_config
+from kqueen.engines.base import BaseEngine
 
+import googleapiclient.discovery
 import logging
 import yaml
 
@@ -17,7 +15,7 @@ class GceEngine(BaseEngine):
     Google Container Engine
     """
     name = 'gce'
-    verbose_name = 'gce'
+    verbose_name = 'Google Container engine'
     service_account_file = 'service_account.json'
     project = 'kqueen-186209'
     zone = 'us-central1-a'
