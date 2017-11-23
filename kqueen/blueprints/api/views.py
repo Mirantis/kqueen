@@ -156,7 +156,7 @@ api.add_url_rule('/provisioners/<uuid:pk>', view_func=DeleteProvisioner.as_view(
 
 @api.route('/provisioners/engines', methods=['GET'])
 @jwt_required()
-def engine_list():
+def provisioner_engine_list():
     from kqueen.engines import __all__ as ENGINES
     engine_cls = []
     module_path = 'kqueen.engines'
@@ -174,7 +174,7 @@ def engine_list():
                 'parameters': {}
             })
         except Exception:
-            pass
+            logger.error('Unable to read parameters for engine {}'.format(engine))
 
     return jsonify(engine_cls)
 
