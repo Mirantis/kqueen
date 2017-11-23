@@ -44,6 +44,8 @@ setup(
         'google-api-python-client==1.6.4',
         'google-auth==1.2.1',
         'google-auth-httplib2==0.0.3',
+        'azure',
+        'azure-mgmt-containerservice',
     ],
     setup_requires=[
         'pytest-runner',

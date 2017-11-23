@@ -28,3 +28,7 @@ sphinx_rtd_theme
 google-api-python-client==1.6.4
 google-auth==1.2.1
 google-auth-httplib2==0.0.3
+
+#AKS
+azure
+azure-mgmt-containerservice
