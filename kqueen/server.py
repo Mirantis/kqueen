@@ -1,12 +1,15 @@
+from .auth import authenticate
+from .auth import identity
+from .blueprints.api.views import api
+from .blueprints.metrics.views import metrics
+from .config import current_config
+from .middleware import setup_metrics
+from .serializers import KqueenJSONEncoder
+from .storages.etcd import EtcdBackend
 from flask import Flask
 from flask_jwt import JWT
 from flask_swagger_ui import get_swaggerui_blueprint
-from kqueen.auth import authenticate, identity
-from kqueen.blueprints.api.views import api
-from kqueen.serializers import KqueenJSONEncoder
 from werkzeug.contrib.cache import SimpleCache
-from kqueen.config import current_config
-from .storages.etcd import EtcdBackend
 
 import logging
 
@@ -29,6 +32,7 @@ def create_app(config_file=None):
     app.json_encoder = KqueenJSONEncoder
 
     app.register_blueprint(api, url_prefix='/api/v1')
+    app.register_blueprint(metrics, url_prefix='/metrics')
     app.register_blueprint(swaggerui_blueprint, url_prefix=swagger_url)
 
     # load configuration
@@ -43,6 +47,9 @@ def create_app(config_file=None):
     # setup JWT
     JWT(app, authenticate, identity)
 
+    # setup metrics
+    setup_metrics(app)
+
     return app
 
 
@@ -51,5 +58,7 @@ app = create_app()
 
 def run():
     logger.debug('kqueen starting')
-    app.run(host=app.config.get('KQUEEN_HOST', '127.0.0.1'),
-            port=int(app.config.get('KQUEEN_PORT', 5000)))
+    app.run(
+        host=app.config.get('KQUEEN_HOST'),
+        port=int(app.config.get('KQUEEN_PORT'))
+    )
