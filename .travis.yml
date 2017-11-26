@@ -17,7 +17,7 @@ stages:
 - name: publish
   if: tag =~ ^v.*
 - name: verify
-  if: branch = master AND type = push
+  if: branch = master AND type IN (push, api)
 jobs:
   include:
   - stage: test
