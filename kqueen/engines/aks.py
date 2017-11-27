@@ -14,7 +14,7 @@ config = current_config()
 
 class AksEngine(BaseEngine):
     """
-    Google Container Engine
+    Azure Container Service
     """
     name = 'aks'
     verbose_name = 'Azure Kubernetes Managed Service'
@@ -32,6 +32,7 @@ class AksEngine(BaseEngine):
         """
         # Call parent init to save cluster on self
         super(AksEngine, self).__init__(cluster, **kwargs)
+
         # Client initialization
         self.client_id = kwargs.get('client_id', self.client_id)
         self.secret = kwargs.get('secret', self.secret)
@@ -41,12 +42,13 @@ class AksEngine(BaseEngine):
         self.location = kwargs.get('location', self.location)
         self.ssh_key = kwargs.get('ssh_key', self.ssh_key)
         self.client = self._get_client()
+
         # Cache settings
         self.cache_timeout = 5 * 60
 
     def _get_client(self):
         """
-        Initialize Google client
+        Initialize Azure client
         Construct service account credentials using the service account key file
 
         """
@@ -94,6 +96,7 @@ class AksEngine(BaseEngine):
             msg = 'Deleting cluster {} failed with following reason: {}'.format(self.cluster.id, repr(e))
             logger.error(msg)
             return (False, msg)
+
         return (False, None)
 
     def get_kubeconfig(self):
@@ -128,7 +131,8 @@ class AksEngine(BaseEngine):
         return self.cluster
 
     def cluster_list(self):
-        """GCE engine don't support list of clusters"""
+        """AKS engine don't support list of clusters"""
+        # TODO: it does, add list of clusters
 
         return []
 
@@ -143,8 +147,7 @@ class AksEngine(BaseEngine):
 
     def get_progress(self):
         """
-        GCE engine don't report any progress because cluster is already provisioned before
-        cluster is imported
+        AKS engine don't report any progress.
 
         Implementation of :func:`~kqueen.engines.base.BaseEngine.get_progress`
         """
