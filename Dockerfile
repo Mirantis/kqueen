@@ -7,8 +7,7 @@ WORKDIR /code
 COPY . .
 
 # install from local file
-# TODO: use pypi instead
-RUN python setup.py install
+RUN pip install .
 
 # run app
 CMD ./entrypoint.sh
