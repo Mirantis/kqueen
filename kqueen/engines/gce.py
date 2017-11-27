@@ -16,14 +16,33 @@ class GceEngine(BaseEngine):
     """
     name = 'gce'
     verbose_name = 'Google Container engine'
-    service_account_file = 'service_account.json'
-    project = 'kqueen-186209'
-    zone = 'us-central1-a'
-    cluster_config = """
-    cluster:
-      name: test-cluster
-      initialNodeCount: 1
-    """
+    #project = 'kqueen-186209'
+    #zone = 'us-central1-a'
+    parameter_schema = {
+        'provisioner': {
+            'service_account_info': {
+                'type': 'json_file',
+                'label': 'Service Account File',
+                'validators': {
+                    'required': True
+                }
+            },
+            'project': {
+                'type': 'text',
+                'label': 'Project',
+                'validators': {
+                    'required': True
+                }
+            },
+            'zone': {
+                'type': 'text',
+                'label': 'Zone',
+                'validators': {
+                    'required': True
+                }
+            }
+        }
+    }
 
     def __init__(self, cluster, **kwargs):
         """
@@ -32,10 +51,13 @@ class GceEngine(BaseEngine):
         # Call parent init to save cluster on self
         super(GceEngine, self).__init__(cluster, **kwargs)
         # Client initialization
-        self.service_account_file = kwargs.get('service_account_file', self.service_account_file)
-        self.project = kwargs.get('project', self.project)
-        self.zone = kwargs.get('zone', self.zone)
-        self.cluster_config = yaml.load(kwargs.get('cluster_config', self.cluster_config))
+        self.service_account_info = kwargs.get('service_account_info', {})
+        self.project = kwargs.get('project', '')
+        self.zone = kwargs.get('zone', '')
+        self.cluster_config = {
+            'name': self.cluster.name,
+            'initialNodeCount': kwargs.get('node_count', 1)
+        }
         self.client = self._get_client()
         self.cluster_id = "a" + self.cluster.id.replace("-", "")
         # Cache settings
@@ -47,7 +69,7 @@ class GceEngine(BaseEngine):
         Construct service account credentials using the service account key file
 
         """
-        credentials = service_account.Credentials.from_service_account_file(self.service_account_file)
+        credentials = service_account.Credentials.from_service_account_info(self.service_account_info)
         client = googleapiclient.discovery.build('container', 'v1', credentials=credentials)
 
         return client
@@ -157,7 +179,7 @@ class GceEngine(BaseEngine):
         Implementation of :func:`~kqueen.engines.base.BaseEngine.get_parameter_schema`
         """
 
-        return {}
+        return cls.parameter_schema
 
     def get_progress(self):
         """
