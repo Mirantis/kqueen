@@ -291,7 +291,8 @@ class Provisioner(Model, metaclass=ModelMeta):
             class_name = self.engine.split('.')[-1]
             module = import_module(module_path)
             _class = getattr(module, class_name)
-        except:
+        except Exception as e:
+            logger.error(repr(e))
             _class = None
         return _class
 
