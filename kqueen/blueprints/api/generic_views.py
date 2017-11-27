@@ -60,7 +60,7 @@ class UpdateView(GenericView):
         self.check_access()
 
         if not request.json:
-            abort(400)
+            abort(400, description='JSON data expected')
 
         data = request.json
         if not isinstance(data, dict):
@@ -106,7 +106,7 @@ class CreateView(GenericView):
         self.check_access()
 
         if not request.json:
-            abort(400)
+            abort(400, description='JSON data expected')
         else:
             cls = self.get_class()
 
@@ -121,6 +121,6 @@ class CreateView(GenericView):
                 self.after_save()
             except Exception as e:
                 current_app.logger.error(e)
-                abort(500)
+                abort(500, description='Creation failed with: {}'.format(e))
 
             return super(CreateView, self).dispatch_request(*args, **kwargs)

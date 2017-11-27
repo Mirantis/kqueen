@@ -52,7 +52,11 @@ class Cluster(Model, metaclass=ModelMeta):
         if self.provisioner:
             _class = self.provisioner.get_engine_cls()
             if _class:
-                parameters = self.provisioner.parameters or {}
+                parameters = {}
+                for i in [self.provisioner.parameters, self.metadata]:
+                    if isinstance(i, dict):
+                        parameters.update(i)
+
                 return _class(self, **parameters)
         return None
 
@@ -287,7 +291,8 @@ class Provisioner(Model, metaclass=ModelMeta):
             class_name = self.engine.split('.')[-1]
             module = import_module(module_path)
             _class = getattr(module, class_name)
-        except:
+        except Exception as e:
+            logger.error(repr(e))
             _class = None
         return _class
 
@@ -312,6 +317,7 @@ class Provisioner(Model, metaclass=ModelMeta):
     def save(self, check_status=True):
         if check_status:
             self.state = self.engine_status(save=False)
+
         return super(Provisioner, self).save()
 
 
