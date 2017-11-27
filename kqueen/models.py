@@ -53,6 +53,8 @@ class Cluster(Model, metaclass=ModelMeta):
             _class = self.provisioner.get_engine_cls()
             if _class:
                 parameters = self.provisioner.parameters or {}
+                # TODO uncomment + test
+                #parameters = parameters + self.metadata
                 return _class(self, **parameters)
         return None
 
@@ -312,6 +314,7 @@ class Provisioner(Model, metaclass=ModelMeta):
     def save(self, check_status=True):
         if check_status:
             self.state = self.engine_status(save=False)
+
         return super(Provisioner, self).save()
 
 

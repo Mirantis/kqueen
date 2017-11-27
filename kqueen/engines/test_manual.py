@@ -1,12 +1,16 @@
 from .manual import ManualEngine
+from flask import url_for
+from kqueen.conftest import auth_header
+from kqueen.conftest import user
 from kqueen.models import Cluster
 from kqueen.models import Provisioner
-from kqueen.conftest import user
 
-import yaml
+import json
 import pytest
+import yaml
 
 
+@pytest.mark.usefixtures('client_class')
 class TestManualEngine:
     def setup(self):
         _user = user()
@@ -18,15 +22,19 @@ class TestManualEngine:
         prov = Provisioner(_user.namespace, **create_kwargs_provisioner)
         prov.save(check_status=False)
 
-        create_kwargs_cluster = {
+        self.create_kwargs_cluster = {
             'name': 'Testing cluster for manual provisioner',
             'provisioner': prov,
             'state': 'deployed',
             'kubeconfig': yaml.load(open('kubeconfig_localhost', 'r').read()),
         }
 
-        self.cluster = Cluster.create(_user.namespace, **create_kwargs_cluster)
+        self.cluster = Cluster.create(_user.namespace, **self.create_kwargs_cluster)
         self.engine = ManualEngine(cluster=self.cluster)
+
+        # client setup
+        self.auth_header = auth_header(self.client)
+        self.namespace = self.auth_header['X-Test-Namespace']
 
     def test_initialization(self):
         assert self.engine.cluster == self.cluster
@@ -58,3 +66,28 @@ class TestManualEngine:
 
     def test_parameter_schema(self):
         assert self.engine.get_parameter_schema() == {}
+
+    def test_create_over_api(self):
+        """Verify Cluster is created over API and kubeconfig is set"""
+
+        url = url_for('api.cluster_list')
+        data = self.create_kwargs_cluster
+        data['provisioner'] = 'Provisioner:{}'.format(data['provisioner'].id)
+
+        # create
+        response = self.client.post(
+            url,
+            data=json.dumps(data),
+            headers=self.auth_header,
+            content_type='application/json'
+        )
+
+        assert response.status_code == 200
+
+        # load
+        cluster_id = response.json['id']
+        obj = Cluster.load(self.namespace, cluster_id)
+        assert obj.validate()
+
+        # check parameters
+        assert obj.kubeconfig == data['kubeconfig']
