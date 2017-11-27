@@ -13,7 +13,7 @@ class ManualEngine(BaseEngine):
     parameter_schema = {
         'cluster': {
             'kubeconfig': {
-                'type': 'file',
+                'type': 'yaml_file',
                 'label': 'Kubeconfig',
                 'validators': {
                     'required': True
@@ -27,7 +27,7 @@ class ManualEngine(BaseEngine):
         """
         Implementation of :func:`~kqueen.engines.base.BaseEngine.__init__`
         """
-
+        self.kubeconfig = kwargs.get('kubeconfig', {})
         super(ManualEngine, self).__init__(cluster, **kwargs)
 
     def cluster_list(self):
@@ -77,7 +77,7 @@ class ManualEngine(BaseEngine):
         Implementation of :func:`~kqueen.engines.base.BaseEngine.get_kubeconfig`
         """
 
-        return self.cluster.kubeconfig
+        return self.kubeconfig
 
     @classmethod
     def get_parameter_schema(cls):
