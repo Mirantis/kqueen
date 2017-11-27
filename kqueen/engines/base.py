@@ -125,16 +125,26 @@ class BaseEngine:
             dict: Dictionary representation of the parameters with hints for form rendering.::
 
                 {
-                    'username': {
-                        'type': 'text',
-                        'validators': {
-                            'required': True
+                    'provisioner': {
+                        'username': {
+                            'type': 'text',
+                            'validators': {
+                                'required': True
+                            }
+                        },
+                        'password': {
+                            'type': 'password',
+                            'validators': {
+                                'required': True
+                            }
                         }
-                    },
-                    'password': {
-                        'type': 'password',
-                        'validators': {
-                            'required': True
+                    }
+                    'cluster': {
+                        'node_count': {
+                            'type': 'integer',
+                            'validators: {
+                                'required': True
+                            }
                         }
                     }
                 }

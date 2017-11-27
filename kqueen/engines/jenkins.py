@@ -30,18 +30,20 @@ class JenkinsEngine(BaseEngine):
     provision_job_name = config.get('JENKINS_PROVISION_JOB_NAME')
     anchor_parameter = config.get('JENKINS_ANCHOR_PARAMETER')
     parameter_schema = {
-        'username': {
-            'type': 'text',
-            'label': 'Username',
-            'validators': {
-                'required': True
-            }
-        },
-        'password': {
-            'type': 'password',
-            'label': 'Password',
-            'validators': {
-                'required': True
+        'provisioner': {
+            'username': {
+                'type': 'text',
+                'label': 'Username',
+                'validators': {
+                    'required': True
+                }
+            },
+            'password': {
+                'type': 'password',
+                'label': 'Password',
+                'validators': {
+                    'required': True
+                }
             }
         }
     }

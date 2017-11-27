@@ -10,6 +10,17 @@ class ManualEngine(BaseEngine):
     """
 
     name = 'manual'
+    parameter_schema = {
+        'cluster': {
+            'kubeconfig': {
+                'type': 'file',
+                'label': 'Kubeconfig',
+                'validators': {
+                    'required': True
+                }
+            }
+        }
+    }
     verbose_name = 'Manual Engine'
 
     def __init__(self, cluster, **kwargs):
@@ -75,7 +86,7 @@ class ManualEngine(BaseEngine):
         Implementation of :func:`~kqueen.engines.base.BaseEngine.get_parameter_schema`
         """
 
-        return {}
+        return cls.parameter_schema
 
     def get_progress(self):
         """
