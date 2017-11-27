@@ -9,9 +9,14 @@ import json
 import pytest
 import yaml
 
+CLUSTER_METADATA = {
+    'minion_count': 10,
+    'cluster_type': 'ha',
+}
+
 
 @pytest.mark.usefixtures('client_class')
-class TestManualEngine:
+class ManualEngineBase:
     def setup(self):
         _user = user()
         create_kwargs_provisioner = {
@@ -27,6 +32,7 @@ class TestManualEngine:
             'provisioner': prov,
             'state': 'deployed',
             'kubeconfig': yaml.load(open('kubeconfig_localhost', 'r').read()),
+            'metadata': CLUSTER_METADATA,
         }
 
         self.cluster = Cluster.create(_user.namespace, **self.create_kwargs_cluster)
@@ -36,6 +42,8 @@ class TestManualEngine:
         self.auth_header = auth_header(self.client)
         self.namespace = self.auth_header['X-Test-Namespace']
 
+
+class TestClusterAction(ManualEngineBase):
     def test_initialization(self):
         assert self.engine.cluster == self.cluster
 
@@ -67,6 +75,8 @@ class TestManualEngine:
     def test_parameter_schema(self):
         assert self.engine.get_parameter_schema() == {}
 
+
+class TestCreateOverAPI(ManualEngineBase):
     def test_create_over_api(self):
         """Verify Cluster is created over API and kubeconfig is set"""
 
@@ -91,3 +101,17 @@ class TestManualEngine:
 
         # check parameters
         assert obj.kubeconfig == data['kubeconfig']
+
+        return obj
+
+    @pytest.mark.parametrize('metadata_name', list(CLUSTER_METADATA.keys()))
+    def test_metadata_parameters_direct(self, metadata_name):
+        assert metadata_name in self.cluster.metadata
+        assert self.cluster.metadata[metadata_name] == CLUSTER_METADATA[metadata_name]
+
+    @pytest.mark.parametrize('metadata_name', list(CLUSTER_METADATA.keys()))
+    def test_metadata_parameters_api(self, metadata_name):
+        obj = self.test_create_over_api()
+
+        assert metadata_name in obj.metadata
+        assert obj.metadata[metadata_name] == CLUSTER_METADATA[metadata_name]
