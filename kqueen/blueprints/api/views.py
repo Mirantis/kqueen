@@ -156,17 +156,16 @@ api.add_url_rule('/provisioners/<uuid:pk>', view_func=DeleteProvisioner.as_view(
 
 @api.route('/provisioners/engines', methods=['GET'])
 @jwt_required()
-def engine_list():
+def provisioner_engine_list():
     from kqueen.engines import __all__ as ENGINES
     engine_cls = []
     module_path = 'kqueen.engines'
     for engine in ENGINES:
         try:
-            class_name = engine.split('.')[-1]
             module = import_module(module_path)
-            _class = getattr(module, class_name)
+            _class = getattr(module, engine)
             engine_cls.append({
-                'name': engine,
+                'name': '.'.join([module_path, engine]),
                 'parameters': _class.get_parameter_schema()
             })
         except NotImplementedError:
@@ -175,7 +174,7 @@ def engine_list():
                 'parameters': {}
             })
         except Exception:
-            pass
+            logger.error('Unable to read parameters for engine {}'.format(engine))
 
     return jsonify(engine_cls)
 

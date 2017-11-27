@@ -17,15 +17,16 @@ stages:
 - name: publish
   if: tag =~ ^v.*
 - name: verify
-  if: branch = master AND type = push
+  if: branch = master AND type IN (push, api)
 jobs:
   include:
   - stage: test
     before_install:
     - docker-compose -f docker-compose.yml -f docker-compose.kubernetes.yml up -d
     install:
-    - pip3 install -r requirements.txt
+    - pip install -e ".[dev]"
     script:
+    - export prometheus_multiproc_dir=$(mktemp -d)
     - python3 -m flake8
     - python3 -m pytest --cov=. --cov-report=term-missing:skip-covered
     - coveralls
@@ -35,7 +36,7 @@ jobs:
     - wget -O - http://localhost:5000/api/v1/health
   - stage: build
     script:
-    - export IMAGE="kqueen/api:${TRAVIS_BRANCH}"
+    - export IMAGE="kqueen/api:${TRAVIS_BRANCH/\//-}"
     - echo "Building image $IMAGE"
     - docker build -t $IMAGE .
     - docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD"

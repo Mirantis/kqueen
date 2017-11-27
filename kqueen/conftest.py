@@ -152,6 +152,7 @@ def user():
         username=profile['username'],
         password=fake.password(),
         organization=organization(),
+        active=True
     )
     user.save()
 

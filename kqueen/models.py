@@ -2,6 +2,7 @@ from importlib import import_module
 from kqueen.config import current_config
 from kqueen.kubeapi import KubernetesAPI
 from kqueen.storages.etcd import DatetimeField
+from kqueen.storages.etcd import BoolField
 from kqueen.storages.etcd import IdField
 from kqueen.storages.etcd import JSONField
 from kqueen.storages.etcd import Model
@@ -340,6 +341,7 @@ class User(Model, metaclass=ModelMeta):
     password = SecretField(required=True)
     organization = RelationField(required=True)
     created_at = DatetimeField()
+    active = BoolField(required=True)
 
     @property
     def namespace(self):

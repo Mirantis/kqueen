@@ -140,6 +140,9 @@ Example configuration files are located in `config/` directory. Default configur
       - Not Reachable
       - Caption for unknown provisioner.
 
+    * - PROMETHEUS_WHITELIST
+      - 127.0.0.0/8
+      - Addresses allowed to access metrics endpoint without token
 
 
 Backup
