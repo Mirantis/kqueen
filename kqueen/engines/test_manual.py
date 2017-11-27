@@ -14,6 +14,10 @@ CLUSTER_METADATA = {
     'cluster_type': 'ha',
 }
 
+PROVISIONER_PARAMETERS = {
+    'credentials': 'username:password',
+}
+
 
 @pytest.mark.usefixtures('client_class')
 class ManualEngineBase:
@@ -21,7 +25,8 @@ class ManualEngineBase:
         _user = user()
         create_kwargs_provisioner = {
             'name': 'Testing manual',
-            'engine': 'kqueen.engines.ManualEngine'
+            'engine': 'kqueen.engines.ManualEngine',
+            'parameters': PROVISIONER_PARAMETERS,
         }
 
         prov = Provisioner(_user.namespace, **create_kwargs_provisioner)
@@ -115,3 +120,17 @@ class TestCreateOverAPI(ManualEngineBase):
 
         assert metadata_name in obj.metadata
         assert obj.metadata[metadata_name] == CLUSTER_METADATA[metadata_name]
+
+    @pytest.mark.parametrize('param_name', list(CLUSTER_METADATA.keys()) + list(PROVISIONER_PARAMETERS.keys()))
+    def test_engine_gets_parameters(self, param_name, monkeypatch):
+        obj = self.test_create_over_api()
+
+        def fake_init(self, cluster, **kwargs):
+            self.cluster = cluster
+            self.test_kwargs = kwargs
+
+        monkeypatch.setattr(ManualEngine, '__init__', fake_init)
+
+        engine = obj.engine
+
+        assert param_name in engine.test_kwargs

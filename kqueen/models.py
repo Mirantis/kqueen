@@ -52,9 +52,11 @@ class Cluster(Model, metaclass=ModelMeta):
         if self.provisioner:
             _class = self.provisioner.get_engine_cls()
             if _class:
-                parameters = self.provisioner.parameters or {}
-                # TODO uncomment + test
-                #parameters = parameters + self.metadata
+                parameters = {}
+                for i in [self.provisioner.parameters, self.metadata]:
+                    if isinstance(i, dict):
+                        parameters.update(i)
+
                 return _class(self, **parameters)
         return None
 
