@@ -24,3 +24,6 @@ class Config(BaseConfig):
     AKS_SECRET = '24dee47b-451f-b8c2-aae2-8c22b5ce353a'
     AKS_TENANT = '9be2469a-4466-451f-b8c2-3c1156f933a5'
     AKS_SUBSCRIPTION_ID = 'b0f2aac6-a64a-45df-89ec-3c1156f933a5'
+
+    # SSH public key
+    SSH_KEY = 'ssh-rsa AAAAB3NzadfadfafQEAylDZDzgMuEsJQpwFHDW+QivCVhryxXd1/HWqq1TVhJmT9oNAYdhUBnf/9kVtgmP0EWpDJtGSEaSugCmx8KE76I64RhpOTlm7wO0FFUVnzhFtTPx38WHfMjMdk1HF8twZU4svi72Xbg1KyBimwvaxTTd4zxq8Mskp3uwtkqPcQJDSQaZYv+wtuB6m6vHBCOTZwAognDGEvvCg0dgTU4hch1zoHSaxedS1UFHjUAM598iuI3+hMos/5hjG/vuay4cPLBJX5x1YF6blbFALwrQw8ZmTPaimqDUA9WD6KSmS1qg4rOkk4cszIfJ5vyymMrG+G3qk5LeT4VrgIgWQTAHyXw=='

@@ -23,6 +23,7 @@ class AksEngine(BaseEngine):
     tenant = config.get('AKS_TENANT')
     subscription_id = config.get('AKS_SUBSCRIPTION_ID')
     resource_group_name = 'test-cluster'
+    ssh_key = config.get('SSH_KEY')
     location = 'eastus'
 
     def __init__(self, cluster, **kwargs):
@@ -38,6 +39,7 @@ class AksEngine(BaseEngine):
         self.subscription_id = kwargs.get('subscription_id', self.subscription_id)
         self.resource_group_name = kwargs.get('resource_group_name', self.resource_group_name)
         self.location = kwargs.get('location', self.location)
+        self.ssh_key = kwargs.get('ssh_key', self.ssh_key)
         self.client = self._get_client()
         # Cache settings
         self.cache_timeout = 5 * 60
@@ -63,11 +65,12 @@ class AksEngine(BaseEngine):
             'type': 'Microsoft.ContainerService/ManagedClusters',
             'name': self.cluster.id,
             'properties': {
+                # TODO: fix hardcoded params
                 'kubernetes_version': '1.7.7',
                 'dns_prefix': 'test-cluster',
                 'agent_pool_profiles': [{'fqdn': None, 'vnet_subnet_id': None, 'storage_profile': 'ManagedDisks', 'name': 'agentpool', 'count': 1, 'dns_prefix': None, 'ports': None, 'vm_size': 'Standard_D2_v2', 'os_type': 'Linux', 'os_disk_size_gb': None}],
                 'service_principal_profile': {'client_id': self.client_id, 'secret': self.secret},
-                'linux_profile': {'admin_username': 'azureuser', 'ssh': {'public_keys': [{'key_data': 'ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAylDZDzgMuEsJQpwFHDW+QivCVhryxXd1/HWqq1TVhJmT9oNAYdhUBnf/9kVtgmP0EWpDJtGSEaSugCmx8KE76I64RhpOTlm7wO0FFUVnzhFtTPx38WHfMjMdk1HF8twZU4svi72Xbg1KyBimwvaxTTd4zxq8Mskp3uwtkqPcQJDSQaZYv+wtuB6m6vHBCOTZwAognDGEvvCg0dgTU4hch1zoHSaxedS1UFHjUAM598iuI3+hMos/5hjG/vuay4cPLBJX5x1YF6blbFALwrQw8ZmTPaimqDUA9WD6KSmS1qg4rOkk4cszIfJ5vyymMrG+G3qk5LeT4VrgIgWQTAHyXw=='}]}, },
+                'linux_profile': {'admin_username': 'azureuser', 'ssh': {'public_keys': [{'key_data': self.ssh_key}]}, },
             },
         }
 
@@ -78,7 +81,7 @@ class AksEngine(BaseEngine):
             msg = 'Creating cluster {} failed with following reason: {}'.format(self.cluster.id, repr(e))
             logger.error(msg)
             return (False, msg)
-        return (None, None)
+        return (False, None)
 
     def deprovision(self, **kwargs):
         """
@@ -91,7 +94,7 @@ class AksEngine(BaseEngine):
             msg = 'Deleting cluster {} failed with following reason: {}'.format(self.cluster.id, repr(e))
             logger.error(msg)
             return (False, msg)
-        return (None, None)
+        return (False, None)
 
     def get_kubeconfig(self):
         """
