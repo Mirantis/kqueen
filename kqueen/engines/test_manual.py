@@ -9,9 +9,11 @@ import json
 import pytest
 import yaml
 
+KUBECONFIG = yaml.load(open('kubeconfig_localhost', 'r').read())
 CLUSTER_METADATA = {
     'minion_count': 10,
     'cluster_type': 'ha',
+    'kubeconfig': KUBECONFIG
 }
 
 PROVISIONER_PARAMETERS = {
@@ -36,7 +38,7 @@ class ManualEngineBase:
             'name': 'Testing cluster for manual provisioner',
             'provisioner': prov,
             'state': 'deployed',
-            'kubeconfig': yaml.load(open('kubeconfig_localhost', 'r').read()),
+            'kubeconfig': KUBECONFIG,
             'metadata': CLUSTER_METADATA,
         }
 
@@ -65,7 +67,7 @@ class TestClusterAction(ManualEngineBase):
         assert method() == (True, None)
 
     def test_get_kubeconfig(self):
-        assert self.engine.get_kubeconfig() == self.cluster.kubeconfig
+        assert self.cluster.engine.get_kubeconfig() == self.cluster.kubeconfig
 
     def test_progress(self):
         progress = self.engine.get_progress()
@@ -78,7 +80,7 @@ class TestClusterAction(ManualEngineBase):
         assert self.engine.engine_status()
 
     def test_parameter_schema(self):
-        assert self.engine.get_parameter_schema() == {}
+        assert self.engine.get_parameter_schema() == self.engine.parameter_schema
 
 
 class TestCreateOverAPI(ManualEngineBase):
