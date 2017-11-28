@@ -4,7 +4,6 @@ from kqueen.engines.base import BaseEngine
 
 import googleapiclient.discovery
 import logging
-import yaml
 
 logger = logging.getLogger(__name__)
 config = current_config()
@@ -16,13 +15,13 @@ class GceEngine(BaseEngine):
     """
     name = 'gce'
     verbose_name = 'Google Container engine'
-    #project = 'kqueen-186209'
-    #zone = 'us-central1-a'
+    # project = 'kqueen-186209'
+    # zone = 'us-central1-a'
     parameter_schema = {
         'provisioner': {
             'service_account_info': {
                 'type': 'json_file',
-                'label': 'Service Account File',
+                'label': 'Service Account File (JSON)',
                 'validators': {
                     'required': True
                 }
