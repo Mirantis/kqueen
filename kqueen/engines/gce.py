@@ -188,7 +188,7 @@ class GceEngine(BaseEngine):
             'key': key,
             'name': self.cluster_id,
             'id': self.cluster.id,
-            'state': state, 
+            'state': state,
             'metadata': {}
         }
         return cluster

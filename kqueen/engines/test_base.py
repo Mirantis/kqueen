@@ -12,7 +12,6 @@ required_methods = [
     'get_kubeconfig',
     'get_parameter_schema',
     'get_progress',
-    'engine_status',
 ]
 
 engines = [
@@ -34,6 +33,10 @@ class TestBaseEngine:
 
         with pytest.raises(NotImplementedError):
             attr()
+
+    def test_engine_status(self, cluster, app):
+        engine = BaseEngine(cluster)
+        assert engine.engine_status() == app.config.get('PROVISIONER_OK_STATE')
 
 
 class TestAllEngines:
