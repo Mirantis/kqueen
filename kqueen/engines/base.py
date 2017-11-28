@@ -1,3 +1,8 @@
+from kqueen.config import current_config
+
+config = current_config()
+
+
 class BaseEngine:
     """Base Engine object.
 
@@ -176,4 +181,4 @@ class BaseEngine:
         Returns:
             str: Return status of engine, should use statuses from ``app.config``
         """
-        raise NotImplementedError
+        return config.get('PROVISIONER_OK_STATE')
