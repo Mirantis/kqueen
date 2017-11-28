@@ -1,8 +1,8 @@
 from importlib import import_module
 from kqueen.config import current_config
 from kqueen.kubeapi import KubernetesAPI
-from kqueen.storages.etcd import DatetimeField
 from kqueen.storages.etcd import BoolField
+from kqueen.storages.etcd import DatetimeField
 from kqueen.storages.etcd import IdField
 from kqueen.storages.etcd import JSONField
 from kqueen.storages.etcd import Model
@@ -58,7 +58,18 @@ class Cluster(Model, metaclass=ModelMeta):
                         parameters.update(i)
 
                 return _class(self, **parameters)
-        return None
+        else:
+            raise Exception('Missing provisioner')
+
+    def delete(self):
+        """Deprovision cluster and delete object from database"""
+
+        deprov_status, deprov_msg = self.engine.deprovision()
+
+        if deprov_status:
+            super(Cluster, self).delete()
+        else:
+            raise Exception('Unable to deprovision cluster: {}'.format(deprov_msg))
 
     def get_kubeconfig(self):
         if self.kubeconfig:

@@ -78,12 +78,13 @@ class AksEngine(BaseEngine):
 
         try:
             create_cluster = self.client.managed_clusters.create_or_update(self.resource_group_name, self.cluster.id, cluster)
-            return (create_cluster, None)
+            return create_cluster, None
         except Exception as e:
             msg = 'Creating cluster {} failed with following reason: {}'.format(self.cluster.id, repr(e))
             logger.error(msg)
-            return (False, msg)
-        return (False, None)
+            return False, msg
+
+        return False, None
 
     def deprovision(self, **kwargs):
         """
@@ -91,13 +92,13 @@ class AksEngine(BaseEngine):
         """
         try:
             delete_cluster = self.client.managed_clusters.delete(self.resource_group_name, self.cluster.id)
-            return (delete_cluster, None)
+            return delete_cluster, None
         except Exception as e:
             msg = 'Deleting cluster {} failed with following reason: {}'.format(self.cluster.id, repr(e))
             logger.error(msg)
-            return (False, msg)
+            return False, msg
 
-        return (False, None)
+        return False, None
 
     def get_kubeconfig(self):
         """

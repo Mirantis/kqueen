@@ -119,10 +119,12 @@ class JenkinsEngine(BaseEngine):
 
     def deprovision(self, **kwargs):
         """
+        Deprovisioning isn't supported for Jenkins provisioner yet.
+
         Implementation of :func:`~kqueen.engines.base.BaseEngine.deprovision`
         """
 
-        pass
+        return True, None
 
     def get_kubeconfig(self):
         """
