@@ -46,7 +46,7 @@ class ManualEngine(BaseEngine):
         self.cluster.state = config.get('CLUSTER_OK_STATE')
         self.cluster.save()
 
-        return (True, None)
+        return True, None
 
     def deprovision(self):
         """
@@ -55,7 +55,7 @@ class ManualEngine(BaseEngine):
         Implementation of :func:`~kqueen.engines.base.BaseEngine.deprovision`
         """
 
-        return (True, None)
+        return True, None
 
     def get_kubeconfig(self):
         """Get kubeconfig of the cluster

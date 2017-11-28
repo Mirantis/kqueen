@@ -59,12 +59,13 @@ class GceEngine(BaseEngine):
         self.cluster_config["cluster"]["name"] = self.cluster_id
         try:
             create_cluster = self.client.projects().zones().clusters().create(projectId=self.project, zone=self.zone, body=self.cluster_config).execute()
-            return (create_cluster, None)
+            return create_cluster, None
         except Exception as e:
             msg = 'Creating cluster {} failed with following reason: {}'.format(self.cluster_id, repr(e))
             logger.error(msg)
-            return (False, msg)
-        return (None, None)
+            return False, msg
+
+        return False, None
 
     def deprovision(self, **kwargs):
         """
@@ -72,12 +73,13 @@ class GceEngine(BaseEngine):
         """
         try:
             delete_cluster = self.client.projects().zones().clusters().delete(projectId=self.project, zone=self.zone, clusterId=self.cluster_id).execute()
-            return (delete_cluster, None)
+            return delete_cluster, None
         except Exception as e:
             msg = 'Deleting cluster {} failed with following reason: {}'.format(self.cluster_id, repr(e))
             logger.error(msg)
-            return (False, msg)
-        return (None, None)
+            return False, msg
+
+        return False, None
 
     def get_kubeconfig(self):
         """
