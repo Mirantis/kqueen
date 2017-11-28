@@ -50,7 +50,7 @@ class ManualEngine(BaseEngine):
 
     def deprovision(self):
         """
-        Deprovision isn't supported by manual engine
+        Deprovision isn't supported by manual engine, we just pass it.
 
         Implementation of :func:`~kqueen.engines.base.BaseEngine.deprovision`
         """

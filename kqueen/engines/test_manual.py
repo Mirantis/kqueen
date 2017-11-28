@@ -134,3 +134,18 @@ class TestCreateOverAPI(ManualEngineBase):
         engine = obj.engine
 
         assert param_name in engine.test_kwargs
+
+    def test_delete_deprovision(self, monkeypatch):
+        """"Deprovision is called before cluster delete"""
+
+        def fake_deprovision(self):
+            self.cluster.metadata['_deprovisioned'] = True
+            self.cluster.save()
+
+        monkeypatch.setattr(ManualEngine, 'deprovision', fake_deprovision)
+
+        obj = self.test_create_over_api()
+        obj.delete()
+
+        assert '_deprovisioned' in obj.metadata
+        assert obj.metadata['_deprovisioned']
