@@ -45,7 +45,8 @@ class JenkinsEngine(BaseEngine):
                     'required': True
                 }
             }
-        }
+        },
+        'cluster': {}
     }
 
     def __init__(self, cluster, **kwargs):
@@ -294,10 +295,3 @@ class JenkinsEngine(BaseEngine):
         except:
             response = 1
         return {'response': response, 'progress': progress, 'result': result}
-
-    @classmethod
-    def get_parameter_schema(cls):
-        """
-        Implementation of :func:`~kqueen.engines.base.BaseEngine.get_parameter_schema`
-        """
-        return cls.parameter_schema

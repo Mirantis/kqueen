@@ -29,9 +29,36 @@ class BaseEngine:
         this engine instance.
         name (str): Name of the engine usable by program.
         verbose_name (str): Human readable name of the engine.
+        parameter_schema (dict): Dictionary representation of the parameters with hints for form rendering.::
+
+            {
+                'provisioner': {
+                    'username': {
+                        'type': 'text',
+                        'validators': {
+                            'required': True
+                        }
+                    },
+                    'password': {
+                        'type': 'password',
+                        'validators': {
+                            'required': True
+                        }
+                    }
+                }
+                'cluster': {
+                    'node_count': {
+                        'type': 'integer',
+                        'validators: {
+                            'required': True
+                        }
+                    }
+                }
+            }
     """
     name = 'base'
     verbose_name = 'Base Engine'
+    parameter_schema = {}
 
     def __init__(self, cluster, **kwargs):
         self.cluster = cluster
@@ -127,34 +154,9 @@ class BaseEngine:
         in parameters attribute (JSONField) of the `kqueen.models.Provisioner` object.
 
         Returns:
-            dict: Dictionary representation of the parameters with hints for form rendering.::
-
-                {
-                    'provisioner': {
-                        'username': {
-                            'type': 'text',
-                            'validators': {
-                                'required': True
-                            }
-                        },
-                        'password': {
-                            'type': 'password',
-                            'validators': {
-                                'required': True
-                            }
-                        }
-                    }
-                    'cluster': {
-                        'node_count': {
-                            'type': 'integer',
-                            'validators: {
-                                'required': True
-                            }
-                        }
-                    }
-                }
+            dict:  Returns ``self.parameter_schema`` in default, but can be overridden.
         """
-        raise NotImplementedError
+        return cls.parameter_schema
 
     def get_progress(self):
         """Get progress of provisioning if its possible to determine.

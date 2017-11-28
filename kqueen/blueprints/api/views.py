@@ -165,10 +165,6 @@ def provisioner_engine_list():
             module = import_module(module_path)
             _class = getattr(module, engine)
             parameters = _class.get_parameter_schema()
-            if 'provisioner' not in parameters:
-                parameters['provisioner'] = {}
-            if 'cluster' not in parameters:
-                parameters['cluster'] = {}
             engine_cls.append({
                 'name': '.'.join([module_path, engine]),
                 'parameters': parameters

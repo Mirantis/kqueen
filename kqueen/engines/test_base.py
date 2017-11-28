@@ -10,7 +10,6 @@ required_methods = [
     'provision',
     'deprovision',
     'get_kubeconfig',
-    'get_parameter_schema',
     'get_progress',
 ]
 
@@ -37,6 +36,10 @@ class TestBaseEngine:
     def test_engine_status(self, cluster, app):
         engine = BaseEngine(cluster)
         assert engine.engine_status() == app.config.get('PROVISIONER_OK_STATE')
+
+    def test_get_parameter_schema(self, cluster):
+        engine = BaseEngine(cluster)
+        assert engine.get_parameter_schema() == engine.parameter_schema
 
 
 class TestAllEngines:

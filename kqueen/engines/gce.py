@@ -48,7 +48,8 @@ class GceEngine(BaseEngine):
                     'required': True
                 }
             }
-        }
+        },
+        'cluster': {}
     }
 
     def __init__(self, cluster, **kwargs):
@@ -197,15 +198,6 @@ class GceEngine(BaseEngine):
         """GCE engine don't support list of clusters"""
 
         return []
-
-    @classmethod
-    def get_parameter_schema(cls):
-        """Return parameters specific for this Provisioner implementation.
-
-        Implementation of :func:`~kqueen.engines.base.BaseEngine.get_parameter_schema`
-        """
-
-        return cls.parameter_schema
 
     def get_progress(self):
         """
