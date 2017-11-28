@@ -4,9 +4,17 @@ from kqueen.engines.base import BaseEngine
 
 import googleapiclient.discovery
 import logging
+import requests
 
 logger = logging.getLogger(__name__)
 config = current_config()
+
+
+STATE_MAP = {
+    'PROVISIONING': config.get('CLUSTER_PROVISIONING_STATE'),
+    'RUNNING': config.get('CLUSTER_OK_STATE'),
+    'STOPPING': config.get('CLUSTER_DEPROVISIONING_STATE')
+}
 
 
 class GceEngine(BaseEngine):
@@ -53,12 +61,14 @@ class GceEngine(BaseEngine):
         self.service_account_info = kwargs.get('service_account_info', {})
         self.project = kwargs.get('project', '')
         self.zone = kwargs.get('zone', '')
+        self.cluster_id = 'a' + self.cluster.id.replace('-', '')
         self.cluster_config = {
-            'name': self.cluster.name,
-            'initialNodeCount': kwargs.get('node_count', 1)
+            'cluster': {
+                'name': self.cluster_id,
+                'initialNodeCount': kwargs.get('node_count', 1)
+            }
         }
         self.client = self._get_client()
-        self.cluster_id = "a" + self.cluster.id.replace("-", "")
         # Cache settings
         self.cache_timeout = 5 * 60
 
@@ -77,7 +87,6 @@ class GceEngine(BaseEngine):
         """
         Implementation of :func:`~kqueen.engines.base.BaseEngine.provision`
         """
-        self.cluster_config["cluster"]["name"] = self.cluster_id
         try:
             create_cluster = self.client.projects().zones().clusters().create(projectId=self.project, zone=self.zone, body=self.cluster_config).execute()
             return create_cluster, None
@@ -86,7 +95,7 @@ class GceEngine(BaseEngine):
             logger.error(msg)
             return False, msg
 
-        return False, None
+        return True, None
 
     def deprovision(self, **kwargs):
         """
@@ -100,7 +109,7 @@ class GceEngine(BaseEngine):
             logger.error(msg)
             return False, msg
 
-        return False, None
+        return True, None
 
     def get_kubeconfig(self):
         """
@@ -164,7 +173,25 @@ class GceEngine(BaseEngine):
         First we try to get cluster by external_id, because its much more efficient in this
         implementation. If its not possible yet, we return from the slower method
         """
-        return self.cluster
+        request = self.client.projects().zones().clusters().get(projectId=self.project, zone=self.zone, clusterId=self.cluster_id)
+        try:
+            response = request.execute()
+        except Exception as e:
+            msg = 'Fetching data from backend for cluster {} failed with following reason: {}'.format(self.cluster_id, repr(e))
+            logger.error(msg)
+            return {}
+
+        state = STATE_MAP.get(response['status'], config.get('CLUSTER_UNKNOWN_STATE'))
+
+        key = 'cluster-{}-{}'.format(self.name, self.cluster_id)
+        cluster = {
+            'key': key,
+            'name': self.cluster_id,
+            'id': self.cluster.id,
+            'state': state, 
+            'metadata': {}
+        }
+        return cluster
 
     def cluster_list(self):
         """GCE engine don't support list of clusters"""
@@ -193,3 +220,12 @@ class GceEngine(BaseEngine):
             'progress': 100,
             'result': config.get('CLUSTER_OK_STATE'),
         }
+
+    @classmethod
+    def engine_status(cls):
+        test_url = 'https://container.googleapis.com/v1/projects/project/zones/zone/clusters?alt=json'
+        headers = {'Accept': 'application/json'}
+        response = requests.get(test_url, headers=headers)
+        if response.status_code == 401:
+            return config.get('PROVISIONER_OK_STATE')
+        return config.get('PROVISIONER_ERROR_STATE')
