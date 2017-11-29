@@ -63,8 +63,11 @@ class GceEngine(BaseEngine):
             'node_count': {
                 'type': 'integer',
                 'label': 'Node Count',
+                'default': 1,
                 'validators': {
-                    'required': True
+                    'required': True,
+                    'min': 1,
+                    'number': True
                 }
             }
         }
