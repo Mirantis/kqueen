@@ -25,6 +25,46 @@ class AksEngine(BaseEngine):
     resource_group_name = 'test-cluster'
     ssh_key = config.get('SSH_KEY')
     location = 'eastus'
+    parameter_schema = {
+        'provisioner': {
+            'client_id': {
+                'type': 'text',
+                'label': 'Cluster ID',
+                'validators': {
+                    'required': True
+                }
+            },
+            'secret': {
+                'type': 'password',
+                'label': 'Secret',
+                'validators': {
+                    'required': True
+                }
+            },
+            'tenant': {
+                'type': 'text',
+                'label': 'Tenant',
+                'validators': {
+                    'required': True
+                }
+            },
+            'subscription_id': {
+                'type': 'text',
+                'label': 'SSH Key (public)',
+                'validators': {
+                    'required': True
+                }
+            },
+            'ssh_key': {
+                'type': 'text_area',
+                'label': 'SSH Key',
+                'validators': {
+                    'required': True
+                }
+            }
+        },
+        'cluster': {}
+    }
 
     def __init__(self, cluster, **kwargs):
         """
@@ -70,10 +110,37 @@ class AksEngine(BaseEngine):
                 # TODO: fix hardcoded params
                 'kubernetes_version': '1.7.7',
                 'dns_prefix': 'test-cluster',
-                'agent_pool_profiles': [{'fqdn': None, 'vnet_subnet_id': None, 'storage_profile': 'ManagedDisks', 'name': 'agentpool', 'count': 1, 'dns_prefix': None, 'ports': None, 'vm_size': 'Standard_D2_v2', 'os_type': 'Linux', 'os_disk_size_gb': None}],
-                'service_principal_profile': {'client_id': self.client_id, 'secret': self.secret},
-                'linux_profile': {'admin_username': 'azureuser', 'ssh': {'public_keys': [{'key_data': self.ssh_key}]}, },
-            },
+                'agent_pool_profiles': [
+                    {
+                        'fqdn': None,
+                        'vnet_subnet_id': None,
+                        'storage_profile': 'ManagedDisks',
+                        'name': 'agentpool',
+                        'count': 1,
+                        'dns_prefix': None,
+                        'ports': None,
+                        'vm_size': 'Standard_D2_v2',
+                        'os_type': 'Linux',
+                        'os_disk_size_gb': None
+                    }
+                ],
+                'service_principal_profile': {
+                    'client_id': self.client_id,
+                    'secret': self.secret
+                },
+                'linux_profile': {
+                    'admin_username': 'azureuser',
+                    'ssh': {
+                        'public_keys': {
+                            [
+                                 {
+                                     'key_data': self.ssh_key
+                                 }
+                            ]
+                        }
+                    }
+                }
+            }
         }
 
         try:
@@ -84,7 +151,7 @@ class AksEngine(BaseEngine):
             logger.error(msg)
             return False, msg
 
-        return False, None
+        return True, None
 
     def deprovision(self, **kwargs):
         """
@@ -98,7 +165,7 @@ class AksEngine(BaseEngine):
             logger.error(msg)
             return False, msg
 
-        return False, None
+        return True, None
 
     def get_kubeconfig(self):
         """
@@ -136,15 +203,6 @@ class AksEngine(BaseEngine):
         # TODO: it does, add list of clusters
 
         return []
-
-    @classmethod
-    def get_parameter_schema(cls):
-        """Return parameters specific for this Provisioner implementation.
-
-        Implementation of :func:`~kqueen.engines.base.BaseEngine.get_parameter_schema`
-        """
-
-        return {}
 
     def get_progress(self):
         """
