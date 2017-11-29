@@ -24,7 +24,9 @@ class GceEngine(BaseEngine):
     name = 'gce'
     verbose_name = 'Google Container engine'
     # project = 'kqueen-186209'
-    # zone = 'us-central1-a'
+    # TODO: only subset of possible choices for zone is listed in parameter_schema,
+    # we could add more later, here is the list of possible choices:
+    # https://cloud.google.com/compute/docs/regions-zones/
     parameter_schema = {
         'provisioner': {
             'service_account_info': {
@@ -42,14 +44,30 @@ class GceEngine(BaseEngine):
                 }
             },
             'zone': {
-                'type': 'text',
+                'type': 'select',
                 'label': 'Zone',
+                'choices': [
+                    ('us-central1-a', 'US - Central 1 - A'),
+                    ('us-west1-a', 'US - West 1 - A'),
+                    ('us-east1-a', 'US - East 1 - A'),
+                    ('southamerica-east1-a', 'South America - East 1 - A'),
+                    ('europe-west1-b', 'Europe - West 1 - B'),
+                    ('asia-southeast1-a', 'Asia - Southeast 1 - A')
+                ],
                 'validators': {
                     'required': True
                 }
             }
         },
-        'cluster': {}
+        'cluster': {
+            'node_count': {
+                'type': 'integer',
+                'label': 'Node Count',
+                'validators': {
+                    'required': True
+                }
+            }
+        }
     }
 
     def __init__(self, cluster, **kwargs):
