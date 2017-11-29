@@ -11,6 +11,13 @@ import yaml
 logger = logging.getLogger(__name__)
 config = current_config()
 
+STATE_MAP = {
+    'Creating': config.get('CLUSTER_PROVISIONING_STATE'),
+    'Succeeded': config.get('CLUSTER_OK_STATE'),
+    'Deleting': config.get('CLUSTER_DEPROVISIONING_STATE'),
+    'Failed': config.get('CLUSTER_ERROR_STATE')
+}
+
 
 class AksEngine(BaseEngine):
     """
@@ -196,7 +203,24 @@ class AksEngine(BaseEngine):
         First we try to get cluster by external_id, because its much more efficient in this
         implementation. If its not possible yet, we return from the slower method
         """
-        return self.cluster
+        try:
+            response = self.client.managed_clusters.get(self.resource_group_name, self.cluster.id)
+        except Exception as e:
+            msg = 'Fetching data from backend for cluster {} failed with following reason: {}'.format(self.cluster_id, repr(e))
+            logger.error(msg)
+            return {}
+        properties = response.properties.as_dict()
+        state = STATE_MAP.get(properties.get('provisioning_state'), config.get('CLUSTER_UNKNOWN_STATE'))
+
+        key = 'cluster-{}-{}'.format(self.name, self.cluster_id)
+        cluster = {
+            'key': key,
+            'name': self.cluster_id,
+            'id': self.cluster.id,
+            'state': state,
+            'metadata': {}
+        }
+        return cluster
 
     def cluster_list(self):
         """AKS engine don't support list of clusters"""
