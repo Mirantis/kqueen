@@ -89,8 +89,8 @@ class GceEngine(BaseEngine):
         Implementation of :func:`~kqueen.engines.base.BaseEngine.provision`
         """
         try:
-            create_cluster = self.client.projects().zones().clusters().create(projectId=self.project, zone=self.zone, body=self.cluster_config).execute()
-            return create_cluster, None
+            self.client.projects().zones().clusters().create(projectId=self.project, zone=self.zone, body=self.cluster_config).execute()
+            # TODO: check if provisioning response is healthy
         except Exception as e:
             msg = 'Creating cluster {} failed with following reason: {}'.format(self.cluster_id, repr(e))
             logger.error(msg)
@@ -103,8 +103,8 @@ class GceEngine(BaseEngine):
         Implementation of :func:`~kqueen.engines.base.BaseEngine.deprovision`
         """
         try:
-            delete_cluster = self.client.projects().zones().clusters().delete(projectId=self.project, zone=self.zone, clusterId=self.cluster_id).execute()
-            return delete_cluster, None
+            self.client.projects().zones().clusters().delete(projectId=self.project, zone=self.zone, clusterId=self.cluster_id).execute()
+            # TODO: check if provisioning response is healthy
         except Exception as e:
             msg = 'Deleting cluster {} failed with following reason: {}'.format(self.cluster_id, repr(e))
             logger.error(msg)
