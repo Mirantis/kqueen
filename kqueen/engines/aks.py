@@ -56,13 +56,6 @@ class AksEngine(BaseEngine):
                     'required': True
                 }
             },
-            'ssh_key': {
-                'type': 'text_area',
-                'label': 'Default SSH Key (public)',
-                'validators': {
-                    'required': True
-                }
-            },
         },
         'cluster': {
             'location': {
