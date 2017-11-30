@@ -11,6 +11,10 @@ KQueen - Kubernetes cluster manager
 .. image:: https://coveralls.io/repos/github/Mirantis/kqueen/badge.svg?branch=master
     :target: https://coveralls.io/github/Mirantis/kqueen?branch=master
 
+Overview
+--------
+
+More information about KQueen Architecture and use cases is described in `RATIONALE <RATIONALE.md>`_ file.
 
 Development
 -----------
@@ -79,3 +83,11 @@ For full documenation please refer to
    :target: https://badge.fury.io/py/kqueen
 .. |Coverage Status| image:: https://coveralls.io/repos/github/Mirantis/kqueen/badge.svg?branch=master
    :target: https://coveralls.io/github/Mirantis/kqueen?branch=master
+
+DEMOs
+-----
+
+Generic KQueen Overview
+
+.. image:: https://img.youtube.com/vi/PCAwCxPQc2A/0.jpg
+   :target: https://www.youtube.com/watch?v=PCAwCxPQc2A&t=1s
