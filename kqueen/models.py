@@ -87,6 +87,7 @@ class Cluster(Model, metaclass=ModelMeta):
             out = {
                 'addons': kubernetes.list_services(filter_addons=True),
                 'deployments': kubernetes.list_deployments(),
+                'namespaces': kubernetes.list_namespaces(),
                 'nodes': kubernetes.list_nodes(),
                 'nodes_pods': kubernetes.count_pods_by_node(),
                 'persistent_volumes': kubernetes.list_persistent_volumes(),
