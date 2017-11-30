@@ -58,11 +58,13 @@ class AksEngine(BaseEngine):
             },
             'ssh_key': {
                 'type': 'text_area',
-                'label': 'SSH Key (public)',
+                'label': 'Default SSH Key (public)',
                 'validators': {
                     'required': True
                 }
             },
+        },
+        'cluster': {
             'location': {
                 'type': 'select',
                 'label': 'Location',
@@ -74,9 +76,23 @@ class AksEngine(BaseEngine):
                 'validators': {
                     'required': True
                 }
+            },
+            'ssh_key': {
+                'type': 'text_area',
+                'label': 'SSH Key (public)',
+                'validators': {}
+            },
+            'node_count': {
+                'type': 'integer',
+                'label': 'Node Count',
+                'default': 1,
+                'validators': {
+                    'required': True,
+                    'min': 1,
+                    'number': True
+                }
             }
-        },
-        'cluster': {}
+        }
     }
 
     def __init__(self, cluster, **kwargs):
@@ -94,6 +110,7 @@ class AksEngine(BaseEngine):
         self.resource_group_name = kwargs.get('resource_group_name', self.resource_group_name)
         self.location = kwargs.get('location', '')
         self.ssh_key = kwargs.get('ssh_key', '')
+        self.node_count = kwargs.get('node_count', 1)
         self.client = self._get_client()
 
         # Cache settings
@@ -129,7 +146,7 @@ class AksEngine(BaseEngine):
                         'vnet_subnet_id': None,
                         'storage_profile': 'ManagedDisks',
                         'name': 'agentpool',
-                        'count': 1,
+                        'count': self.node_count,
                         'dns_prefix': None,
                         'ports': None,
                         'vm_size': 'Standard_D2_v2',
