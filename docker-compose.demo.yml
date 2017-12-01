@@ -8,6 +8,11 @@ services:
       - etcd
     environment:
       KQUEEN_ETCD_HOST: etcd
+      BOOTSTRAP_ADMIN: true
+      BOOTSTRAP_ADMIN_USERNAME: admin
+      BOOTSTRAP_ADMIN_PASSWORD: default
+      BOOTSTRAP_ADMIN_ORGANIZATION: DemoOrg
+      BOOTSTRAP_ADMIN_NAMESPACE: demoorg
   kqueen_ui:
     image: atengler/kqueen-ui
     ports:
@@ -15,6 +20,8 @@ services:
     depends_on:
       - kqueen
     environment:
-      KQUEEN_UI_KQUEEN_API_URL: 'http://kqueen:5000/api/v1/'
-      KQUEEN_UI_KQUEEN_AUTH_URL: 'http://kqueen:5000/api/v1/auth'
-      KQUEEN_UI_CONFIG_FILE: 'config/prod.py'
+      KQUEEN_UI_CONFIG_FILE: config/prod.py
+      KQUEENUI_KQUEEN_API_URL: http://kqueen:5000/api/v1/
+      KQUEENUI_KQUEEN_AUTH_URL: http://kqueen:5000/api/v1/auth
+      KQUEENUI_KQUEEN_SERVICE_USER_USERNAME: admin
+      KQUEENUI_KQUEEN_SERVICE_USER_PASSWORD: default
