@@ -14,8 +14,15 @@ services:
       BOOTSTRAP_ADMIN_PASSWORD: default
       BOOTSTRAP_ADMIN_ORGANIZATION: DemoOrg
       BOOTSTRAP_ADMIN_NAMESPACE: demoorg
+  kqueen_mail:
+    image: modularitycontainers/postfix
+    volumes:
+      - /var/spool/postfix:/var/spool/postfix
+      - /var/spool/mail:/var/spool/mail
+    environment:
+      MYHOSTNAME: 'kqueen_mail'
   kqueen_ui:
-    image: atengler/kqueen-ui
+    image: atengler/kqueen-ui:v0.1
     ports:
       - 127.0.0.1:5080:5080
     depends_on:
@@ -26,3 +33,5 @@ services:
       KQUEENUI_KQUEEN_AUTH_URL: http://kqueen:5000/api/v1/auth
       KQUEENUI_KQUEEN_SERVICE_USER_USERNAME: admin
       KQUEENUI_KQUEEN_SERVICE_USER_PASSWORD: default
+      KQUEENUI_MAIL_SERVER: kqueen_mail
+      KQUEENUI_MAIL_PORT: 10025
