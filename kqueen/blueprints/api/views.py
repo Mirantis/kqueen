@@ -62,6 +62,13 @@ def index():
 class ListClusters(ListView):
     object_class = Cluster
 
+    def get_content(self, *args, **kwargs):
+        clusters = super(ListClusters, self).get_content(*args, **kwargs)
+        # refresh states on all clusters
+        # TODO: replace this with some async function
+        [c.get_state() for c in clusters]
+        return clusters
+
 
 class CreateCluster(CreateView):
     object_class = Cluster

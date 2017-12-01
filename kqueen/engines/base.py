@@ -95,7 +95,7 @@ class BaseEngine:
                     'key': key,     # (str) this record should be cached under this key if you choose to cache
                     'name': name,   # (str) name of the cluster in its respective backend
                     'id': id,       # (str or UUID) id of `kqueen.models.Cluster` object in KQueen database
-                    'state': state, # (str) cluster.state
+                    'state': state, # (str) state of cluster on backend represented by app.config['CLUSTER_[FOO]_STATE']
                     'metadata': {
                         'foo': bar  # any keys specific for the Provisioner implementation
                     }
