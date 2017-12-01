@@ -17,3 +17,4 @@ services:
     environment:
       KQUEEN_API_URL: 'http://kqueen:5000/api/v1/'
       KQUEEN_AUTH_URL: 'http://kqueen:5000/api/v1/auth'
+      KQUEEN_CONFIG_FILE: 'config/prod.py'
