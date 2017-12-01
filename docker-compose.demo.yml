@@ -8,7 +8,7 @@ services:
       - etcd
     environment:
       KQUEEN_ETCD_HOST: etcd
-      BOOTSTRAP_ADMIN: true
+      BOOTSTRAP_ADMIN: 1
       BOOTSTRAP_ADMIN_USERNAME: admin
       BOOTSTRAP_ADMIN_PASSWORD: default
       BOOTSTRAP_ADMIN_ORGANIZATION: DemoOrg
