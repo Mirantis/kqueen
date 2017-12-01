@@ -7,6 +7,7 @@ services:
     depends_on:
       - etcd
     environment:
+      KQUEEN_CONFIG_FILE: config/prod.py
       KQUEEN_ETCD_HOST: etcd
       BOOTSTRAP_ADMIN: 1
       BOOTSTRAP_ADMIN_USERNAME: admin

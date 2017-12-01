@@ -42,7 +42,7 @@ def main():
                 active=True
             )
             user.save()
-            print('User {} successfully created!'.format(user.name))
+            print('User {} successfully created!'.format(user.username))
         except:
             raise Exception('Adding {} user failed'.format(args.username))
 
