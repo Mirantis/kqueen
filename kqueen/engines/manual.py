@@ -11,12 +11,24 @@ class ManualEngine(BaseEngine):
 
     name = 'manual'
     verbose_name = 'Manual Engine'
+    parameter_schema = {
+        'provisioner': {},
+        'cluster': {
+            'kubeconfig': {
+                'type': 'yaml_file',
+                'label': 'Kubeconfig',
+                'validators': {
+                    'required': True
+                }
+            }
+        }
+    }
 
     def __init__(self, cluster, **kwargs):
         """
         Implementation of :func:`~kqueen.engines.base.BaseEngine.__init__`
         """
-
+        self.kubeconfig = kwargs.get('kubeconfig', {})
         super(ManualEngine, self).__init__(cluster, **kwargs)
 
     def cluster_list(self):
@@ -66,16 +78,7 @@ class ManualEngine(BaseEngine):
         Implementation of :func:`~kqueen.engines.base.BaseEngine.get_kubeconfig`
         """
 
-        return self.cluster.kubeconfig
-
-    @classmethod
-    def get_parameter_schema(cls):
-        """Return parameters specific for this Provisioner implementation.
-
-        Implementation of :func:`~kqueen.engines.base.BaseEngine.get_parameter_schema`
-        """
-
-        return {}
+        return self.kubeconfig
 
     def get_progress(self):
         """

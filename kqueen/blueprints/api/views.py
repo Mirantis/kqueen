@@ -164,14 +164,18 @@ def provisioner_engine_list():
         try:
             module = import_module(module_path)
             _class = getattr(module, engine)
+            parameters = _class.get_parameter_schema()
             engine_cls.append({
                 'name': '.'.join([module_path, engine]),
-                'parameters': _class.get_parameter_schema()
+                'parameters': parameters
             })
         except NotImplementedError:
             engine_cls.append({
                 'name': engine,
-                'parameters': {}
+                'parameters': {
+                    'provisioner': {},
+                    'cluster': {}
+                }
             })
         except Exception:
             logger.error('Unable to read parameters for engine {}'.format(engine))
