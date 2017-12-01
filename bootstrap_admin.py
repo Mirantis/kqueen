@@ -28,6 +28,7 @@ def main():
                 created_at=datetime.utcnow()
             )
             organization.save()
+            print('Organization {} successfully created!'.format(organization.name))
         except:
             raise Exception('Adding {} organization failed'.format(args.organization))
         try:
@@ -41,6 +42,7 @@ def main():
                 active=True
             )
             user.save()
+            print('User {} successfully created!'.format(user.name))
         except:
             raise Exception('Adding {} user failed'.format(args.username))
 
