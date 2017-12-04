@@ -1,7 +1,7 @@
 version: '2'
 services:
   kqueen:
-    build: ./
+    image: kqueen/api:v0.11
     ports:
       - 127.0.0.1:5000:5000
     depends_on:
@@ -15,7 +15,7 @@ services:
       BOOTSTRAP_ADMIN_ORGANIZATION: DemoOrg
       BOOTSTRAP_ADMIN_NAMESPACE: demoorg
     extra_hosts:
-    - "ci.mcp.mirantis.net:172.16.48.254"
+      - "ci.mcp.mirantis.net:172.16.48.254"
   kqueen_mail:
     image: modularitycontainers/postfix
     volumes:

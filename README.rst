@@ -54,11 +54,6 @@ Demo environment
 
     docker-compose -f docker-compose.yml -f docker-compose.demo.yml -f docker-compose.kubernetes.yml up
 
--  You can add some example data by running
-
-::
-
-    docker-compose -f docker-compose.yml -f docker-compose.demo.yml exec kqueen ./devenv.py
 
 It will add user ``admin`` with password ``default`` and few of testing
 objects.
@@ -87,7 +82,12 @@ For full documenation please refer to
 DEMOs
 -----
 
-Generic KQueen Overview
+**Generic KQueen Overview**
 
 .. image:: https://img.youtube.com/vi/PCAwCxPQc2A/0.jpg
    :target: https://www.youtube.com/watch?v=PCAwCxPQc2A&t=1s
+
+**AKS (Azure) in KQueen**
+
+.. image:: https://img.youtube.com/vi/xHydnJGcs2k/0.jpg
+   :target: https://youtu.be/xHydnJGcs2k
