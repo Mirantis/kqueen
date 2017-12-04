@@ -42,21 +42,15 @@ Development
 Demo environment
 ----------------
 
--  Without local Kubernetes
+- Make sure you can reach Jenkins server defined in `JENKINS_API_URL` variable in file `kqueen/config/prod.py`.
+- Run these commands to run Kqueen API and UI in containers.
 
 ::
 
     docker-compose -f docker-compose.yml -f docker-compose.demo.yml up
 
--  Including local Kubernetes (without ``kubelet``)
+- You can login using user `admin` and password `default`. Default username and password can be changed in `docker-compose.demo.yml` file before first start of API.
 
-::
-
-    docker-compose -f docker-compose.yml -f docker-compose.demo.yml -f docker-compose.kubernetes.yml up
-
-
-It will add user ``admin`` with password ``default`` and few of testing
-objects.
 
 Configuration
 -------------

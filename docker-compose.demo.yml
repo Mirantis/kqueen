@@ -9,6 +9,7 @@ services:
     environment:
       KQUEEN_CONFIG_FILE: config/prod.py
       KQUEEN_ETCD_HOST: etcd
+      #KQUEEN_DEBUG: 'True'
       BOOTSTRAP_ADMIN: 1
       BOOTSTRAP_ADMIN_USERNAME: admin
       BOOTSTRAP_ADMIN_PASSWORD: default
