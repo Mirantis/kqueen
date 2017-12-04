@@ -14,6 +14,8 @@ services:
       BOOTSTRAP_ADMIN_PASSWORD: default
       BOOTSTRAP_ADMIN_ORGANIZATION: DemoOrg
       BOOTSTRAP_ADMIN_NAMESPACE: demoorg
+    extra_hosts:
+    - "ci.mcp.mirantis.net:172.16.48.254"
   kqueen_mail:
     image: modularitycontainers/postfix
     volumes:
@@ -22,7 +24,7 @@ services:
     environment:
       MYHOSTNAME: 'kqueen_mail'
   kqueen_ui:
-    image: atengler/kqueen-ui:v0.1
+    image: kqueen/ui:v0.1
     ports:
       - 127.0.0.1:5080:5080
     depends_on:
