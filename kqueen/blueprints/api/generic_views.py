@@ -44,7 +44,7 @@ class DeleteView(GenericView):
 
         try:
             obj.delete()
-        except:
+        except Exception:
             abort(500)
 
         return jsonify({'id': obj.id, 'state': 'deleted'})
@@ -72,7 +72,7 @@ class UpdateView(GenericView):
 
         try:
             obj.save()
-        except:
+        except Exception:
             abort(500)
 
         return super(UpdateView, self).dispatch_request(*args, **kwargs)

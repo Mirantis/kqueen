@@ -29,7 +29,7 @@ def main():
             )
             organization.save()
             print('Organization {} successfully created!'.format(organization.name))
-        except:
+        except Exception:
             raise Exception('Adding {} organization failed'.format(args.organization))
         try:
             user = User(
@@ -43,7 +43,7 @@ def main():
             )
             user.save()
             print('User {} successfully created!'.format(user.username))
-        except:
+        except Exception:
             raise Exception('Adding {} user failed'.format(args.username))
 
 

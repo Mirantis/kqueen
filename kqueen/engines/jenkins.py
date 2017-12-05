@@ -171,7 +171,7 @@ class JenkinsEngine(BaseEngine):
             self.cluster.metadata = metadata
             self.cluster.save()
             return external_id
-        except:
+        except Exception:
             pass
         return external_id
 
@@ -292,6 +292,6 @@ class JenkinsEngine(BaseEngine):
                     progress = 99
             else:
                 progress = 100
-        except:
+        except Exception:
             response = 1
         return {'response': response, 'progress': progress, 'result': result}
