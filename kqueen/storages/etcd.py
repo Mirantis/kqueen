@@ -222,7 +222,7 @@ class RelationField(Field):
         try:
             class_name = self.value.__class__.__name__
             selfid = self.value.id
-        except:
+        except Exception:
             return False
 
         return class_name and selfid
@@ -378,7 +378,7 @@ class Model:
             value = response.value
         except etcd.EtcdKeyNotFound:
             raise NameError('Object not found')
-        except:
+        except Exception:
             raise
 
         return cls.deserialize(value, key=key, namespace=namespace)
@@ -476,7 +476,7 @@ class Model:
 
             self._key = key
             return True
-        except:
+        except Exception:
             raise
 
     def delete(self):

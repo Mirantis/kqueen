@@ -59,5 +59,5 @@ class TestAllEngines:
             method()
         except NotImplementedError:
             pytest.fail('Engine {} missing method {}'.format(engine_class.__name__, method_name))
-        except:
+        except Exception:
             pass
