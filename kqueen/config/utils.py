@@ -57,4 +57,6 @@ def current_config(config_file=None):
 
     setattr(config, 'source_file', read_file)
 
+    print(config)
+
     return config

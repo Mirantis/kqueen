@@ -30,14 +30,21 @@ class Field:
     def __init__(self, *args, **kwargs):
         """Initialize Field object
 
+        Params:
+            value: Set field value. This has higher priority than using attributes.
+
         Attributes:
             required (bool): Set field to be required before saving the model. Defaults to False.
+            value: Set field value.
 
         """
 
-        # TODO: pass value via args[0]
+        # value can be passed as args[0] or kwargs['value']
+        if len(args) >= 1:
+            self.value = args[0]
+        else:
+            self.value = kwargs.get('value', None)
 
-        self.value = kwargs.get('value', None)
         self.required = kwargs.get('required', False)
 
     def set_value(self, value, **kwargs):

@@ -13,7 +13,7 @@ class Config(BaseConfig):
     # Jenkins engine settings
     JENKINS_API_URL = 'https://ci.mcp.mirantis.net'
     JENKINS_PROVISION_JOB_NAME = 'deploy-aws-k8s_ha_calico_sm'
-    JENKINS_PROVISION_JOB_CTX = {}
+    JENKINS_PROVISION_JOB_CTX = {'STACK_DELETE': False}
     JENKINS_ANCHOR_PARAMETER = 'STACK_NAME'
     JENKINS_USERNAME = None
     JENKINS_PASSWORD = None
