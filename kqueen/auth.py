@@ -37,6 +37,6 @@ def identity(payload):
     user_id = payload['identity']
     try:
         user = User.load(None, user_id)
-    except:
+    except Exception:
         user = None
     return user

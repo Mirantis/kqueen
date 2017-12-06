@@ -43,7 +43,7 @@ class Cluster(Model, metaclass=ModelMeta):
                 return self.state
             self.state = cluster['state']
             self.save()
-        except:
+        except Exception:
             pass
         return self.state
 
@@ -98,7 +98,7 @@ class Cluster(Model, metaclass=ModelMeta):
                 'version': kubernetes.get_version(),
             }
 
-        except:
+        except Exception:
             out = {}
 
         return out
@@ -216,7 +216,7 @@ class Cluster(Model, metaclass=ModelMeta):
                             'source': resource_id,
                             'target': service_select_app_2_uid[resource['metadata']['labels']['app']]
                         })
-                    except:
+                    except Exception:
                         pass
 
         out = {
@@ -226,7 +226,7 @@ class Cluster(Model, metaclass=ModelMeta):
                 'Pod': '',
             }
         }
-#        except:
+#        except Exception:
 #            out = {
 #                'items': [],
 #                'relations': []
