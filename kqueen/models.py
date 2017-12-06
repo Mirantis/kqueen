@@ -346,6 +346,7 @@ class Organization(Model, metaclass=ModelMeta):
     id = IdField(required=True)
     name = StringField(required=True)
     namespace = StringField(required=True)
+    policy = JSONField()
     created_at = DatetimeField()
 
 
@@ -358,6 +359,7 @@ class User(Model, metaclass=ModelMeta):
     password = SecretField(required=True)
     organization = RelationField(required=True)
     created_at = DatetimeField()
+    role = StringField(required=True)
     active = BoolField(required=True)
 
     @property

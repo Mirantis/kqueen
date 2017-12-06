@@ -1,0 +1,22 @@
+{
+    "cluster:create": ["admin"],
+    "cluster:delete": ["admin"],
+    "cluster:get": "all",
+    "cluster:list": "all",
+    "cluster:update": "all",
+    "organization:create": ["superadmin"],
+    "organization:delete": ["superadmin"],
+    "organization:get": "all",
+    "organization:list": "all",
+    "organization:update": "all",
+    "provisioner:create": ["admin"],
+    "provisioner:delete": ["admin"],
+    "provisioner:get": "all",
+    "provisioner:list": "all",
+    "provisioner:update": "all",
+    "user:create": ["admin"],
+    "user:delete": ["admin"],
+    "user:get": "all",
+    "user:list": "all",
+    "user:update": "all"
+}

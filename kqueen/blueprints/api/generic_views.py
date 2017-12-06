@@ -1,9 +1,10 @@
-from flask import jsonify
-from flask.views import View
 from flask import abort
-from flask_jwt import _jwt_required, current_identity
 from flask import current_app
+from flask import jsonify
 from flask import request
+from flask.views import View
+from flask_jwt import _jwt_required, current_identity, JWTError
+from kqueen.auth import is_authorized
 from .helpers import get_object
 
 
@@ -17,8 +18,40 @@ class GenericView(View):
     def get_content(self, *args, **kwargs):
         raise NotImplementedError
 
+    def _policy_check(self):
+        # get view class
+        try:
+            _class = self.get_class()
+        except NotImplementedError:
+            return
+
+        # get user data
+        if current_identity:
+            user = current_identity.get_dict()
+            organization = current_identity.organization
+        else:
+            return
+
+        # form policy key
+        policy = '{}:{}'.format(_class.__name__.lower(), self.action)
+        # get policies and update them with organization level overrides
+        policies = current_app.config.get('DEFAULT_POLICIES', {})
+        if hasattr(organization, 'policies') and organization.policies:
+            policies.update(organization.policies)
+        policy_value = policies.get(policy, None)
+
+        # evaluate user permissions
+        if policy_value and current_identity:
+            user = current_identity.get_dict() 
+            authorized = is_authorized(user, policy_value)
+            if not authorized: 
+                raise JWTError('Insufficient permissions',
+                               'Your user account is lacking the necessary '
+                               'permissions to perform this operation')
+
     def check_access(self):
         _jwt_required(current_app.config['JWT_DEFAULT_REALM'])
+        self._policy_check()
 
     def dispatch_request(self, *args, **kwargs):
         self.check_access()
@@ -29,6 +62,7 @@ class GenericView(View):
 
 class GetView(GenericView):
     methods = ['GET']
+    action = 'get'
 
     def get_content(self, *args, **kwargs):
         return get_object(self.get_class(), kwargs['pk'], current_identity)
@@ -36,6 +70,7 @@ class GetView(GenericView):
 
 class DeleteView(GenericView):
     methods = ['DELETE']
+    action = 'delete'
 
     def dispatch_request(self, *args, **kwargs):
         self.check_access()
@@ -52,6 +87,7 @@ class DeleteView(GenericView):
 
 class UpdateView(GenericView):
     methods = ['PATCH']
+    action = 'update'
 
     def get_content(self, *args, **kwargs):
         return get_object(self.get_class(), kwargs['pk'], current_identity)
@@ -80,6 +116,7 @@ class UpdateView(GenericView):
 
 class ListView(GenericView):
     methods = ['GET']
+    action = 'list'
 
     def get_content(self, *args, **kwargs):
         try:
@@ -92,6 +129,7 @@ class ListView(GenericView):
 
 class CreateView(GenericView):
     methods = ['POST']
+    action = 'create'
 
     def save_object(self):
         self.obj.save()

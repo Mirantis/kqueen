@@ -48,6 +48,7 @@ with app.app_context():
             password='default',
             organization=organization,
             created_at=datetime.utcnow(),
+            role='superadmin',
             active=True
         )
         user.save()
