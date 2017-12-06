@@ -41,10 +41,8 @@ class GenericView(View):
         policy_value = policies.get(policy, None)
 
         # evaluate user permissions
-        if policy_value and current_identity:
-            user = current_identity.get_dict()
-            authorized = is_authorized(user, policy_value)
-            if not authorized:
+        if policy_value and user:
+            if not is_authorized(user, policy_value):
                 raise JWTError('Insufficient permissions',
                                'Your user account is lacking the necessary '
                                'permissions to perform this operation')
