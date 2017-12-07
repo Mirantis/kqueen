@@ -132,7 +132,7 @@ class TestClusterCRUD(BaseTestCRUD):
             self.cluster.name = 'Provisioned'
             self.cluster.save()
 
-            return (True, None)
+            return True, None
 
         monkeypatch.setattr(provisioner.get_engine_cls(), 'provision', fake_provision)
 
@@ -158,7 +158,7 @@ class TestClusterCRUD(BaseTestCRUD):
         provisioner.save()
 
         def fake_provision(self, *args, **kwargs):
-            return (False, 'Testing msg')
+            return False, 'Testing msg'
 
         monkeypatch.setattr(provisioner.get_engine_cls(), 'provision', fake_provision)
 

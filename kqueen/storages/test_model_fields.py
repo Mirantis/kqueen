@@ -1,4 +1,6 @@
+from kqueen.storages.etcd import BoolField
 from kqueen.storages.etcd import DatetimeField
+from kqueen.storages.etcd import Field
 from kqueen.storages.etcd import IdField
 from kqueen.storages.etcd import JSONField
 from kqueen.storages.etcd import Model
@@ -23,15 +25,16 @@ def create_model(required=False, global_ns=False):
         secret = SecretField(required=required)
         relation = RelationField(required=required)
         datetime = DatetimeField(required=required)
+        boolean = BoolField(required=required)
 
     return TestModel
 
 
 utcnow = datetime.datetime(1989, 11, 17)
 
-model_kwargs = {'string': 'abc123', 'json': {'a': 1, 'b': 2, 'c': 'tri'}, 'secret': 'pass', 'datetime': utcnow}
-model_kwargs_dict = {'string': 'abc123', 'json': {'a': 1, 'b': 2, 'c': 'tri'}, 'secret': 'pass', 'datetime': utcnow.isoformat()}
-model_fields = ['id', 'string', 'json', 'secret', 'relation', 'datetime']
+model_kwargs = {'string': 'abc123', 'json': {'a': 1, 'b': 2, 'c': 'tri'}, 'secret': 'pass', 'datetime': utcnow, 'boolean': True}
+model_kwargs_dict = {'string': 'abc123', 'json': {'a': 1, 'b': 2, 'c': 'tri'}, 'secret': 'pass', 'datetime': utcnow.isoformat(), 'boolean': True}
+model_fields = ['id', 'string', 'json', 'secret', 'relation', 'datetime', 'boolean']
 namespace = 'test'
 
 
@@ -39,7 +42,8 @@ def model_serialized(related=None):
     if related:
         return (
             '{{"string": "abc123", "json": "{{\\"a\\": 1, \\"b\\": 2, \\"c\\": \\"tri\\"}}", '
-            '"secret": "pass", "relation": "{related_class}:{related_id}", "datetime": {date_timestamp}}}'.format(
+            '"secret": "pass", "relation": "{related_class}:{related_id}", "datetime": {date_timestamp}, '
+            '"boolean": "true"}}'.format(
                 related_class=related.__class__.__name__,
                 related_id=related.id,
                 date_timestamp=int(utcnow.timestamp())
@@ -48,7 +52,7 @@ def model_serialized(related=None):
     else:
         return (
             '{{"string": "abc123", "json": "{\\"a\\": 1, \\"b\\": 2, \\"c\\": \\"tri\\"}", '
-            '"secret": "pass", "datetime": {date_timestamp}}}'.format(
+            '"secret": "pass", "datetime": {date_timestamp}, "boolean": "true"}}'.format(
                 date_timestamp=int(utcnow.timestamp()),
             )
         )
@@ -228,6 +232,26 @@ class TestDuplicateId:
 
         assert obj1.id != obj2.id
 
+
+class TestFieldSetValues:
+    def setup(self):
+        self.value = 'abc123'
+
+    def test_create_by_args(self):
+        field = Field(self.value)
+
+        assert field.value == self.value
+
+    def test_create_by_kwargs(self):
+        field = Field(value=self.value)
+
+        assert field.value == self.value
+
+    def test_create_by_both(self):
+        field = Field('args_value', value='kwargs_value')
+
+        assert field.value == 'args_value'
+
 #
 # Relation Field
 #
@@ -346,3 +370,34 @@ class TestDateTimeField:
         self.field.set_value(self.datetime)
 
         assert self.field.dict_value() == self.field.value.isoformat()
+
+
+class TestBoolField:
+    def setup(self):
+        self.boolean = False
+        self.field = BoolField()
+
+    def test_serialization(self):
+        req = 'false'
+        self.field.set_value(self.boolean)
+
+        assert self.field.serialize() == req
+
+    def test_serialization_none(self):
+        self.field.set_value(None)
+
+        assert self.field.serialize() is None
+
+    @pytest.mark.parametrize('serialized, req', [
+        ('false', False),
+        ('true', True),
+    ])
+    def test_deserialization(self, serialized, req):
+        self.field.deserialize(serialized)
+
+        assert self.field.value == req
+
+    def test_dict_value_returns_boolean(self):
+        self.field.set_value(self.boolean)
+
+        assert self.field.dict_value() == self.boolean

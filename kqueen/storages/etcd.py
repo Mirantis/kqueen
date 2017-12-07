@@ -30,14 +30,21 @@ class Field:
     def __init__(self, *args, **kwargs):
         """Initialize Field object
 
+        Argss:
+            value: Set field value. This has higher priority than using attributes.
+
         Attributes:
             required (bool): Set field to be required before saving the model. Defaults to False.
+            value: Set field value.
 
         """
 
-        # TODO: pass value via args[0]
+        # value can be passed as args[0] or kwargs['value']
+        if len(args) >= 1:
+            self.value = args[0]
+        else:
+            self.value = kwargs.get('value', None)
 
-        self.value = kwargs.get('value', None)
         self.required = kwargs.get('required', False)
 
     def set_value(self, value, **kwargs):
@@ -98,6 +105,25 @@ class Field:
 
 class StringField(Field):
     pass
+
+
+class BoolField(Field):
+
+    def deserialize(self, serialized, **kwargs):
+        if isinstance(serialized, six.string_types):
+            value = json.loads(serialized)
+            self.set_value(value, **kwargs)
+
+    def set_value(self, value, **kwargs):
+        if value is not None:
+            if isinstance(value, bool):
+                self.value = value
+            else:
+                self.deserialize(value)
+
+    def serialize(self):
+        if isinstance(self.value, bool):
+            return json.dumps(self.value)
 
 
 class IdField(Field):
@@ -203,7 +229,7 @@ class RelationField(Field):
         try:
             class_name = self.value.__class__.__name__
             selfid = self.value.id
-        except:
+        except Exception:
             return False
 
         return class_name and selfid
@@ -359,7 +385,7 @@ class Model:
             value = response.value
         except etcd.EtcdKeyNotFound:
             raise NameError('Object not found')
-        except:
+        except Exception:
             raise
 
         return cls.deserialize(value, key=key, namespace=namespace)
@@ -383,7 +409,7 @@ class Model:
 
         for field_name, field in cls.get_fields().items():
             field_class = field.__class__
-            if hasattr(field_class, 'is_field') and toplevel.get(field_name):
+            if hasattr(field_class, 'is_field') and toplevel.get(field_name) is not None:
                 field_object = field_class(**field.__dict__)
                 field_object.deserialize(toplevel[field_name], **kwargs)
 
@@ -457,7 +483,7 @@ class Model:
 
             self._key = key
             return True
-        except:
+        except Exception:
             raise
 
     def delete(self):
@@ -512,7 +538,7 @@ class Model:
             else:
                 wr = field.get_value()
 
-            if wr:
+            if wr is not None:
                 output[field_name] = wr
 
         return output

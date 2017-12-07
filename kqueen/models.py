@@ -1,6 +1,7 @@
 from importlib import import_module
 from kqueen.config import current_config
 from kqueen.kubeapi import KubernetesAPI
+from kqueen.storages.etcd import BoolField
 from kqueen.storages.etcd import DatetimeField
 from kqueen.storages.etcd import IdField
 from kqueen.storages.etcd import JSONField
@@ -42,7 +43,7 @@ class Cluster(Model, metaclass=ModelMeta):
                 return self.state
             self.state = cluster['state']
             self.save()
-        except:
+        except Exception:
             pass
         return self.state
 
@@ -51,9 +52,24 @@ class Cluster(Model, metaclass=ModelMeta):
         if self.provisioner:
             _class = self.provisioner.get_engine_cls()
             if _class:
-                parameters = self.provisioner.parameters or {}
+                parameters = {}
+                for i in [self.provisioner.parameters, self.metadata]:
+                    if isinstance(i, dict):
+                        parameters.update(i)
+
                 return _class(self, **parameters)
-        return None
+        else:
+            raise Exception('Missing provisioner')
+
+    def delete(self):
+        """Deprovision cluster and delete object from database"""
+
+        deprov_status, deprov_msg = self.engine.deprovision()
+
+        if deprov_status:
+            super(Cluster, self).delete()
+        else:
+            raise Exception('Unable to deprovision cluster: {}'.format(deprov_msg))
 
     def get_kubeconfig(self):
         if self.kubeconfig:
@@ -71,6 +87,7 @@ class Cluster(Model, metaclass=ModelMeta):
             out = {
                 'addons': kubernetes.list_services(filter_addons=True),
                 'deployments': kubernetes.list_deployments(),
+                'namespaces': kubernetes.list_namespaces(),
                 'nodes': kubernetes.list_nodes(),
                 'nodes_pods': kubernetes.count_pods_by_node(),
                 'persistent_volumes': kubernetes.list_persistent_volumes(),
@@ -81,7 +98,7 @@ class Cluster(Model, metaclass=ModelMeta):
                 'version': kubernetes.get_version(),
             }
 
-        except:
+        except Exception:
             out = {}
 
         return out
@@ -199,7 +216,7 @@ class Cluster(Model, metaclass=ModelMeta):
                             'source': resource_id,
                             'target': service_select_app_2_uid[resource['metadata']['labels']['app']]
                         })
-                    except:
+                    except Exception:
                         pass
 
         out = {
@@ -209,7 +226,7 @@ class Cluster(Model, metaclass=ModelMeta):
                 'Pod': '',
             }
         }
-#        except:
+#        except Exception:
 #            out = {
 #                'items': [],
 #                'relations': []
@@ -286,7 +303,8 @@ class Provisioner(Model, metaclass=ModelMeta):
             class_name = self.engine.split('.')[-1]
             module = import_module(module_path)
             _class = getattr(module, class_name)
-        except:
+        except Exception as e:
+            logger.error(repr(e))
             _class = None
         return _class
 
@@ -311,6 +329,7 @@ class Provisioner(Model, metaclass=ModelMeta):
     def save(self, check_status=True):
         if check_status:
             self.state = self.engine_status(save=False)
+
         return super(Provisioner, self).save()
 
 
@@ -337,6 +356,7 @@ class User(Model, metaclass=ModelMeta):
     password = SecretField(required=True)
     organization = RelationField(required=True)
     created_at = DatetimeField()
+    active = BoolField(required=True)
 
     @property
     def namespace(self):

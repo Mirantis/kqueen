@@ -30,20 +30,23 @@ class JenkinsEngine(BaseEngine):
     provision_job_name = config.get('JENKINS_PROVISION_JOB_NAME')
     anchor_parameter = config.get('JENKINS_ANCHOR_PARAMETER')
     parameter_schema = {
-        'username': {
-            'type': 'text',
-            'label': 'Username',
-            'validators': {
-                'required': True
+        'provisioner': {
+            'username': {
+                'type': 'text',
+                'label': 'Username',
+                'validators': {
+                    'required': True
+                }
+            },
+            'password': {
+                'type': 'password',
+                'label': 'Password',
+                'validators': {
+                    'required': True
+                }
             }
         },
-        'password': {
-            'type': 'password',
-            'label': 'Password',
-            'validators': {
-                'required': True
-            }
-        }
+        'cluster': {}
     }
 
     def __init__(self, cluster, **kwargs):
@@ -119,10 +122,12 @@ class JenkinsEngine(BaseEngine):
 
     def deprovision(self, **kwargs):
         """
+        Deprovisioning isn't supported for Jenkins provisioner yet.
+
         Implementation of :func:`~kqueen.engines.base.BaseEngine.deprovision`
         """
 
-        pass
+        return True, None
 
     def get_kubeconfig(self):
         """
@@ -166,7 +171,7 @@ class JenkinsEngine(BaseEngine):
             self.cluster.metadata = metadata
             self.cluster.save()
             return external_id
-        except:
+        except Exception:
             pass
         return external_id
 
@@ -287,13 +292,6 @@ class JenkinsEngine(BaseEngine):
                     progress = 99
             else:
                 progress = 100
-        except:
+        except Exception:
             response = 1
         return {'response': response, 'progress': progress, 'result': result}
-
-    @classmethod
-    def get_parameter_schema(cls):
-        """
-        Implementation of :func:`~kqueen.engines.base.BaseEngine.get_parameter_schema`
-        """
-        return cls.parameter_schema

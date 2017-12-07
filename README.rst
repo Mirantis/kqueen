@@ -11,6 +11,10 @@ KQueen - Kubernetes cluster manager
 .. image:: https://coveralls.io/repos/github/Mirantis/kqueen/badge.svg?branch=master
     :target: https://coveralls.io/github/Mirantis/kqueen?branch=master
 
+Overview
+--------
+
+More information about KQueen Architecture and use cases is described in `RATIONALE <RATIONALE.md>`_ file.
 
 Development
 -----------
@@ -20,7 +24,7 @@ Development
 ::
 
     mkvirtualenv -p /usr/bin/python3 kqueen
-    pip3 install -r requirements.txt
+    pip3 install -e ".[dev]"
     pip3 install --editable .
     # start etcd in container
     docker-compose up -d # start
@@ -50,11 +54,6 @@ Demo environment
 
     docker-compose -f docker-compose.yml -f docker-compose.demo.yml -f docker-compose.kubernetes.yml up
 
--  You can add some example data by running
-
-::
-
-    docker-compose -f docker-compose.yml -f docker-compose.demo.yml exec kqueen ./devenv.py
 
 It will add user ``admin`` with password ``default`` and few of testing
 objects.
@@ -79,3 +78,16 @@ For full documenation please refer to
    :target: https://badge.fury.io/py/kqueen
 .. |Coverage Status| image:: https://coveralls.io/repos/github/Mirantis/kqueen/badge.svg?branch=master
    :target: https://coveralls.io/github/Mirantis/kqueen?branch=master
+
+DEMOs
+-----
+
+**Generic KQueen Overview**
+
+.. image:: https://img.youtube.com/vi/PCAwCxPQc2A/0.jpg
+   :target: https://www.youtube.com/watch?v=PCAwCxPQc2A&t=1s
+
+**AKS (Azure) in KQueen**
+
+.. image:: https://img.youtube.com/vi/xHydnJGcs2k/0.jpg
+   :target: https://youtu.be/xHydnJGcs2k

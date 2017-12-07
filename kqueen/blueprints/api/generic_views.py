@@ -44,7 +44,7 @@ class DeleteView(GenericView):
 
         try:
             obj.delete()
-        except:
+        except Exception:
             abort(500)
 
         return jsonify({'id': obj.id, 'state': 'deleted'})
@@ -60,7 +60,7 @@ class UpdateView(GenericView):
         self.check_access()
 
         if not request.json:
-            abort(400)
+            abort(400, description='JSON data expected')
 
         data = request.json
         if not isinstance(data, dict):
@@ -72,7 +72,7 @@ class UpdateView(GenericView):
 
         try:
             obj.save()
-        except:
+        except Exception:
             abort(500)
 
         return super(UpdateView, self).dispatch_request(*args, **kwargs)
@@ -106,7 +106,7 @@ class CreateView(GenericView):
         self.check_access()
 
         if not request.json:
-            abort(400)
+            abort(400, description='JSON data expected')
         else:
             cls = self.get_class()
 
@@ -121,6 +121,6 @@ class CreateView(GenericView):
                 self.after_save()
             except Exception as e:
                 current_app.logger.error(e)
-                abort(500)
+                abort(500, description='Creation failed with: {}'.format(e))
 
             return super(CreateView, self).dispatch_request(*args, **kwargs)
