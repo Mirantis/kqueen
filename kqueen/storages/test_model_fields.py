@@ -1,5 +1,6 @@
 from kqueen.storages.etcd import BoolField
 from kqueen.storages.etcd import DatetimeField
+from kqueen.storages.etcd import Field
 from kqueen.storages.etcd import IdField
 from kqueen.storages.etcd import JSONField
 from kqueen.storages.etcd import Model
@@ -230,6 +231,26 @@ class TestDuplicateId:
         print(obj2.get_dict())
 
         assert obj1.id != obj2.id
+
+
+class TestFieldSetValues:
+    def setup(self):
+        self.value = 'abc123'
+
+    def test_create_by_args(self):
+        field = Field(self.value)
+
+        assert field.value == self.value
+
+    def test_create_by_kwargs(self):
+        field = Field(value=self.value)
+
+        assert field.value == self.value
+
+    def test_create_by_both(self):
+        field = Field('args_value', value='kwargs_value')
+
+        assert field.value == 'args_value'
 
 #
 # Relation Field
