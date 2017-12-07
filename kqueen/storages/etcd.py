@@ -30,14 +30,21 @@ class Field:
     def __init__(self, *args, **kwargs):
         """Initialize Field object
 
+        Argss:
+            value: Set field value. This has higher priority than using attributes.
+
         Attributes:
             required (bool): Set field to be required before saving the model. Defaults to False.
+            value: Set field value.
 
         """
 
-        # TODO: pass value via args[0]
+        # value can be passed as args[0] or kwargs['value']
+        if len(args) >= 1:
+            self.value = args[0]
+        else:
+            self.value = kwargs.get('value', None)
 
-        self.value = kwargs.get('value', None)
         self.required = kwargs.get('required', False)
 
     def set_value(self, value, **kwargs):
@@ -222,7 +229,7 @@ class RelationField(Field):
         try:
             class_name = self.value.__class__.__name__
             selfid = self.value.id
-        except:
+        except Exception:
             return False
 
         return class_name and selfid
@@ -378,7 +385,7 @@ class Model:
             value = response.value
         except etcd.EtcdKeyNotFound:
             raise NameError('Object not found')
-        except:
+        except Exception:
             raise
 
         return cls.deserialize(value, key=key, namespace=namespace)
@@ -476,7 +483,7 @@ class Model:
 
             self._key = key
             return True
-        except:
+        except Exception:
             raise
 
     def delete(self):
