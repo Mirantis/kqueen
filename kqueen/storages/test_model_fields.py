@@ -207,7 +207,7 @@ class TestGetDict:
         dicted = self.obj1.get_dict(expand=True)
 
         assert isinstance(dicted['relation'], dict)
-        assert dicted['relation'] == self.obj2.get_dict()
+        assert dicted['relation'] == self.obj2.get_dict(expand=True)
 
 
 class TestDuplicateId:
