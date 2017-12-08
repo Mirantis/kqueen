@@ -1,6 +1,13 @@
+from .generic_views import CreateView
+from .generic_views import DeleteView
+from .generic_views import GetView
+from .generic_views import ListView
+from .generic_views import UpdateView
 from .helpers import get_object
+from concurrent.futures import ThreadPoolExecutor
 from flask import abort
 from flask import Blueprint
+from flask import current_app
 from flask import jsonify
 from flask import make_response
 from flask_jwt import current_identity
@@ -10,8 +17,8 @@ from kqueen.models import Cluster
 from kqueen.models import Organization
 from kqueen.models import Provisioner
 from kqueen.models import User
-from .generic_views import ListView, CreateView, GetView, UpdateView, DeleteView
 
+import asyncio
 import logging
 import os
 import yaml
@@ -62,11 +69,16 @@ def index():
 class ListClusters(ListView):
     object_class = Cluster
 
+    async def _update_cluster(self, cluster):
+        return cluster.get_state()
+
     def get_content(self, *args, **kwargs):
         clusters = super(ListClusters, self).get_content(*args, **kwargs)
-        # refresh states on all clusters
-        # TODO: replace this with some async function
-        [c.get_state() for c in clusters]
+
+        loop = asyncio.get_event_loop()
+        tasks = [self._update_cluster(c) for c in clusters]
+        loop.run_until_complete(asyncio.gather(*tasks))
+
         return clusters
 
 

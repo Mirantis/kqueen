@@ -209,6 +209,7 @@ class TestClusterCRUD(BaseTestCRUD):
 
         def fake_get_state(self):
             self.metadata = {'executed': True}
+            print('get_state on {}'.format(self))
             self.save()
 
             return config.get('CLUSTER_UNKNOWN_STATE')
@@ -224,5 +225,6 @@ class TestClusterCRUD(BaseTestCRUD):
         assert response.status_code == 200
 
         obj = self.obj.__class__.load(self.namespace, self.obj.id)
-        assert obj.metadata, 'get_state wasn\'t executed'
+
+        assert obj.metadata, 'get_state wasn\'t executed for cluster {}'.format(obj)
         assert obj.metadata['executed'], 'get_state wasn\'t executed'
