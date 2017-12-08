@@ -9,6 +9,8 @@ from .helpers import get_object
 
 
 class GenericView(View):
+    obj = None
+
     def get_class(self):
         if hasattr(self, 'object_class'):
             return self.object_class
@@ -18,7 +20,7 @@ class GenericView(View):
     def get_content(self, *args, **kwargs):
         raise NotImplementedError
 
-    def _policy_check(self):
+    def check_authorization(self):
         # get view class
         try:
             _class = self.get_class()
@@ -41,57 +43,79 @@ class GenericView(View):
         policy_value = policies.get(policy, None)
 
         # evaluate user permissions
-        if policy_value and user:
-            if not is_authorized(user, policy_value):
+        # if there are multiple objects, filter out those which current user
+        # doesn't have access to
+        if isinstance(self.obj, list):
+            allowed = []
+            for obj in self.obj:
+                if is_authorized(user, policy_value, resource=obj):
+                    allowed.append(obj)
+            self.obj = allowed
+        # if there is single object raise if user doesn't have access to it
+        elif policy_value and user:
+            if not is_authorized(user, policy_value, resource=self.obj):
                 raise JWTError('Insufficient permissions',
                                'Your user account is lacking the necessary '
                                'permissions to perform this operation')
 
-    def check_access(self):
+    def check_authentication(self):
         _jwt_required(current_app.config['JWT_DEFAULT_REALM'])
-        self._policy_check()
 
     def dispatch_request(self, *args, **kwargs):
-        self.check_access()
+        self.check_authentication()
+        self.set_object(*args, **kwargs)
+        self.check_authorization()
         output = self.get_content(*args, **kwargs)
 
         return jsonify(output)
+
+    def set_object(self, *args, **kwargs):
+        pass
 
 
 class GetView(GenericView):
     methods = ['GET']
     action = 'get'
 
+    def set_object(self, *args, **kwargs):
+        self.obj = get_object(self.get_class(), kwargs['pk'], current_identity)
+
     def get_content(self, *args, **kwargs):
-        return get_object(self.get_class(), kwargs['pk'], current_identity)
+        return self.obj
 
 
 class DeleteView(GenericView):
     methods = ['DELETE']
     action = 'delete'
 
-    def dispatch_request(self, *args, **kwargs):
-        self.check_access()
+    def set_object(self, *args, **kwargs):
+        self.obj = get_object(self.get_class(), kwargs['pk'], current_identity)
 
-        obj = get_object(self.get_class(), kwargs['pk'], current_identity)
+    def dispatch_request(self, *args, **kwargs):
+        self.check_authentication()
+        self.set_object(*args, **kwargs)
+        self.check_authorization()
 
         try:
-            obj.delete()
+            self.obj.delete()
         except Exception:
             abort(500)
 
-        return jsonify({'id': obj.id, 'state': 'deleted'})
+        return jsonify({'id': self.obj.id, 'state': 'deleted'})
 
 
 class UpdateView(GenericView):
     methods = ['PATCH']
     action = 'update'
 
+    def set_object(self, *args, **kwargs):
+        self.obj = get_object(self.get_class(), kwargs['pk'], current_identity)
+
     def get_content(self, *args, **kwargs):
-        return get_object(self.get_class(), kwargs['pk'], current_identity)
+        return self.obj
 
     def dispatch_request(self, *args, **kwargs):
-        self.check_access()
+        self.check_authentication()
 
         if not request.json:
             abort(400, description='JSON data expected')
@@ -100,29 +124,34 @@ class UpdateView(GenericView):
         if not isinstance(data, dict):
             abort(400)
 
-        obj = get_object(self.get_class(), kwargs['pk'], current_identity)
+        self.set_object(*args, **kwargs)
+        self.check_authorization()
+
         for key, value in data.items():
-            setattr(obj, key, value)
+            setattr(self.obj, key, value)
 
         try:
-            obj.save()
+            self.obj.save()
         except Exception:
             abort(500)
 
-        return super(UpdateView, self).dispatch_request(*args, **kwargs)
+        output = self.get_content(*args, **kwargs)
+        return jsonify(output)
 
 
 class ListView(GenericView):
     methods = ['GET']
     action = 'list'
 
-    def get_content(self, *args, **kwargs):
+    def set_object(self, *args, **kwargs):
         try:
             namespace = current_identity.namespace
         except AttributeError:
             namespace = None
+        self.obj = list(self.get_class().list(namespace, return_objects=True).values())
 
-        return list(self.get_class().list(namespace, return_objects=True).values())
+    def get_content(self, *args, **kwargs):
+        return self.obj
 
 
 class CreateView(GenericView):
@@ -135,23 +164,25 @@ class CreateView(GenericView):
     def after_save(self):
         pass
 
+    def set_object(self, *args, **kwargs):
+        cls = self.get_class()
+        try:
+            namespace = current_identity.namespace
+        except AttributeError:
+            namespace = None
+
+        self.obj = cls(namespace, **request.json)
+
     def get_content(self, *args, **kwargs):
         return self.obj.get_dict(expand=True)
 
     def dispatch_request(self, *args, **kwargs):
-        self.check_access()
-
+        self.check_authentication()
         if not request.json:
             abort(400, description='JSON data expected')
         else:
-            cls = self.get_class()
-
-            try:
-                namespace = current_identity.namespace
-            except AttributeError:
-                namespace = None
-
-            self.obj = cls(namespace, **request.json)
+            self.set_object(*args, **kwargs)
+            self.check_authorization()
             try:
                 self.save_object()
                 self.after_save()
@@ -159,4 +190,5 @@ class CreateView(GenericView):
                 current_app.logger.error(e)
                 abort(500, description='Creation failed with: {}'.format(e))
 
-            return super(CreateView, self).dispatch_request(*args, **kwargs)
+            output = self.get_content(*args, **kwargs)
+            return jsonify(output)
