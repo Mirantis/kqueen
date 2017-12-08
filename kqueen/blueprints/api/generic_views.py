@@ -45,18 +45,19 @@ class GenericView(View):
         # evaluate user permissions
         # if there are multiple objects, filter out those which current user
         # doesn't have access to
-        if isinstance(self.obj, list):
-            allowed = []
-            for obj in self.obj:
-                if is_authorized(user, policy_value, resource=obj):
-                    allowed.append(obj)
-            self.obj = allowed
-        # if there is single object raise if user doesn't have access to it
-        elif policy_value and user:
-            if not is_authorized(user, policy_value, resource=self.obj):
-                raise JWTError('Insufficient permissions',
-                               'Your user account is lacking the necessary '
-                               'permissions to perform this operation')
+        if policy_value:
+            if isinstance(self.obj, list):
+                allowed = []
+                for obj in self.obj:
+                    if is_authorized(user, policy_value, resource=obj):
+                        allowed.append(obj)
+                self.obj = allowed
+            # if there is single object raise if user doesn't have access to it
+            else:
+                if not is_authorized(user, policy_value, resource=self.obj):
+                    raise JWTError('Insufficient permissions',
+                                   'Your user account is lacking the necessary '
+                                   'permissions to perform this operation')
 
     def check_authentication(self):
         _jwt_required(current_app.config['JWT_DEFAULT_REALM'])
