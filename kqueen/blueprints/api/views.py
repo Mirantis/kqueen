@@ -4,10 +4,8 @@ from .generic_views import GetView
 from .generic_views import ListView
 from .generic_views import UpdateView
 from .helpers import get_object
-from concurrent.futures import ThreadPoolExecutor
 from flask import abort
 from flask import Blueprint
-from flask import current_app
 from flask import jsonify
 from flask import make_response
 from flask_jwt import current_identity
@@ -69,15 +67,24 @@ def index():
 class ListClusters(ListView):
     object_class = Cluster
 
-    async def _update_cluster(self, cluster):
-        return cluster.get_state()
+    async def _update_clusters(self, clusters):
+        loop = asyncio.get_event_loop()
+        futures = [loop.run_in_executor(None, c.get_state) for c in clusters]
+
+        for state in await asyncio.gather(*futures):
+            print(state)
 
     def get_content(self, *args, **kwargs):
         clusters = super(ListClusters, self).get_content(*args, **kwargs)
 
-        loop = asyncio.get_event_loop()
-        tasks = [self._update_cluster(c) for c in clusters]
-        loop.run_until_complete(asyncio.gather(*tasks))
+        try:
+            loop = asyncio.get_event_loop()
+            loop.run_until_complete(self._update_clusters(clusters))
+        except RuntimeError:
+            logger.warning('Asyncio loop is NOT available, fallback to simple looping')
+
+            for c in clusters:
+                c.get_state()
 
         return clusters
 

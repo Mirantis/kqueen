@@ -209,7 +209,6 @@ class TestClusterCRUD(BaseTestCRUD):
 
         def fake_get_state(self):
             self.metadata = {'executed': True}
-            print('get_state on {}'.format(self))
             self.save()
 
             return config.get('CLUSTER_UNKNOWN_STATE')
