@@ -1,9 +1,11 @@
 """Authentication methods for API."""
 
-from kqueen.models import User
+from kqueen.models import Organization, User
 from werkzeug.security import safe_str_cmp
 
-import six
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def authenticate(username, password):
@@ -44,7 +46,7 @@ def identity(payload):
     return user
 
 
-def is_authorized(user, policy_value):
+def is_authorized(_user, policy_value, resource=None):
     """
     Evaluate if given user fulfills requirements of the given
     policy_value.
@@ -52,30 +54,60 @@ def is_authorized(user, policy_value):
     Example:
         >>> user.get_dict()
         >>> {'username': 'jsmith', ..., 'role': 'member'}
-        >>> is_authorized(user, "all")
+        >>> is_authorized(user, "ALL")
         True
-        >>> is_authorized(user, ['admin'])
+        >>> is_authorized(user, "IS_ADMIN")
         False
 
     Args:
         user (dict or User): User data
-        policy_value (string or list): Either "all" or list of allowed roles
+        policy_value (string or list): Condition written using shorthands and magic keywords
 
     Returns:
         bool: authorized or not
     """
-    if isinstance(user, User):
-        role = user.get_dict()['role']
-    elif isinstance(user, dict):
-        role = user['role']
+    if isinstance(_user, User):
+        user = _user.get_dict()
+    elif isinstance(_user, dict):
+        user = _user
     else:
-        raise TypeError('Invalid type for argument user {}'.format(type(user)))
+        raise TypeError('Invalid type for argument user {}'.format(type(_user)))
 
-    if role == 'superadmin':
+    # magic keywords
+    USER = user['id']
+    ORGANIZATION = user['organization'].id
+    ROLE = user['role']
+    if resource:
+        if hasattr(resource, 'owner'):
+            OWNER = resource.owner.id
+            OWNER_ORGANIZATION = resource.owner.organization.id
+        elif isinstance(resource, User):
+            OWNER = resource.id
+            OWNER_ORGANIZATION = resource.organization.id
+        elif isinstance(resource, Organization):
+            OWNER_ORGANIZATION = resource.id
+
+    # replace shorthands with full condition in policy_value
+    shorthands = {
+        'IS_ADMIN': 'ORGANIZATION == OWNER_ORGANIZATION and ROLE == "admin"',
+        'IS_SUPERADMIN': 'ROLE == "superadmin"',
+        'IS_OWNER': 'ORGANIZATION == OWNER_ORGANIZATION and USER == OWNER',
+        'ADMIN_OR_OWNER': 'ORGANIZATION == OWNER_ORGANIZATION and (ROLE == "admin" or USER == OWNER)',
+        'ALL': 'ORGANIZATION == OWNER_ORGANIZATION'
+    }
+    for short, full in shorthands.items():
+        policy_value = policy_value.replace(short, full)
+
+    if ROLE == 'superadmin':
         # no point in checking anything here
         return True
-    if isinstance(policy_value, six.string_types) and policy_value == 'all':
-        return True
-    elif isinstance(policy_value, list) and role in policy_value:
-        return True
-    return False
+
+    try:
+        authorized = eval(policy_value)
+        if not isinstance(authorized, bool):
+            logger.error('Policy evaluation did not return boolean: {}'.format(str(authorized)))
+            authorized = False
+    except Exception as e:
+        logger.error('Policy evaluation failed: {}'.format(repr(e)))
+        authorized = False
+    return authorized
