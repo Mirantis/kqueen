@@ -74,18 +74,23 @@ def is_authorized(_user, policy_value, resource=None):
         raise TypeError('Invalid type for argument user {}'.format(type(_user)))
 
     # magic keywords
-    USER = user['id']
-    ORGANIZATION = user['organization'].id
+    USER = user['id']                       # noqa: F841
+    ORGANIZATION = user['organization'].id  # noqa: F841
     ROLE = user['role']
     if resource:
+        if not resource.validate():
+            # if invalid resource is passed, let's just continue dispatch_request
+            # so it can properly fail with 500 response code
+            logger.error('Cannot evaluate policy for invalid object: {}'.format(str(resource.get_dict())))
+            return True
         if hasattr(resource, 'owner'):
-            OWNER = resource.owner.id
-            OWNER_ORGANIZATION = resource.owner.organization.id
+            OWNER = resource.owner.id                            # noqa: F841
+            OWNER_ORGANIZATION = resource.owner.organization.id  # noqa: F841
         elif isinstance(resource, User):
-            OWNER = resource.id
-            OWNER_ORGANIZATION = resource.organization.id
+            OWNER = resource.id                                  # noqa: F841
+            OWNER_ORGANIZATION = resource.organization.id        # noqa: F841
         elif isinstance(resource, Organization):
-            OWNER_ORGANIZATION = resource.id
+            OWNER_ORGANIZATION = resource.id                     # noqa: F841
 
     # replace shorthands with full condition in policy_value
     shorthands = {
