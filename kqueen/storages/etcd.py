@@ -367,6 +367,11 @@ class Model:
         except etcd.EtcdKeyNotFound:
             return output
 
+        # Don't allow iteration over children generator on empty directory
+        # More informations here: https://github.com/jplana/python-etcd/issues/54
+        if not getattr(directory, '_children', []):
+            return output
+
         for result in directory.children:
             if return_objects:
                 output[result.key.replace(key, '')] = cls.deserialize(result.value, namespace=namespace)
