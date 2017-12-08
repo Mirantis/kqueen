@@ -71,8 +71,8 @@ class ListClusters(ListView):
         loop = asyncio.get_event_loop()
         futures = [loop.run_in_executor(None, c.get_state) for c in clusters]
 
-        for state in await asyncio.gather(*futures):
-            print(state)
+        for _ in await asyncio.gather(*futures):
+            pass
 
     def get_content(self, *args, **kwargs):
         clusters = super(ListClusters, self).get_content(*args, **kwargs)
