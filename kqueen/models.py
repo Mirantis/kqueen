@@ -33,6 +33,7 @@ class Cluster(Model, metaclass=ModelMeta):
     kubeconfig = JSONField()
     metadata = JSONField()
     created_at = DatetimeField()
+    owner = RelationField(required=True)
 
     def get_state(self):
         try:
@@ -297,6 +298,7 @@ class Provisioner(Model, metaclass=ModelMeta):
     state = StringField()
     parameters = JSONField()
     created_at = DatetimeField()
+    owner = RelationField(required=True)
 
     def get_engine_cls(self):
         """Return engine class"""
