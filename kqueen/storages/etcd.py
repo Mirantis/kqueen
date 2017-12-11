@@ -1,15 +1,19 @@
+from .exceptions import BackendError
+from Crypto import Random
+from Crypto.Cipher import AES
+from datetime import datetime
+from dateutil.parser import parse as du_parse
+from flask import current_app
+from kqueen.config import current_config
+
+import base64
 import bcrypt
 import etcd
+import hashlib
+import importlib
 import json
 import logging
 import uuid
-import importlib
-import six
-from datetime import datetime
-from dateutil.parser import parse as du_parse
-from kqueen.config import current_config
-from flask import current_app
-from .exceptions import BackendError
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +50,12 @@ class Field:
         else:
             self.value = kwargs.get('value', None)
 
+        # set block size for crypto
+        self.bs = 16
+
+        # field parameters
         self.required = kwargs.get('required', False)
+        self.encrypted = kwargs.get('encrypted', False)
 
     def on_create(self, **kwargs):
         """Optional action that should be run only on newly created objects"""
@@ -97,6 +106,55 @@ class Field:
         """
         return True
 
+    def _get_encryption_key(self):
+        """
+        Read encryption key and format it.
+
+        Returns:
+            Encryption key.
+        """
+
+        # check for key
+        config = current_config()
+        key = config.get('SECRET_KEY')
+
+        if key is None:
+            raise Exception('Missing SECRET_KEY')
+
+        # calculate hash passowrd
+        return hashlib.sha256(key.encode('utf-8')).digest()[:self.bs]
+
+    def _pad(self, s):
+        return s + (self.bs - len(s) % self.bs) * chr(self.bs - len(s) % self.bs)
+
+    def _unpad(self, s):
+        return s[:-ord(s[len(s) - 1:])]
+
+    def encrypt(self):
+        """Encrypt stored value"""
+
+        key = self._get_encryption_key()
+        padded = self._pad(str(self.serialize()))
+
+        iv = Random.new().read(self.bs)
+        suite = AES.new(key, AES.MODE_CBC, iv)
+        encrypted = suite.encrypt(padded)
+        encoded = base64.b64encode(iv + encrypted)
+
+        return encoded
+
+    def decrypt(self, crypted, **kwargs):
+        key = self._get_encryption_key()
+        decoded = base64.b64decode(crypted)
+
+        iv = decoded[:self.bs]
+        suite = AES.new(key, AES.MODE_CBC, iv)
+        decrypted = suite.decrypt(decoded[self.bs:]).decode('utf-8')
+
+        serialized = self._unpad(decrypted)
+        self.deserialize(serialized, **kwargs)
+        print('Seralizing from: {}, value: {}'.format(serialized, self.value))
+
     def __str__(self):
         return str(self.value)
 
@@ -115,7 +173,7 @@ class StringField(Field):
 class BoolField(Field):
 
     def deserialize(self, serialized, **kwargs):
-        if isinstance(serialized, six.string_types):
+        if isinstance(serialized, str):
             value = json.loads(serialized)
             self.set_value(value, **kwargs)
 
@@ -156,10 +214,15 @@ class DatetimeField(Field):
 
     def deserialize(self, serialized, **kwargs):
         value = None
+
+        # convert to float if serialized is digit
+        if isinstance(serialized, str) and serialized.isdigit():
+            serialized = float(serialized)
+
         if isinstance(serialized, (float, int)):
             value = datetime.fromtimestamp(serialized)
             self.set_value(value, **kwargs)
-        elif isinstance(serialized, six.string_types):
+        elif isinstance(serialized, str):
             value = du_parse(serialized)
             self.set_value(value, **kwargs)
 
