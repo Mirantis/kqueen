@@ -37,6 +37,7 @@ setup(
         'flask-swagger-ui',
         'gunicorn',
         'kubernetes',
+        'pycrypto',
         'prometheus_client',
         'python-etcd',
         'python-jenkins',
