@@ -25,6 +25,8 @@ class BaseConfig:
     CLUSTER_DEPROVISIONING_STATE = 'Destroying'
     CLUSTER_UNKNOWN_STATE = 'Unknown'
 
+    CLUSTER_STATE_ON_LIST = True
+
     # Provisioner statuses
     PROVISIONER_ERROR_STATE = 'Error'
     PROVISIONER_OK_STATE = 'OK'

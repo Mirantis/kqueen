@@ -15,12 +15,14 @@ from kqueen.models import Cluster
 from kqueen.models import Organization
 from kqueen.models import Provisioner
 from kqueen.models import User
+from kqueen.config import current_config
 
 import asyncio
 import logging
 import os
 import yaml
 
+config = current_config()
 logger = logging.getLogger(__name__)
 
 api = Blueprint('api', __name__)
@@ -77,14 +79,15 @@ class ListClusters(ListView):
     def get_content(self, *args, **kwargs):
         clusters = super(ListClusters, self).get_content(*args, **kwargs)
 
-        try:
-            loop = asyncio.get_event_loop()
-            loop.run_until_complete(self._update_clusters(clusters))
-        except RuntimeError:
-            logger.warning('Asyncio loop is NOT available, fallback to simple looping')
+        if config.get('CLUSTER_STATE_ON_LIST'):
+            try:
+                loop = asyncio.get_event_loop()
+                loop.run_until_complete(self._update_clusters(clusters))
+            except RuntimeError:
+                logger.warning('Asyncio loop is NOT available, fallback to simple looping')
 
-            for c in clusters:
-                c.get_state()
+                for c in clusters:
+                    c.get_state()
 
         return clusters
 

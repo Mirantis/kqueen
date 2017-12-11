@@ -129,6 +129,9 @@ Example configuration files are located in `config/` directory. Default configur
       - Unknown
       - Caption for cluster with unknown state.
 
+    * - CLUSTER_STATE_ON_LIST
+      - True
+      - Update state of clusters on cluster list. This can be may be disabled for organizations with large number of clusters in deploy state.
 
     * - PROVISIONER_ERROR_STATE
       - Error
