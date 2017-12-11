@@ -1,10 +1,13 @@
-from flask import url_for
-from uuid import uuid4
-from kqueen.conftest import cluster
 from .test_crud import BaseTestCRUD
+from flask import url_for
+from kqueen.config import current_config
+from kqueen.conftest import cluster
+from uuid import uuid4
 
-import pytest
 import json
+import pytest
+
+config = current_config()
 
 
 class TestClusterCRUD(BaseTestCRUD):
@@ -198,3 +201,29 @@ class TestClusterCRUD(BaseTestCRUD):
         )
 
         assert response.status_code == code
+
+    def test_cluster_list_run_get_state(self, monkeypatch):
+        for _ in range(10):
+            c = cluster()
+            c.save()
+
+        def fake_get_state(self):
+            self.metadata = {'executed': True}
+            self.save()
+
+            return config.get('CLUSTER_UNKNOWN_STATE')
+
+        monkeypatch.setattr(self.obj.__class__, 'get_state', fake_get_state)
+
+        response = self.client.get(
+            url_for('api.cluster_list'),
+            headers=self.auth_header,
+            content_type='application/json',
+        )
+
+        assert response.status_code == 200
+
+        obj = self.obj.__class__.load(self.namespace, self.obj.id)
+
+        assert obj.metadata, 'get_state wasn\'t executed for cluster {}'.format(obj)
+        assert obj.metadata['executed'], 'get_state wasn\'t executed'

@@ -35,16 +35,18 @@ class Cluster(Model, metaclass=ModelMeta):
     created_at = DatetimeField()
 
     def get_state(self):
-        if self.state != config.get('CLUSTER_PROVISIONING_STATE'):
-            return self.state
         try:
             cluster = self.engine.cluster_get()
-            if cluster['state'] == config.get('CLUSTER_PROVISIONING_STATE'):
+        except Exception as e:
+            logger.error('Unable to get data from backend for cluster {}'.format(self.name))
+            cluster = {}
+
+        if 'state' in cluster:
+            if cluster['state'] == self.state:
                 return self.state
             self.state = cluster['state']
             self.save()
-        except Exception:
-            pass
+
         return self.state
 
     @property

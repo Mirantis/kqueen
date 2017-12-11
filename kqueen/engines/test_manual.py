@@ -58,7 +58,7 @@ class TestClusterAction(ManualEngineBase):
         assert self.engine.cluster_list() == []
 
     def test_cluster_get(self):
-        assert self.engine.cluster_get() == self.cluster
+        assert self.engine.cluster_get() == {}
 
     @pytest.mark.parametrize('action', ['provision', 'deprovision'])
     def test_actions(self, action):

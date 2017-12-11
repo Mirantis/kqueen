@@ -72,6 +72,28 @@ with app.app_context():
     except:
         raise Exception('Adding AWS provisioner failed')
 
+    try:
+        # load kubeconfig file
+        if os.path.isfile(kubeconfig_file):
+            print('Loading remote kubeconfig from {}'.format(kubeconfig_file))
+            kubeconfig = yaml.load(open(kubeconfig_file).read())
+        else:
+            print('Loading remote kubeconfig from {}'.format(kubeconfig_url))
+            kubeconfig = yaml.load(requests.get(kubeconfig_url).text)
+
+        cluster = Cluster(
+            user.namespace,
+            id=uuid_jenkins,
+            name='AWS kqueen testing',
+            state='OK',
+            provisioner=provisioner,
+            kubeconfig=kubeconfig,
+            created_at=datetime.utcnow()
+        )
+        cluster.save()
+    except:
+        raise Exception('Adding AWS cluster failed')
+
     # GKE provisioner
     try:
         provisioner = Provisioner(
@@ -91,7 +113,7 @@ with app.app_context():
             user.namespace,
             id=uuid_gke,
             state='OK',
-            name='GKE clustet, paused',
+            name='GKE cluster, paused',
             provisioner=provisioner,
             created_at=datetime.utcnow()
         )
@@ -118,36 +140,13 @@ with app.app_context():
             user.namespace,
             id=uuid_aks,
             state='OK',
-            name='AKS clustet, paused',
+            name='AKS cluster, paused',
             provisioner=provisioner,
             created_at=datetime.utcnow()
         )
         cluster.save()
     except:
         raise Exception('Adding AKS cluster failed')
-
-    try:
-        # load kubeconfig file
-        if os.path.isfile(kubeconfig_file):
-            print('Loading remote kubeconfig from {}'.format(kubeconfig_file))
-            kubeconfig = yaml.load(open(kubeconfig_file).read())
-        else:
-            print('Loading remote kubeconfig from {}'.format(kubeconfig_url))
-            kubeconfig = yaml.load(requests.get(kubeconfig_url).text)
-
-        cluster = Cluster(
-            user.namespace,
-            id=uuid_jenkins,
-            name='AWS kqueen testing',
-            state='OK',
-            provisioner=provisioner,
-            kubeconfig=kubeconfig,
-            created_at=datetime.utcnow()
-        )
-        cluster.save()
-    except:
-        raise Exception('Adding AWS cluster failed')
-
 
     # Local cluster
     try:

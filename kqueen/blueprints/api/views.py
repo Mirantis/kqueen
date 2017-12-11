@@ -1,3 +1,8 @@
+from .generic_views import CreateView
+from .generic_views import DeleteView
+from .generic_views import GetView
+from .generic_views import ListView
+from .generic_views import UpdateView
 from .helpers import get_object
 from flask import abort
 from flask import Blueprint
@@ -10,12 +15,14 @@ from kqueen.models import Cluster
 from kqueen.models import Organization
 from kqueen.models import Provisioner
 from kqueen.models import User
-from .generic_views import ListView, CreateView, GetView, UpdateView, DeleteView
+from kqueen.config import current_config
 
+import asyncio
 import logging
 import os
 import yaml
 
+config = current_config()
 logger = logging.getLogger(__name__)
 
 api = Blueprint('api', __name__)
@@ -61,6 +68,28 @@ def index():
 # Clusters
 class ListClusters(ListView):
     object_class = Cluster
+
+    async def _update_clusters(self, clusters):
+        loop = asyncio.get_event_loop()
+        futures = [loop.run_in_executor(None, c.get_state) for c in clusters]
+
+        for _ in await asyncio.gather(*futures):
+            pass
+
+    def get_content(self, *args, **kwargs):
+        clusters = super(ListClusters, self).get_content(*args, **kwargs)
+
+        if config.get('CLUSTER_STATE_ON_LIST'):
+            try:
+                loop = asyncio.get_event_loop()
+                loop.run_until_complete(self._update_clusters(clusters))
+            except RuntimeError:
+                logger.warning('Asyncio loop is NOT available, fallback to simple looping')
+
+                for c in clusters:
+                    c.get_state()
+
+        return clusters
 
 
 class CreateCluster(CreateView):
