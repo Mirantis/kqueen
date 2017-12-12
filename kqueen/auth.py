@@ -21,10 +21,11 @@ def authenticate(username, password):
         user: authenticated user
 
     """
+    from kqueen.server import bcrypt
     users = list(User.list(None, return_objects=True).values())
     username_table = {u.username: u for u in users}
     user = username_table.get(username)
-    if user and user.active and safe_str_cmp(user.password.encode('utf-8'), password.encode('utf-8')):
+    if user and user.active and bcrypt.check_password_hash(user.password, password):
         return user
 
 

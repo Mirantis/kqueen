@@ -47,6 +47,10 @@ class Field:
 
         self.required = kwargs.get('required', False)
 
+    def on_create(self, **kwargs):
+        """Optional action that should be run only on newly created objects"""
+        pass
+
     def set_value(self, value, **kwargs):
         self.value = value
 
@@ -137,6 +141,13 @@ class IdField(Field):
 
 class SecretField(Field):
     pass
+
+
+class PasswordField(Field):
+
+    def on_create(self):
+        from kqueen.server import bcrypt
+        self.value = bcrypt.generate_password_hash(self.value).decode()
 
 
 class DatetimeField(Field):
@@ -301,6 +312,9 @@ class Model:
             if hasattr(field_class, 'is_field'):
                 field_object = field_class(**field.__dict__)
                 field_object.set_value(kwargs.get(field_name), namespace=ns)
+                # Hash password field in case of new DB entry
+                if kwargs.get('__create__', False):
+                    field_object.on_create()
                 setattr(self, '_{}'.format(field_name), field_object)
 
     @classmethod
@@ -348,10 +362,11 @@ class Model:
         )
 
     @classmethod
-    def create(cls, namespace, **kwargs):
+    def create(cls, ns, **kwargs):
         """Create new object"""
 
-        o = cls(namespace, **kwargs)
+        kwargs['__create__'] = True
+        o = cls(ns, **kwargs)
 
         return o
 
@@ -408,7 +423,6 @@ class Model:
     @classmethod
     def deserialize(cls, serialized, **kwargs):
         object_kwargs = {}
-
         # deserialize toplevel dict and loop fields and deserialize them
         toplevel = json.loads(serialized)
 

@@ -167,7 +167,7 @@ class CreateView(GenericView):
         except AttributeError:
             namespace = None
 
-        self.obj = cls(namespace, **request.json)
+        self.obj = cls.create(namespace, **request.json)
         self.check_authorization()
 
     def get_content(self, *args, **kwargs):
