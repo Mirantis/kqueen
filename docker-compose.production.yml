@@ -1,0 +1,16 @@
+version: '2'
+services:
+  etcd:
+    restart: always
+  api:
+    image: kqueen/api:v0.11
+    restart: always
+  #proxy:
+  #  images: nginx
+  #  restart: always
+  ui:
+    image: kqueen/ui:v0.11
+    restart: always
+  mail:
+    image: modularitycontainers/postfix
+    restart: always
