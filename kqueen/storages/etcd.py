@@ -521,6 +521,13 @@ class Model:
 
         return True
 
+    def _expand(self, obj):
+        expanded = obj.get_dict()
+        for key, value in expanded.items():
+            if hasattr(value, 'get_dict'):
+                expanded[key] = self._expand(value)
+        return expanded
+
     def get_dict(self, expand=False):
         """Return object properties represented by dict.
 
@@ -537,7 +544,7 @@ class Model:
             field = getattr(self, '_{}'.format(field_name))
 
             if expand and hasattr(field.value, 'get_dict'):
-                wr = field.value.get_dict()
+                wr = self._expand(field.value)
             elif hasattr(field, 'dict_value'):
                 wr = field.dict_value()
             else:

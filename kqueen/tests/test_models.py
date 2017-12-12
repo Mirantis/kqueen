@@ -33,10 +33,11 @@ class TestClusterModel:
         assert loaded == cluster
         assert hasattr(loaded, '_key'), 'Loaded object is missing _key'
 
-    def test_id_generation(self, provisioner):
+    def test_id_generation(self, provisioner, user):
         provisioner.save(check_status=False)
+        user.save()
 
-        empty = Cluster(provisioner._object_namespace, name='test', provisioner=provisioner)
+        empty = Cluster(provisioner._object_namespace, name='test', provisioner=provisioner, owner=user)
         empty.save()
 
     def test_added_key(self, cluster):

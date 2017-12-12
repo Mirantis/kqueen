@@ -108,8 +108,9 @@ class GetCluster(GetView):
     object_class = Cluster
 
     def dispatch_request(self, *args, **kwargs):
-        self.check_access()
-
+        self.check_authentication()
+        self.set_object(*args, **kwargs)
+        self.check_authorization()
         cluster = self.get_content(*args, **kwargs)
         cluster.get_state()
 

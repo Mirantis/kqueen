@@ -29,6 +29,7 @@ class ManualEngineBase:
             'name': 'Testing manual',
             'engine': 'kqueen.engines.ManualEngine',
             'parameters': PROVISIONER_PARAMETERS,
+            'owner': _user
         }
 
         prov = Provisioner(_user.namespace, **create_kwargs_provisioner)
@@ -40,6 +41,7 @@ class ManualEngineBase:
             'state': 'deployed',
             'kubeconfig': KUBECONFIG,
             'metadata': CLUSTER_METADATA,
+            'owner': _user
         }
 
         self.cluster = Cluster.create(_user.namespace, **self.create_kwargs_cluster)
@@ -90,6 +92,7 @@ class TestCreateOverAPI(ManualEngineBase):
         url = url_for('api.cluster_list')
         data = self.create_kwargs_cluster
         data['provisioner'] = 'Provisioner:{}'.format(data['provisioner'].id)
+        data['owner'] = 'User:{}'.format(data['owner'].id)
 
         # create
         response = self.client.post(

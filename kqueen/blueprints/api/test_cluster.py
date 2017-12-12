@@ -23,6 +23,7 @@ class TestClusterCRUD(BaseTestCRUD):
         data = self.obj.get_dict()
         data['id'] = None
         data['provisioner'] = 'Provisioner:{}'.format(self.obj.provisioner.id)
+        data['owner'] = 'User:{}'.format(self.obj.owner.id)
 
         return data
 
@@ -107,12 +108,14 @@ class TestClusterCRUD(BaseTestCRUD):
         assert 'kinds' in response.json
         assert 'relations' in response.json
 
-    def test_create(self, provisioner):
+    def test_create(self, provisioner, user):
         provisioner.save()
+        user.save()
 
         post_data = {
             'name': 'Testing cluster',
             'provisioner': 'Provisioner:{}'.format(provisioner.id),
+            'owner': 'User:{}'.format(user.id)
         }
 
         response = self.client.post(
@@ -126,10 +129,11 @@ class TestClusterCRUD(BaseTestCRUD):
 
         assert 'id' in response.json
         assert response.json['name'] == post_data['name']
-        assert response.json['provisioner'] == provisioner.get_dict()
+        assert response.json['provisioner'] == provisioner.get_dict(expand=True)
 
-    def test_provision_after_create(self, provisioner, monkeypatch):
+    def test_provision_after_create(self, provisioner, user, monkeypatch):
         provisioner.save()
+        user.save()
 
         def fake_provision(self, *args, **kwargs):
             self.cluster.name = 'Provisioned'
@@ -142,6 +146,7 @@ class TestClusterCRUD(BaseTestCRUD):
         post_data = {
             'name': 'Testing cluster',
             'provisioner': 'Provisioner:{}'.format(provisioner.id),
+            'owner': 'User:{}'.format(user.id)
         }
 
         response = self.client.post(
@@ -157,8 +162,9 @@ class TestClusterCRUD(BaseTestCRUD):
         assert response.status_code == 200
         assert obj.name == 'Provisioned'
 
-    def test_provision_failed(self, provisioner, monkeypatch):
+    def test_provision_failed(self, provisioner, user, monkeypatch):
         provisioner.save()
+        user.save()
 
         def fake_provision(self, *args, **kwargs):
             return False, 'Testing msg'
@@ -168,6 +174,7 @@ class TestClusterCRUD(BaseTestCRUD):
         post_data = {
             'name': 'Testing cluster',
             'provisioner': 'Provisioner:{}'.format(provisioner.id),
+            'owner': 'User:{}'.format(user.id)
         }
 
         response = self.client.post(

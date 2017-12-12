@@ -47,6 +47,7 @@ def cluster():
         _user.namespace,
         name='Fixtured provisioner',
         engine='kqueen.engines.ManualEngine',
+        owner=_user
     )
     prov.save(check_status=False)
 
@@ -57,6 +58,7 @@ def cluster():
         'state': 'deployed',
         'kubeconfig': yaml.load(open('kubeconfig_localhost', 'r').read()),
         'created_at': datetime.datetime(2017, 11, 15, 13, 36, 24),
+        'owner': _user
     }
 
     return Cluster.create(_user.namespace, **create_kwargs)
@@ -70,6 +72,7 @@ def provisioner():
     create_kwargs = {
         'name': 'Fixtured provisioner',
         'engine': 'kqueen.engines.ManualEngine',
+        'owner': _user
     }
 
     return Provisioner.create(_user.namespace, **create_kwargs)
@@ -152,6 +155,7 @@ def user():
         username=profile['username'],
         password=fake.password(),
         organization=organization(),
+        role='superadmin',
         active=True
     )
     user.save()
