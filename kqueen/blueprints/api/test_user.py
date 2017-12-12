@@ -34,7 +34,7 @@ class TestUserCRUD(BaseTestCRUD):
         Returns:
             dict: Authorization header dict
         """
-        data = {'username': self.obj.username, 'password': self.obj.password}
+        data = {'username': self.obj.username, 'password': self.obj.username + 'password'}
 
         response = self.client.post(
             '/api/v1/auth',

@@ -23,6 +23,7 @@ fake = Faker()
 def app():
     """Prepare app."""
     app = create_app()
+    app.testing = True
 
     return app
 
@@ -92,7 +93,7 @@ def get_auth_token(_client, _user):
 
     data = {
         'username': _user.username,
-        'password': _user.password
+        'password': _user.username + 'password'
     }
 
     response = _client.post(
@@ -150,10 +151,10 @@ def organization():
 def user():
     """Prepare user object."""
     profile = fake.simple_profile()
-    user = User(
+    user = User.create(
         None,
         username=profile['username'],
-        password=fake.password(),
+        password=profile['username'] + 'password',
         organization=organization(),
         role='superadmin',
         active=True
