@@ -92,23 +92,27 @@ def is_authorized(_user, policy_value, resource=None):
         elif isinstance(resource, Organization):
             OWNER_ORGANIZATION = resource.id                     # noqa: F841
 
-    # replace shorthands with full condition in policy_value
-    shorthands = {
+    # predefined conditions for evaluation
+    conditions = {
         'IS_ADMIN': 'ORGANIZATION == OWNER_ORGANIZATION and ROLE == "admin"',
         'IS_SUPERADMIN': 'ROLE == "superadmin"',
         'IS_OWNER': 'ORGANIZATION == OWNER_ORGANIZATION and USER == OWNER',
         'ADMIN_OR_OWNER': 'ORGANIZATION == OWNER_ORGANIZATION and (ROLE == "admin" or USER == OWNER)',
         'ALL': 'ORGANIZATION == OWNER_ORGANIZATION'
     }
-    for short, full in shorthands.items():
-        policy_value = policy_value.replace(short, full)
+
+    try:
+        condition = conditions[policy_value]
+    except KeyError:
+        logger.error('Policy evaluation failed. Invalid rule: {}'.format(str(policy_value)))
+        return False
 
     if ROLE == 'superadmin':
         # no point in checking anything here
         return True
 
     try:
-        authorized = eval(policy_value)
+        authorized = eval(condition)
         if not isinstance(authorized, bool):
             logger.error('Policy evaluation did not return boolean: {}'.format(str(authorized)))
             authorized = False
