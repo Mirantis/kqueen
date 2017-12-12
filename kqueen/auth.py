@@ -1,6 +1,7 @@
 """Authentication methods for API."""
 
 from kqueen.models import Organization, User
+from uuid import uuid4
 from werkzeug.security import safe_str_cmp
 
 import logging
@@ -79,10 +80,18 @@ def is_authorized(_user, policy_value, resource=None):
     ROLE = user['role']
     if resource:
         if not resource.validate():
+            invalid = True
+            # test if we are validating on create view and if so, patch missing object id
+            if not resource.id:
+                resource.id = uuid4()
+                if resource.validate():
+                    invalid = False
+                resource.id = None
             # if invalid resource is passed, let's just continue dispatch_request
             # so it can properly fail with 500 response code
-            logger.error('Cannot evaluate policy for invalid object: {}'.format(str(resource.get_dict())))
-            return True
+            if invalid:
+                logger.error('Cannot evaluate policy for invalid object: {}'.format(str(resource.get_dict())))
+                return True
         if hasattr(resource, 'owner'):
             OWNER = resource.owner.id                            # noqa: F841
             OWNER_ORGANIZATION = resource.owner.organization.id  # noqa: F841

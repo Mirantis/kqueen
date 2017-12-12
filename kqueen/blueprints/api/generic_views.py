@@ -20,66 +20,68 @@ class GenericView(View):
     def get_content(self, *args, **kwargs):
         raise NotImplementedError
 
+    def check_authentication(self):
+        _jwt_required(current_app.config['JWT_DEFAULT_REALM'])
+
     def check_authorization(self):
         # get view class
         try:
             _class = self.get_class()
         except NotImplementedError:
-            return
+            return False
 
         # get user data
         if current_identity:
             user = current_identity.get_dict()
             organization = current_identity.organization
         else:
-            return
+            return False
 
         # form policy key
         policy = '{}:{}'.format(_class.__name__.lower(), self.action)
         # get policies and update them with organization level overrides
         policies = current_app.config.get('DEFAULT_POLICIES', {})
-        if hasattr(organization, 'policies') and organization.policies:
-            policies.update(organization.policies)
-        policy_value = policies.get(policy, None)
+        if hasattr(organization, 'policy') and organization.policy:
+            policies.update(organization.policy)
+
+        try:
+            policy_value = policies[policy]
+        except KeyError:
+            current_app.logger.error('Unknown policy {}'.format(policy))
+            return False
 
         # evaluate user permissions
         # if there are multiple objects, filter out those which current user
         # doesn't have access to
-        if policy_value:
-            if isinstance(self.obj, list):
-                allowed = []
-                for obj in self.obj:
-                    if is_authorized(user, policy_value, resource=obj):
-                        allowed.append(obj)
-                self.obj = allowed
-            # if there is single object raise if user doesn't have access to it
-            else:
-                if not is_authorized(user, policy_value, resource=self.obj):
-                    raise JWTError('Insufficient permissions',
-                                   'Your user account is lacking the necessary '
-                                   'permissions to perform this operation')
+        if isinstance(self.obj, list):
+            allowed = []
+            for obj in self.obj:
+                if is_authorized(user, policy_value, resource=obj):
+                    allowed.append(obj)
+            self.obj = allowed
+        # if there is single object raise if user doesn't have access to it
+        else:
+            if not is_authorized(user, policy_value, resource=self.obj):
+                raise JWTError('Insufficient permissions',
+                               'Your user account is lacking the necessary '
+                               'permissions to perform this operation')
 
-    def check_authentication(self):
-        _jwt_required(current_app.config['JWT_DEFAULT_REALM'])
+    def set_object(self, *args, **kwargs):
+        self.obj = get_object(self.get_class(), kwargs['pk'], current_identity)
+        # check authorization for given object
+        self.check_authorization()
 
     def dispatch_request(self, *args, **kwargs):
         self.check_authentication()
         self.set_object(*args, **kwargs)
-        self.check_authorization()
         output = self.get_content(*args, **kwargs)
 
         return jsonify(output)
-
-    def set_object(self, *args, **kwargs):
-        pass
 
 
 class GetView(GenericView):
     methods = ['GET']
     action = 'get'
-
-    def set_object(self, *args, **kwargs):
-        self.obj = get_object(self.get_class(), kwargs['pk'], current_identity)
 
     def get_content(self, *args, **kwargs):
         return self.obj
@@ -89,13 +91,9 @@ class DeleteView(GenericView):
     methods = ['DELETE']
     action = 'delete'
 
-    def set_object(self, *args, **kwargs):
-        self.obj = get_object(self.get_class(), kwargs['pk'], current_identity)
-
     def dispatch_request(self, *args, **kwargs):
         self.check_authentication()
         self.set_object(*args, **kwargs)
-        self.check_authorization()
 
         try:
             self.obj.delete()
@@ -108,9 +106,6 @@ class DeleteView(GenericView):
 class UpdateView(GenericView):
     methods = ['PATCH']
     action = 'update'
-
-    def set_object(self, *args, **kwargs):
-        self.obj = get_object(self.get_class(), kwargs['pk'], current_identity)
 
     def get_content(self, *args, **kwargs):
         return self.obj
@@ -126,7 +121,6 @@ class UpdateView(GenericView):
             abort(400)
 
         self.set_object(*args, **kwargs)
-        self.check_authorization()
 
         for key, value in data.items():
             setattr(self.obj, key, value)
@@ -150,6 +144,7 @@ class ListView(GenericView):
         except AttributeError:
             namespace = None
         self.obj = list(self.get_class().list(namespace, return_objects=True).values())
+        self.check_authorization()
 
     def get_content(self, *args, **kwargs):
         return self.obj
@@ -173,6 +168,7 @@ class CreateView(GenericView):
             namespace = None
 
         self.obj = cls(namespace, **request.json)
+        self.check_authorization()
 
     def get_content(self, *args, **kwargs):
         return self.obj.get_dict(expand=True)
@@ -183,7 +179,6 @@ class CreateView(GenericView):
             abort(400, description='JSON data expected')
         else:
             self.set_object(*args, **kwargs)
-            self.check_authorization()
             try:
                 self.save_object()
                 self.after_save()
