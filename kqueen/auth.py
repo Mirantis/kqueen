@@ -2,7 +2,6 @@
 
 from kqueen.models import Organization, User
 from uuid import uuid4
-from werkzeug.security import safe_str_cmp
 
 import logging
 
