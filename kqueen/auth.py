@@ -2,8 +2,8 @@
 
 from kqueen.models import Organization, User
 from uuid import uuid4
-from werkzeug.security import safe_str_cmp
 
+import bcrypt
 import logging
 
 logger = logging.getLogger(__name__)
@@ -24,7 +24,9 @@ def authenticate(username, password):
     users = list(User.list(None, return_objects=True).values())
     username_table = {u.username: u for u in users}
     user = username_table.get(username)
-    if user and user.active and safe_str_cmp(user.password.encode('utf-8'), password.encode('utf-8')):
+    user_password = user.password.encode('utf-8')
+    given_password = password.encode('utf-8')
+    if user and user.active and bcrypt.checkpw(given_password, user_password):
         return user
 
 

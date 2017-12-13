@@ -7,8 +7,8 @@ from kqueen.storages.etcd import IdField
 from kqueen.storages.etcd import JSONField
 from kqueen.storages.etcd import Model
 from kqueen.storages.etcd import ModelMeta
+from kqueen.storages.etcd import PasswordField
 from kqueen.storages.etcd import RelationField
-from kqueen.storages.etcd import SecretField
 from kqueen.storages.etcd import StringField
 from tempfile import mkstemp
 
@@ -358,7 +358,7 @@ class User(Model, metaclass=ModelMeta):
     id = IdField(required=True)
     username = StringField(required=True)
     email = StringField(required=False)
-    password = SecretField(required=True)
+    password = PasswordField(required=True)
     organization = RelationField(required=True)
     created_at = DatetimeField()
     role = StringField(required=True)

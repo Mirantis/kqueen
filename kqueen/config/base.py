@@ -21,6 +21,8 @@ class BaseConfig:
     JWT_EXPIRATION_DELTA = timedelta(hours=1)
     JWT_AUTH_HEADER_PREFIX = 'Bearer'
 
+    BCRYPT_ROUNDS = 12
+
     # Cluster statuses
     CLUSTER_ERROR_STATE = 'Error'
     CLUSTER_OK_STATE = 'OK'

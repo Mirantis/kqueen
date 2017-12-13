@@ -42,7 +42,7 @@ with app.app_context():
         raise Exception('Adding DemoOrg organization failed')
 
     try:
-        user = User(
+        user = User.create(
             None,
             username='admin',
             password='default',

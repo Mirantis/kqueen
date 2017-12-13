@@ -5,8 +5,8 @@ from kqueen.storages.etcd import IdField
 from kqueen.storages.etcd import JSONField
 from kqueen.storages.etcd import Model
 from kqueen.storages.etcd import ModelMeta
+from kqueen.storages.etcd import PasswordField
 from kqueen.storages.etcd import RelationField
-from kqueen.storages.etcd import SecretField
 from kqueen.storages.etcd import StringField
 from kqueen.storages.exceptions import BackendError
 
@@ -22,7 +22,7 @@ def create_model(required=False, global_ns=False):
         id = IdField(required=required)
         string = StringField(required=required)
         json = JSONField(required=required)
-        secret = SecretField(required=required)
+        password = PasswordField(required=required)
         relation = RelationField(required=required)
         datetime = DatetimeField(required=required)
         boolean = BoolField(required=required)
@@ -32,9 +32,9 @@ def create_model(required=False, global_ns=False):
 
 utcnow = datetime.datetime(1989, 11, 17)
 
-model_kwargs = {'string': 'abc123', 'json': {'a': 1, 'b': 2, 'c': 'tri'}, 'secret': 'pass', 'datetime': utcnow, 'boolean': True}
-model_kwargs_dict = {'string': 'abc123', 'json': {'a': 1, 'b': 2, 'c': 'tri'}, 'secret': 'pass', 'datetime': utcnow.isoformat(), 'boolean': True}
-model_fields = ['id', 'string', 'json', 'secret', 'relation', 'datetime', 'boolean']
+model_kwargs = {'string': 'abc123', 'json': {'a': 1, 'b': 2, 'c': 'tri'}, 'password': 'pass', 'datetime': utcnow, 'boolean': True}
+model_kwargs_dict = {'string': 'abc123', 'json': {'a': 1, 'b': 2, 'c': 'tri'}, 'password': 'pass', 'datetime': utcnow.isoformat(), 'boolean': True}
+model_fields = ['id', 'string', 'json', 'password', 'relation', 'datetime', 'boolean']
 namespace = 'test'
 
 
@@ -42,7 +42,7 @@ def model_serialized(related=None):
     if related:
         return (
             '{{"string": "abc123", "json": "{{\\"a\\": 1, \\"b\\": 2, \\"c\\": \\"tri\\"}}", '
-            '"secret": "pass", "relation": "{related_class}:{related_id}", "datetime": {date_timestamp}, '
+            '"password": "pass", "relation": "{related_class}:{related_id}", "datetime": {date_timestamp}, '
             '"boolean": "true"}}'.format(
                 related_class=related.__class__.__name__,
                 related_id=related.id,
@@ -52,7 +52,7 @@ def model_serialized(related=None):
     else:
         return (
             '{{"string": "abc123", "json": "{\\"a\\": 1, \\"b\\": 2, \\"c\\": \\"tri\\"}", '
-            '"secret": "pass", "datetime": {date_timestamp}, "boolean": "true"}}'.format(
+            '"password": "pass", "datetime": {date_timestamp}, "boolean": "true"}}'.format(
                 date_timestamp=int(utcnow.timestamp()),
             )
         )
@@ -214,8 +214,8 @@ class TestDuplicateId:
     def setup(self):
         self.model = create_model()
 
-        self.obj1_kwargs = {'string': 'object 1', 'json': {'a': 1, 'b': 2, 'c': 'tri'}, 'secret': 'pass'}
-        self.obj2_kwargs = {'string': 'object 2', 'json': {'a': 1, 'b': 2, 'c': 'tri'}, 'secret': 'pass'}
+        self.obj1_kwargs = {'string': 'object 1', 'json': {'a': 1, 'b': 2, 'c': 'tri'}, 'password': 'pass'}
+        self.obj2_kwargs = {'string': 'object 2', 'json': {'a': 1, 'b': 2, 'c': 'tri'}, 'password': 'pass'}
 
     def test_with_save(self):
         """"Save object are not same"""
