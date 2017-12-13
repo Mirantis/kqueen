@@ -3,6 +3,7 @@
 from kqueen.models import Organization, User
 from uuid import uuid4
 
+import bcrypt
 import logging
 
 logger = logging.getLogger(__name__)
@@ -20,11 +21,12 @@ def authenticate(username, password):
         user: authenticated user
 
     """
-    from kqueen.server import bcrypt
     users = list(User.list(None, return_objects=True).values())
     username_table = {u.username: u for u in users}
     user = username_table.get(username)
-    if user and user.active and bcrypt.check_password_hash(user.password, password):
+    user_password = user.password.encode('utf-8')
+    given_password = password.encode('utf-8')
+    if user and user.active and bcrypt.checkpw(given_password, user_password):
         return user
 
 

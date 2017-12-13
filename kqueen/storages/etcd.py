@@ -1,3 +1,4 @@
+import bcrypt
 import etcd
 import json
 import logging
@@ -146,8 +147,10 @@ class SecretField(Field):
 class PasswordField(Field):
 
     def on_create(self):
-        from kqueen.server import bcrypt
-        self.value = bcrypt.generate_password_hash(self.value).decode()
+        config = current_config()
+        rounds = config.get('BCRYPT_ROUNDS', 12)
+        password = str(self.value).encode('utf-8')
+        self.value = bcrypt.hashpw(password, bcrypt.gensalt(rounds)).decode('utf-8')
 
 
 class DatetimeField(Field):

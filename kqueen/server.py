@@ -9,7 +9,6 @@ from .storages.etcd import EtcdBackend
 from flask import Flask
 from flask_jwt import JWT
 from flask_swagger_ui import get_swaggerui_blueprint
-from flask.ext.bcrypt import Bcrypt
 from werkzeug.contrib.cache import SimpleCache
 
 import logging
@@ -57,7 +56,6 @@ def create_app(config_file=None):
 
 app = create_app()
 # setup Bcrypt
-bcrypt = Bcrypt(app)
 
 
 def run():
