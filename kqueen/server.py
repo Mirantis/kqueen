@@ -55,7 +55,6 @@ def create_app(config_file=None):
 
 
 app = create_app()
-# setup Bcrypt
 
 
 def run():

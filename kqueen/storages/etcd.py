@@ -140,10 +140,6 @@ class IdField(Field):
             self.value = value
 
 
-class SecretField(Field):
-    pass
-
-
 class PasswordField(Field):
 
     def on_create(self):
