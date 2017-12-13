@@ -169,7 +169,7 @@ class BaseEngine:
             dict: Dictionary representation of the provisioning provress.::
 
                 {
-                    'response': response, # (int) any number other than 0 means failure to determine progress
+                    'response': response, # (int) any number other than 200 means failure to determine progress
                     'progress': progress, # (int) provisioning progress in percents
                     'result': result      # (str) current state of the cluster, i.e. 'Deploying'
                 }

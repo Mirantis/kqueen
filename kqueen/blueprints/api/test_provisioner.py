@@ -15,6 +15,13 @@ class TestProvisionerCRUD(BaseTestCRUD):
             'engine': 'kqueen.engines.Dummy',
         }
 
+    def get_create_data(self):
+        data = self.obj.get_dict()
+        data['id'] = None
+        data['owner'] = 'User:{}'.format(self.obj.owner.id)
+
+        return data
+
     def test_provision_engines(self):
         url = url_for('api.provisioner_engine_list')
 

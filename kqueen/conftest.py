@@ -23,6 +23,7 @@ fake = Faker()
 def app():
     """Prepare app."""
     app = create_app()
+    app.testing = True
 
     return app
 
@@ -47,6 +48,7 @@ def cluster():
         _user.namespace,
         name='Fixtured provisioner',
         engine='kqueen.engines.ManualEngine',
+        owner=_user
     )
     prov.save(check_status=False)
 
@@ -57,6 +59,7 @@ def cluster():
         'state': 'deployed',
         'kubeconfig': yaml.load(open('kubeconfig_localhost', 'r').read()),
         'created_at': datetime.datetime(2017, 11, 15, 13, 36, 24),
+        'owner': _user
     }
 
     return Cluster.create(_user.namespace, **create_kwargs)
@@ -70,6 +73,7 @@ def provisioner():
     create_kwargs = {
         'name': 'Fixtured provisioner',
         'engine': 'kqueen.engines.ManualEngine',
+        'owner': _user
     }
 
     return Provisioner.create(_user.namespace, **create_kwargs)
@@ -89,7 +93,7 @@ def get_auth_token(_client, _user):
 
     data = {
         'username': _user.username,
-        'password': _user.password
+        'password': _user.username + 'password'
     }
 
     response = _client.post(
@@ -147,11 +151,12 @@ def organization():
 def user():
     """Prepare user object."""
     profile = fake.simple_profile()
-    user = User(
+    user = User.create(
         None,
         username=profile['username'],
-        password=fake.password(),
+        password=profile['username'] + 'password',
         organization=organization(),
+        role='superadmin',
         active=True
     )
     user.save()

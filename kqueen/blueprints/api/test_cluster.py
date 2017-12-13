@@ -23,6 +23,7 @@ class TestClusterCRUD(BaseTestCRUD):
         data = self.obj.get_dict()
         data['id'] = None
         data['provisioner'] = 'Provisioner:{}'.format(self.obj.provisioner.id)
+        data['owner'] = 'User:{}'.format(self.obj.owner.id)
 
         return data
 
@@ -82,7 +83,8 @@ class TestClusterCRUD(BaseTestCRUD):
     ])
     @pytest.mark.parametrize('url', [
         'cluster_status',
-        'cluster_kubeconfig'
+        'cluster_kubeconfig',
+        'cluster_progress'
     ])
     def test_cluster_status_404(self, url, cluster_id, status_code):
         url = url_for('api.{}'.format(url), pk=cluster_id)
@@ -107,12 +109,25 @@ class TestClusterCRUD(BaseTestCRUD):
         assert 'kinds' in response.json
         assert 'relations' in response.json
 
-    def test_create(self, provisioner):
+    def test_progress_format(self):
+
+        url = url_for('api.cluster_progress', pk=self.obj.id)
+        response = self.client.get(url, headers=self.auth_header)
+
+        assert isinstance(response.json, dict)
+
+        assert 'response' in response.json
+        assert 'progress' in response.json
+        assert 'result' in response.json
+
+    def test_create(self, provisioner, user):
         provisioner.save()
+        user.save()
 
         post_data = {
             'name': 'Testing cluster',
             'provisioner': 'Provisioner:{}'.format(provisioner.id),
+            'owner': 'User:{}'.format(user.id)
         }
 
         response = self.client.post(
@@ -126,10 +141,11 @@ class TestClusterCRUD(BaseTestCRUD):
 
         assert 'id' in response.json
         assert response.json['name'] == post_data['name']
-        assert response.json['provisioner'] == provisioner.get_dict()
+        assert response.json['provisioner'] == provisioner.get_dict(expand=True)
 
-    def test_provision_after_create(self, provisioner, monkeypatch):
+    def test_provision_after_create(self, provisioner, user, monkeypatch):
         provisioner.save()
+        user.save()
 
         def fake_provision(self, *args, **kwargs):
             self.cluster.name = 'Provisioned'
@@ -142,6 +158,7 @@ class TestClusterCRUD(BaseTestCRUD):
         post_data = {
             'name': 'Testing cluster',
             'provisioner': 'Provisioner:{}'.format(provisioner.id),
+            'owner': 'User:{}'.format(user.id)
         }
 
         response = self.client.post(
@@ -157,8 +174,9 @@ class TestClusterCRUD(BaseTestCRUD):
         assert response.status_code == 200
         assert obj.name == 'Provisioned'
 
-    def test_provision_failed(self, provisioner, monkeypatch):
+    def test_provision_failed(self, provisioner, user, monkeypatch):
         provisioner.save()
+        user.save()
 
         def fake_provision(self, *args, **kwargs):
             return False, 'Testing msg'
@@ -168,6 +186,7 @@ class TestClusterCRUD(BaseTestCRUD):
         post_data = {
             'name': 'Testing cluster',
             'provisioner': 'Provisioner:{}'.format(provisioner.id),
+            'owner': 'User:{}'.format(user.id)
         }
 
         response = self.client.post(

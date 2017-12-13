@@ -1,3 +1,4 @@
+import bcrypt
 import etcd
 import json
 import logging
@@ -46,6 +47,10 @@ class Field:
             self.value = kwargs.get('value', None)
 
         self.required = kwargs.get('required', False)
+
+    def on_create(self, **kwargs):
+        """Optional action that should be run only on newly created objects"""
+        pass
 
     def set_value(self, value, **kwargs):
         self.value = value
@@ -135,8 +140,13 @@ class IdField(Field):
             self.value = value
 
 
-class SecretField(Field):
-    pass
+class PasswordField(Field):
+
+    def on_create(self):
+        config = current_config()
+        rounds = config.get('BCRYPT_ROUNDS', 12)
+        password = str(self.value).encode('utf-8')
+        self.value = bcrypt.hashpw(password, bcrypt.gensalt(rounds)).decode('utf-8')
 
 
 class DatetimeField(Field):
@@ -301,6 +311,9 @@ class Model:
             if hasattr(field_class, 'is_field'):
                 field_object = field_class(**field.__dict__)
                 field_object.set_value(kwargs.get(field_name), namespace=ns)
+                # Hash password field in case of new DB entry
+                if kwargs.get('__create__', False):
+                    field_object.on_create()
                 setattr(self, '_{}'.format(field_name), field_object)
 
     @classmethod
@@ -348,10 +361,11 @@ class Model:
         )
 
     @classmethod
-    def create(cls, namespace, **kwargs):
+    def create(cls, ns, **kwargs):
         """Create new object"""
 
-        o = cls(namespace, **kwargs)
+        kwargs['__create__'] = True
+        o = cls(ns, **kwargs)
 
         return o
 
@@ -408,7 +422,6 @@ class Model:
     @classmethod
     def deserialize(cls, serialized, **kwargs):
         object_kwargs = {}
-
         # deserialize toplevel dict and loop fields and deserialize them
         toplevel = json.loads(serialized)
 
@@ -521,6 +534,13 @@ class Model:
 
         return True
 
+    def _expand(self, obj):
+        expanded = obj.get_dict()
+        for key, value in expanded.items():
+            if hasattr(value, 'get_dict'):
+                expanded[key] = self._expand(value)
+        return expanded
+
     def get_dict(self, expand=False):
         """Return object properties represented by dict.
 
@@ -537,7 +557,7 @@ class Model:
             field = getattr(self, '_{}'.format(field_name))
 
             if expand and hasattr(field.value, 'get_dict'):
-                wr = field.value.get_dict()
+                wr = self._expand(field.value)
             elif hasattr(field, 'dict_value'):
                 wr = field.dict_value()
             else:

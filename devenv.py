@@ -42,12 +42,13 @@ with app.app_context():
         raise Exception('Adding DemoOrg organization failed')
 
     try:
-        user = User(
+        user = User.create(
             None,
             username='admin',
             password='default',
             organization=organization,
             created_at=datetime.utcnow(),
+            role='superadmin',
             active=True
         )
         user.save()
@@ -66,7 +67,8 @@ with app.app_context():
                 'username': 'demo',
                 'password': 'Demo123'
             },
-            created_at=datetime.utcnow()
+            created_at=datetime.utcnow(),
+            owner=user
         )
         provisioner.save(check_status=False)
     except:
@@ -88,7 +90,8 @@ with app.app_context():
             state='OK',
             provisioner=provisioner,
             kubeconfig=kubeconfig,
-            created_at=datetime.utcnow()
+            created_at=datetime.utcnow(),
+            owner=user
         )
         cluster.save()
     except:
@@ -102,7 +105,8 @@ with app.app_context():
             name='Google Kubernetes engine',
             state='OK',
             engine='kqueen.engines.GceEngine',
-            created_at=datetime.utcnow()
+            created_at=datetime.utcnow(),
+            owner=user
         )
         provisioner.save(check_status=False)
     except:
@@ -115,7 +119,8 @@ with app.app_context():
             state='OK',
             name='GKE cluster, paused',
             provisioner=provisioner,
-            created_at=datetime.utcnow()
+            created_at=datetime.utcnow(),
+            owner=user
         )
         cluster.save()
     except:
@@ -129,7 +134,8 @@ with app.app_context():
             name='Azure Kubernetes Service',
             state='OK',
             engine='kqueen.engines.AksEngine',
-            created_at=datetime.utcnow()
+            created_at=datetime.utcnow(),
+            owner=user
         )
         provisioner.save(check_status=False)
     except:
@@ -142,7 +148,8 @@ with app.app_context():
             state='OK',
             name='AKS cluster, paused',
             provisioner=provisioner,
-            created_at=datetime.utcnow()
+            created_at=datetime.utcnow(),
+            owner=user
         )
         cluster.save()
     except:
@@ -157,7 +164,8 @@ with app.app_context():
             state='OK',
             engine='kqueen.engines.ManualEngine',
             parameters={},
-            created_at=datetime.utcnow()
+            created_at=datetime.utcnow(),
+            owner=user
         )
         provisioner.save(check_status=False)
     except:
@@ -172,7 +180,8 @@ with app.app_context():
             state='OK',
             provisioner=provisioner,
             kubeconfig=yaml.load(open('kubeconfig_localhost', 'r').read()),
-            created_at=datetime.utcnow()
+            created_at=datetime.utcnow(),
+            owner=user
         )
         cluster.save()
     except:
@@ -187,7 +196,8 @@ with app.app_context():
             state='OK',
             engine='kqueen.engines.ManualEngine',
             parameters={},
-            created_at=datetime.utcnow()
+            created_at=datetime.utcnow(),
+            owner=user
         )
         provisioner.save(check_status=False)
     except:

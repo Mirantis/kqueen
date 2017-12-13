@@ -107,8 +107,9 @@ class GetCluster(GetView):
     object_class = Cluster
 
     def dispatch_request(self, *args, **kwargs):
-        self.check_access()
-
+        self.check_authentication()
+        self.set_object(*args, **kwargs)
+        self.check_authorization()
         cluster = self.get_content(*args, **kwargs)
         cluster.get_state()
 
@@ -152,6 +153,27 @@ def cluster_kubeconfig(pk):
     obj = get_object(Cluster, pk, current_identity)
 
     return jsonify(obj.kubeconfig)
+
+
+@api.route('/clusters/<uuid:pk>/progress', methods=['GET'])
+@jwt_required()
+def cluster_progress(pk):
+    obj = get_object(Cluster, pk, current_identity)
+    try:
+        progress = obj.engine.get_progress()
+    except NotImplementedError:
+        progress = {
+            'response': 501,
+            'progress': 0,
+            'result': obj.get_state()
+        }
+    except Exception:
+        progress = {
+            'response': 500,
+            'progress': 0,
+            'result': config.get('CLUSTER_UNKNOWN_STATE')
+        }
+    return jsonify(progress)
 
 
 # Provisioners

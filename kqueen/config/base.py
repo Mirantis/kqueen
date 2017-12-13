@@ -1,5 +1,8 @@
 from datetime import timedelta
 
+import json
+import os
+
 
 class BaseConfig:
     DEBUG = False
@@ -17,6 +20,8 @@ class BaseConfig:
     JWT_AUTH_URL_RULE = '/api/v1/auth'
     JWT_EXPIRATION_DELTA = timedelta(hours=1)
     JWT_AUTH_HEADER_PREFIX = 'Bearer'
+
+    BCRYPT_ROUNDS = 12
 
     # Cluster statuses
     CLUSTER_ERROR_STATE = 'Error'
@@ -54,3 +59,18 @@ class BaseConfig:
                 out[att_name] = getattr(cls, att_name)
 
         return out
+
+    @classmethod
+    def setup_policies(cls):
+        """Read default policy file"""
+
+        base_path = os.path.dirname(__file__)
+        full_path = os.path.join(base_path, 'default_policy.json')
+        fh = open(full_path, 'r')
+        try:
+            policy_string = fh.read()
+            cls.DEFAULT_POLICIES = json.loads(policy_string)
+        except Exception:
+            cls.DEFAULT_POLICIES = {}
+        finally:
+            fh.close()

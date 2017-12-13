@@ -7,8 +7,8 @@ from kqueen.storages.etcd import IdField
 from kqueen.storages.etcd import JSONField
 from kqueen.storages.etcd import Model
 from kqueen.storages.etcd import ModelMeta
+from kqueen.storages.etcd import PasswordField
 from kqueen.storages.etcd import RelationField
-from kqueen.storages.etcd import SecretField
 from kqueen.storages.etcd import StringField
 from tempfile import mkstemp
 
@@ -33,6 +33,7 @@ class Cluster(Model, metaclass=ModelMeta):
     kubeconfig = JSONField()
     metadata = JSONField()
     created_at = DatetimeField()
+    owner = RelationField(required=True)
 
     def get_state(self):
         try:
@@ -297,6 +298,7 @@ class Provisioner(Model, metaclass=ModelMeta):
     state = StringField()
     parameters = JSONField()
     created_at = DatetimeField()
+    owner = RelationField(required=True)
 
     def get_engine_cls(self):
         """Return engine class"""
@@ -346,6 +348,7 @@ class Organization(Model, metaclass=ModelMeta):
     id = IdField(required=True)
     name = StringField(required=True)
     namespace = StringField(required=True)
+    policy = JSONField()
     created_at = DatetimeField()
 
 
@@ -355,9 +358,10 @@ class User(Model, metaclass=ModelMeta):
     id = IdField(required=True)
     username = StringField(required=True)
     email = StringField(required=False)
-    password = SecretField(required=True)
+    password = PasswordField(required=True)
     organization = RelationField(required=True)
     created_at = DatetimeField()
+    role = StringField(required=True)
     active = BoolField(required=True)
 
     @property

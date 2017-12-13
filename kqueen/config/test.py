@@ -3,13 +3,15 @@ from .base import BaseConfig
 
 class Config(BaseConfig):
     DEBUG = True
-    LOG_LEVE = 'DEBUG'
+    LOG_LEVEL = 'DEBUG'
 
     # App secret
     SECRET_KEY = 'secret'
 
     # Etcd settings
     ETCD_PREFIX = '/kqueen_test'
+
+    BCRYPT_ROUNDS = 4
 
     # Jenkins engine settings
     JENKINS_API_URL = 'http://localhost'
