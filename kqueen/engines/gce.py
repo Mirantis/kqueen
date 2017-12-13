@@ -220,20 +220,6 @@ class GceEngine(BaseEngine):
 
         return []
 
-    def get_progress(self):
-        """
-        GCE engine don't report any progress because cluster is already provisioned before
-        cluster is imported
-
-        Implementation of :func:`~kqueen.engines.base.BaseEngine.get_progress`
-        """
-
-        return {
-            'response': 0,
-            'progress': 100,
-            'result': config.get('CLUSTER_OK_STATE'),
-        }
-
     @classmethod
     def engine_status(cls):
         test_url = 'https://container.googleapis.com/v1/projects/project/zones/zone/clusters?alt=json'

@@ -156,6 +156,27 @@ def cluster_kubeconfig(pk):
     return jsonify(obj.kubeconfig)
 
 
+@api.route('/clusters/<uuid:pk>/progress', methods=['GET'])
+@jwt_required()
+def cluster_progress(pk):
+    obj = get_object(Cluster, pk, current_identity)
+    try:
+        progress = obj.engine.get_progress()
+    except NotImplementedError:
+        progress = {
+            'response': 501,
+            'progress': 0,
+            'result': obj.get_state()
+        }
+    except Exception:
+        progress = {
+            'response': 500,
+            'progress': 0,
+            'result': config.get('CLUSTER_UNKNOWN_STATE')
+        }
+    return jsonify(progress)
+
+
 # Provisioners
 class ListProvisioners(ListView):
     object_class = Provisioner
