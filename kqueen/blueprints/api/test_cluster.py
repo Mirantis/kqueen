@@ -83,7 +83,8 @@ class TestClusterCRUD(BaseTestCRUD):
     ])
     @pytest.mark.parametrize('url', [
         'cluster_status',
-        'cluster_kubeconfig'
+        'cluster_kubeconfig',
+        'cluster_progress'
     ])
     def test_cluster_status_404(self, url, cluster_id, status_code):
         url = url_for('api.{}'.format(url), pk=cluster_id)
@@ -107,6 +108,17 @@ class TestClusterCRUD(BaseTestCRUD):
         assert 'items' in response.json
         assert 'kinds' in response.json
         assert 'relations' in response.json
+
+    def test_progress_format(self):
+
+        url = url_for('api.cluster_progress', pk=self.obj.id)
+        response = self.client.get(url, headers=self.auth_header)
+
+        assert isinstance(response.json, dict)
+
+        assert 'response' in response.json
+        assert 'progress' in response.json
+        assert 'result' in response.json
 
     def test_create(self, provisioner, user):
         provisioner.save()
