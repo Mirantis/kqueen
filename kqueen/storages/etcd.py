@@ -133,6 +133,9 @@ class Field:
     def encrypt(self):
         """Encrypt stored value"""
 
+        if not self.encrypted:
+            return self.serialize()
+
         key = self._get_encryption_key()
         padded = self._pad(str(self.serialize()))
 
@@ -144,6 +147,10 @@ class Field:
         return encoded
 
     def decrypt(self, crypted, **kwargs):
+
+        if not self.encrypted:
+            return self.deserialize(crypted, **kwargs)
+
         key = self._get_encryption_key()
         decoded = base64.b64decode(crypted)
 
@@ -153,7 +160,6 @@ class Field:
 
         serialized = self._unpad(decrypted)
         self.deserialize(serialized, **kwargs)
-        print('Seralizing from: {}, value: {}'.format(serialized, self.value))
 
     def __str__(self):
         return str(self.value)
@@ -492,7 +498,7 @@ class Model:
             field_class = field.__class__
             if hasattr(field_class, 'is_field') and toplevel.get(field_name) is not None:
                 field_object = field_class(**field.__dict__)
-                field_object.deserialize(toplevel[field_name], **kwargs)
+                field_object.decrypt(toplevel[field_name], **kwargs)
 
                 object_kwargs[field_name] = field_object.get_value()
 
@@ -634,7 +640,7 @@ class Model:
     def serialize(self):
         serdict = {}
         for attr_name, attr in self.get_dict().items():
-            serdict[attr_name] = getattr(self, '_{}'.format(attr_name)).serialize()
+            serdict[attr_name] = getattr(self, '_{}'.format(attr_name)).encrypt()
 
         return json.dumps(serdict)
 
