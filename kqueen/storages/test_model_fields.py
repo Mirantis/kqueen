@@ -20,13 +20,13 @@ def create_model(required=False, global_ns=False, encrypted=False):
         if global_ns:
             global_namespace = global_ns
 
-        id = IdField(required=required, encrypte=encrypted)
-        string = StringField(required=required, encrypte=encrypted)
-        json = JSONField(required=required, encrypte=encrypted)
+        id = IdField(required=required, encrypted=encrypted)
+        string = StringField(required=required, encrypted=encrypted)
+        json = JSONField(required=required, encrypted=encrypted)
         password = PasswordField(required=required, encrypted=encrypted)
-        relation = RelationField(required=required, encrypte=encrypted)
-        datetime = DatetimeField(required=required, encrypte=encrypted)
-        boolean = BoolField(required=required, encrypte=encrypted)
+        relation = RelationField(required=required, encrypted=encrypted)
+        datetime = DatetimeField(required=required, encrypted=encrypted)
+        boolean = BoolField(required=required, encrypted=encrypted)
 
         _required = required
         _global_ns = global_ns
@@ -68,20 +68,12 @@ def model_serialized(related=None):
         )
 
 
-@pytest.fixture(params=itertools.product(*[
-    [True, False],
-    [True, False],
-    [True, False]
-]))
+@pytest.fixture(params=itertools.product([True, False], repeat=3))
 def get_object(request):
     return create_object(*request.param)
 
 
-@pytest.fixture(params=itertools.product(*[
-    [True, False],
-    [True, False],
-    [True, False]
-]))
+@pytest.fixture(params=itertools.product([True, False], repeat=3))
 def get_model(request):
     return create_model(*request.param)
 
@@ -452,13 +444,26 @@ class TestFieldEncryption:
 
         field = getattr(obj, '_{}'.format(field_name))
         field.set_value(field_value)
+        assert field.encrypted
 
         # encryption
         encrypted = field.encrypt()
-        print(encrypted)
+
+        assert isinstance(encrypted, str)
 
         # decryption
         field.set_value(None)
         field.decrypt(encrypted)
 
         assert field.value == field_value
+
+    @pytest.mark.parametrize('field_name, field_value', model_kwargs.items())
+    def test_serialized_model_dont_contain_value(self, field_name, field_value):
+        cls = create_model(False, False, True)
+        obj = cls(namespace, **model_kwargs)
+
+        serialized = obj.serialize()
+        field = getattr(obj, '_{}'.format(field_name))
+
+        assert '"{}"'.format(field.value) not in serialized
+        assert '"{}"'.format(field.serialize()) not in serialized

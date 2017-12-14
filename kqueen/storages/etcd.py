@@ -142,7 +142,7 @@ class Field:
         iv = Random.new().read(self.bs)
         suite = AES.new(key, AES.MODE_CBC, iv)
         encrypted = suite.encrypt(padded)
-        encoded = base64.b64encode(iv + encrypted)
+        encoded = base64.b64encode(iv + encrypted).decode('utf-8')
 
         return encoded
 
