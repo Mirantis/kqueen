@@ -5,12 +5,27 @@ services:
   api:
     image: kqueen/api:v0.11
     restart: always
-  #proxy:
-  #  images: nginx
-  #  restart: always
+  proxy:
+    build: ./nginx/
+    restart: always
+    ports:
+      - 443:443
+      - 80:80
+    volumes:
+      - ./certs/:/mnt/letsencrypt/demo.kqueen.net/:Z
+    volumes_from:
+      - ui:ro
   ui:
-    image: kqueen/ui:v0.11
+    #image: kqueen/ui:v0.1
+    image: kqueen/ui:copy-static
+    volumes:
+      - /mnt/static/
     restart: always
-  mail:
-    image: modularitycontainers/postfix
-    restart: always
+#  mail:
+#    image: modularitycontainers/postfix
+#    restart: always
+#    volumes:
+#      - /var/spool/postfix
+#      - /var/spool/mail
+#    environment:
+#      MYHOSTNAME: 'mail'

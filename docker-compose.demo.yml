@@ -22,7 +22,7 @@ services:
     ports:
       - 127.0.0.1:5080:5080
     depends_on:
-      - kqueen
+      - api
     environment:
       KQUEEN_UI_CONFIG_FILE: config/prod.py
       KQUEENUI_KQUEEN_API_URL: http://api:5000/api/v1/
@@ -31,10 +31,10 @@ services:
       KQUEENUI_KQUEEN_SERVICE_USER_PASSWORD: default
       KQUEENUI_MAIL_SERVER: mail
       KQUEENUI_MAIL_PORT: 10025
-  mail:
-    image: modularitycontainers/postfix
-    volumes:
-      - /var/spool/postfix:/var/spool/postfix
-      - /var/spool/mail:/var/spool/mail
-    environment:
-      MYHOSTNAME: 'mail'
+#  mail:
+#    image: modularitycontainers/postfix
+#    volumes:
+#      - /var/spool/postfix:/var/spool/postfix
+#      - /var/spool/mail:/var/spool/mail
+#    environment:
+#      MYHOSTNAME: 'mail'
