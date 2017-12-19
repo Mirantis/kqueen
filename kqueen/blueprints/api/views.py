@@ -211,14 +211,7 @@ def provisioner_engine_list():
     engine_cls = []
     module_path = 'kqueen.engines'
 
-
-    engines = config.get('PROVISIONER_ENGINE_WHITELIST')
-
-    if engines is None:
-        from kqueen.engines import __all__ as engines_available
-        engines = engines_available
-
-    for engine in engines:
+    for engine in Provisioner.list_engines():
         try:
             module = import_module(module_path)
             _class = getattr(module, engine)
