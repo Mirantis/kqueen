@@ -216,13 +216,16 @@ def provisioner_engine_list():
             module = import_module(module_path)
             _class = getattr(module, engine)
             parameters = _class.get_parameter_schema()
+            name = '.'.join([module_path, engine])
             engine_cls.append({
-                'name': '.'.join([module_path, engine]),
+                'name': name,
+                'verbose_name': getattr(_class, 'verbose_name', name),
                 'parameters': parameters
             })
         except NotImplementedError:
             engine_cls.append({
                 'name': engine,
+                'verbose_name': engine,
                 'parameters': {
                     'provisioner': {},
                     'cluster': {}

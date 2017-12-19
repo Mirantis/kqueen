@@ -1,4 +1,4 @@
-from kqueen.engines.__init__ import __all__ as all_engines
+from kqueen.engines import __all__ as all_engines
 from kqueen.models import Cluster
 from kqueen.models import Provisioner
 from kqueen.storages.etcd import Field
