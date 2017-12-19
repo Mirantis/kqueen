@@ -360,6 +360,7 @@ class User(Model, metaclass=ModelMeta):
     created_at = DatetimeField()
     role = StringField(required=True)
     active = BoolField(required=True)
+    metadata = JSONField(required=False)
 
     @property
     def namespace(self):
