@@ -294,6 +294,7 @@ class Cluster(Model, metaclass=ModelMeta):
 class Provisioner(Model, metaclass=ModelMeta):
     id = IdField(required=True)
     name = StringField(required=True)
+    verbose_name = StringField(required=False)
     engine = StringField(required=True)
     state = StringField()
     parameters = JSONField()
@@ -312,10 +313,6 @@ class Provisioner(Model, metaclass=ModelMeta):
             _class = None
         return _class
 
-    @property
-    def engine_name(self):
-        return getattr(self.get_engine_cls(), 'verbose_name', self.engine)
-
     def engine_status(self, save=True):
         state = config.get('PROVISIONER_UNKNOWN_STATE')
         engine_class = self.get_engine_cls()
@@ -333,7 +330,7 @@ class Provisioner(Model, metaclass=ModelMeta):
     def save(self, check_status=True):
         if check_status:
             self.state = self.engine_status(save=False)
-
+        self.verbose_name = getattr(self.get_engine_cls(), 'verbose_name', self.engine)
         return super(Provisioner, self).save()
 
 
