@@ -301,6 +301,18 @@ class Provisioner(Model, metaclass=ModelMeta):
     created_at = DatetimeField()
     owner = RelationField(required=True)
 
+    @classmethod
+    def list_engines(self):
+        """Read engines and filter them according to whitelist"""
+
+        engines = config.get('PROVISIONER_ENGINE_WHITELIST')
+
+        if engines is None:
+            from kqueen.engines import __all__ as engines_available
+            engines = engines_available
+
+        return engines
+
     def get_engine_cls(self):
         """Return engine class"""
         try:

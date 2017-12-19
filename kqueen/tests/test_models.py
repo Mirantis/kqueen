@@ -1,11 +1,12 @@
+from kqueen.engines import __all__ as all_engines
 from kqueen.models import Cluster
+from kqueen.models import Provisioner
 from kqueen.storages.etcd import Field
 from kqueen.storages.etcd import Model
-from kqueen.engines.__init__ import __all__ as all_engines
 
 import pytest
-import yaml
 import subprocess
+import yaml
 
 
 class TestModelMethods:
@@ -172,3 +173,8 @@ class TestProvisioner:
         engine_class = provisioner.get_engine_cls()
 
         assert engine_class is not None
+
+    def test_list_engines(self):
+        engines = Provisioner.list_engines()
+
+        assert engines == all_engines
