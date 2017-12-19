@@ -142,6 +142,9 @@ Example configuration files are located in `config/` directory. Default configur
     * - PROVISIONER_UNKNOWN_STATE
       - Not Reachable
       - Caption for unknown provisioner.
+    * - PROVISIONER_ENGINE_WHITELIST
+      - None
+      - Enable only engines in list.
 
     * - PROMETHEUS_WHITELIST
       - 127.0.0.0/8

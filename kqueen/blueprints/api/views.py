@@ -208,10 +208,17 @@ api.add_url_rule('/provisioners/<uuid:pk>', view_func=DeleteProvisioner.as_view(
 @api.route('/provisioners/engines', methods=['GET'])
 @jwt_required()
 def provisioner_engine_list():
-    from kqueen.engines import __all__ as ENGINES
     engine_cls = []
     module_path = 'kqueen.engines'
-    for engine in ENGINES:
+
+
+    engines = config.get('PROVISIONER_ENGINE_WHITELIST')
+
+    if engines is None:
+        from kqueen.engines import __all__ as engines_available
+        engines = engines_available
+
+    for engine in engines:
         try:
             module = import_module(module_path)
             _class = getattr(module, engine)
