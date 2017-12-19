@@ -8,13 +8,14 @@ services:
     environment:
       KQUEEN_CONFIG_FILE: config/prod.py
       KQUEEN_ETCD_HOST: etcd
-      #KQUEEN_DEBUG: 'True'
+      KQUEEN_PROMETHEUS_WHITELIST: '172.16.238.0/24'
+      # TODO: set SECRET_KEY
+      KQUEEN_SECRET_KEY: ''
       BOOTSTRAP_ADMIN: 1
       BOOTSTRAP_ADMIN_USERNAME: admin
       BOOTSTRAP_ADMIN_PASSWORD: default
       BOOTSTRAP_ADMIN_ORGANIZATION: DemoOrg
       BOOTSTRAP_ADMIN_NAMESPACE: demoorg
-      KQUEEN_PROMETHEUS_WHITELIST: '172.16.238.0/24'
   proxy:
     build: ./prod/nginx/
     restart: always
@@ -22,7 +23,7 @@ services:
       - 443:443
       - 80:80
     volumes:
-      - ./certs/:/mnt/letsencrypt/demo.kqueen.net/:Z
+      - /mnt/storage/kqueen/certs/:/mnt/letsencrypt/demo.kqueen.net/:Z
     volumes_from:
       - ui:ro
   ui:
@@ -36,17 +37,18 @@ services:
       KQUEENUI_KQUEEN_SERVICE_USER_PASSWORD: default
       KQUEENUI_MAIL_SERVER: mail
       KQUEENUI_MAIL_PORT: 10025
+      STATIC_DIR: /mnt/static/
     volumes:
       - /mnt/static/
     restart: always
-#  mail:
-#    image: modularitycontainers/postfix
-#    restart: always
-#    volumes:
-#      - /var/spool/postfix
-#      - /var/spool/mail
-#    environment:
-#      MYHOSTNAME: 'mail'
+  mail:
+    image: modularitycontainers/postfix
+    restart: always
+    volumes:
+      - /var/spool/postfix/
+      - /var/spool/mail/
+    environment:
+      MYHOSTNAME: 'mail'
   prometheus:
     image: prom/prometheus
     restart: always
@@ -54,3 +56,6 @@ services:
       - 127.0.0.1:9090:9090
     volumes:
       - ./prod/prometheus/:/etc/prometheus/:Z
+    links:
+      - api
+      - etcd
