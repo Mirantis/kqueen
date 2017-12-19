@@ -14,8 +14,9 @@ services:
       BOOTSTRAP_ADMIN_PASSWORD: default
       BOOTSTRAP_ADMIN_ORGANIZATION: DemoOrg
       BOOTSTRAP_ADMIN_NAMESPACE: demoorg
+      KQUEEN_PROMETHEUS_WHITELIST: '172.16.238.0/24'
   proxy:
-    build: ./nginx/
+    build: ./prod/nginx/
     restart: always
     ports:
       - 443:443
@@ -46,3 +47,10 @@ services:
 #      - /var/spool/mail
 #    environment:
 #      MYHOSTNAME: 'mail'
+  prometheus:
+    image: prom/prometheus
+    restart: always
+    ports:
+      - 127.0.0.1:9090:9090
+    volumes:
+      - ./prod/prometheus/:/etc/prometheus/:Z

@@ -1,0 +1,7 @@
+global:
+  scrape_interval: 1m
+scrape_configs:
+- job_name: 'kqueen'
+  static_configs:
+  - targets:
+    - 'api:5000'
