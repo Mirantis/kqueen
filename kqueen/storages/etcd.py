@@ -7,7 +7,6 @@ from flask import current_app
 from kqueen.config import current_config
 
 import base64
-import bcrypt
 import etcd
 import hashlib
 import importlib
@@ -207,10 +206,8 @@ class IdField(Field):
 class PasswordField(Field):
 
     def on_create(self):
-        config = current_config()
-        rounds = config.get('BCRYPT_ROUNDS', 12)
-        password = str(self.value).encode('utf-8')
-        self.value = bcrypt.hashpw(password, bcrypt.gensalt(rounds)).decode('utf-8')
+        from kqueen.auth import encrypt_password
+        self.value = encrypt_password(self.value)
 
 
 class DatetimeField(Field):
