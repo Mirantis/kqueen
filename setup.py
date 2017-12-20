@@ -2,7 +2,7 @@
 
 from setuptools import setup, find_packages
 
-version = '0.11'
+version = '0.15'
 
 with open('README.rst') as f:
     long_description = ''.join(f.readlines())
@@ -30,6 +30,7 @@ setup(
     download_url='https://github.com/Mirantis/kqueen/archive/v{}.tar.gz'.format(version),
     packages=find_packages(),
     zip_safe=False,
+    include_package_data=True,
     install_requires=[
         'bcrypt',
         'Flask==0.12.2',

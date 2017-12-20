@@ -22,11 +22,12 @@ class TestProvisionerCRUD(BaseTestCRUD):
 
         return data
 
-    def test_provision_engines(self):
+    def test_provisioner_engines(self):
         url = url_for('api.provisioner_engine_list')
 
         response = self.client.get(url, headers=self.auth_header)
         print(response.json)
 
+        assert response.status_code == 200
         assert isinstance(response.json, list)
         assert len(response.json) == len(all_engines)
