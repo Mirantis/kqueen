@@ -32,6 +32,7 @@ def record_request_data(response):
 
 
 def setup_metrics(app):
+    # TODO: detect multiprocess mode and raise only when needed
     if 'prometheus_multiproc_dir' in os.environ:
         os.makedirs(os.environ['prometheus_multiproc_dir'], exist_ok=True)
     else:

@@ -2,7 +2,7 @@
 
 from setuptools import setup, find_packages
 
-version = '0.10'
+version = '0.15'
 
 with open('README.rst') as f:
     long_description = ''.join(f.readlines())
@@ -30,12 +30,15 @@ setup(
     download_url='https://github.com/Mirantis/kqueen/archive/v{}.tar.gz'.format(version),
     packages=find_packages(),
     zip_safe=False,
+    include_package_data=True,
     install_requires=[
+        'bcrypt',
         'Flask==0.12.2',
         'Flask-JWT==0.3.2',
         'flask-swagger-ui',
         'gunicorn',
         'kubernetes',
+        'pycrypto',
         'prometheus_client',
         'python-etcd',
         'python-jenkins',
@@ -44,6 +47,8 @@ setup(
         'google-api-python-client==1.6.4',
         'google-auth==1.2.1',
         'google-auth-httplib2==0.0.3',
+        'azure==2.0.0',
+        'azure-mgmt-containerservice',
     ],
     setup_requires=[
         'pytest-runner',

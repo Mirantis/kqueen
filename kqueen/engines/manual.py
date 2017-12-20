@@ -11,12 +11,24 @@ class ManualEngine(BaseEngine):
 
     name = 'manual'
     verbose_name = 'Manual Engine'
+    parameter_schema = {
+        'provisioner': {},
+        'cluster': {
+            'kubeconfig': {
+                'type': 'yaml_file',
+                'label': 'Kubeconfig',
+                'validators': {
+                    'required': True
+                }
+            }
+        }
+    }
 
     def __init__(self, cluster, **kwargs):
         """
         Implementation of :func:`~kqueen.engines.base.BaseEngine.__init__`
         """
-
+        self.kubeconfig = kwargs.get('kubeconfig', {})
         super(ManualEngine, self).__init__(cluster, **kwargs)
 
     def cluster_list(self):
@@ -27,12 +39,9 @@ class ManualEngine(BaseEngine):
     def cluster_get(self):
         """
         Implementation of :func:`~kqueen.engines.base.BaseEngine.cluster_get`
-
-        Returns:
-            Cluster:
         """
 
-        return self.cluster
+        return {}
 
     def provision(self):
         """
@@ -46,16 +55,16 @@ class ManualEngine(BaseEngine):
         self.cluster.state = config.get('CLUSTER_OK_STATE')
         self.cluster.save()
 
-        return (True, None)
+        return True, None
 
     def deprovision(self):
         """
-        Deprovision isn't supported by manual engine
+        Deprovision isn't supported by manual engine, we just pass it.
 
         Implementation of :func:`~kqueen.engines.base.BaseEngine.deprovision`
         """
 
-        return (True, None)
+        return True, None
 
     def get_kubeconfig(self):
         """Get kubeconfig of the cluster
@@ -66,16 +75,7 @@ class ManualEngine(BaseEngine):
         Implementation of :func:`~kqueen.engines.base.BaseEngine.get_kubeconfig`
         """
 
-        return self.cluster.kubeconfig
-
-    @classmethod
-    def get_parameter_schema(cls):
-        """Return parameters specific for this Provisioner implementation.
-
-        Implementation of :func:`~kqueen.engines.base.BaseEngine.get_parameter_schema`
-        """
-
-        return {}
+        return self.kubeconfig
 
     def get_progress(self):
         """

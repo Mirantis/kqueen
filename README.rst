@@ -11,6 +11,10 @@ KQueen - Kubernetes cluster manager
 .. image:: https://coveralls.io/repos/github/Mirantis/kqueen/badge.svg?branch=master
     :target: https://coveralls.io/github/Mirantis/kqueen?branch=master
 
+Overview
+--------
+
+More information about KQueen Architecture and use cases is described in `RATIONALE <RATIONALE.md>`_ file.
 
 Development
 -----------
@@ -20,7 +24,7 @@ Development
 ::
 
     mkvirtualenv -p /usr/bin/python3 kqueen
-    pip install -e ".[dev]"
+    pip3 install -e ".[dev]"
     pip3 install --editable .
     # start etcd in container
     docker-compose up -d # start
@@ -38,26 +42,15 @@ Development
 Demo environment
 ----------------
 
--  Without local Kubernetes
+- Make sure you can reach Jenkins server defined in `JENKINS_API_URL` variable in file `kqueen/config/prod.py`.
+- Run these commands to run Kqueen API and UI in containers.
 
 ::
 
     docker-compose -f docker-compose.yml -f docker-compose.demo.yml up
 
--  Including local Kubernetes (without ``kubelet``)
+- You can login using user `admin` and password `default`. Default username and password can be changed in `docker-compose.demo.yml` file before first start of API.
 
-::
-
-    docker-compose -f docker-compose.yml -f docker-compose.demo.yml -f docker-compose.kubernetes.yml up
-
--  You can add some example data by running
-
-::
-
-    docker-compose -f docker-compose.yml -f docker-compose.demo.yml exec kqueen ./devenv.py
-
-It will add user ``admin`` with password ``default`` and few of testing
-objects.
 
 Configuration
 -------------
@@ -79,3 +72,16 @@ For full documenation please refer to
    :target: https://badge.fury.io/py/kqueen
 .. |Coverage Status| image:: https://coveralls.io/repos/github/Mirantis/kqueen/badge.svg?branch=master
    :target: https://coveralls.io/github/Mirantis/kqueen?branch=master
+
+DEMOs
+-----
+
+**Generic KQueen Overview**
+
+.. image:: https://img.youtube.com/vi/PCAwCxPQc2A/0.jpg
+   :target: https://www.youtube.com/watch?v=PCAwCxPQc2A&t=1s
+
+**AKS (Azure) in KQueen**
+
+.. image:: https://img.youtube.com/vi/xHydnJGcs2k/0.jpg
+   :target: https://youtu.be/xHydnJGcs2k

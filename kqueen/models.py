@@ -1,14 +1,14 @@
 from importlib import import_module
 from kqueen.config import current_config
 from kqueen.kubeapi import KubernetesAPI
-from kqueen.storages.etcd import DatetimeField
 from kqueen.storages.etcd import BoolField
+from kqueen.storages.etcd import DatetimeField
 from kqueen.storages.etcd import IdField
 from kqueen.storages.etcd import JSONField
 from kqueen.storages.etcd import Model
 from kqueen.storages.etcd import ModelMeta
+from kqueen.storages.etcd import PasswordField
 from kqueen.storages.etcd import RelationField
-from kqueen.storages.etcd import SecretField
 from kqueen.storages.etcd import StringField
 from tempfile import mkstemp
 
@@ -30,21 +30,24 @@ class Cluster(Model, metaclass=ModelMeta):
     name = StringField(required=True)
     provisioner = RelationField()
     state = StringField()
-    kubeconfig = JSONField()
+    kubeconfig = JSONField(encrypted=True)
     metadata = JSONField()
     created_at = DatetimeField()
+    owner = RelationField(required=True)
 
     def get_state(self):
-        if self.state != config.get('CLUSTER_PROVISIONING_STATE'):
-            return self.state
         try:
             cluster = self.engine.cluster_get()
-            if cluster['state'] == config.get('CLUSTER_PROVISIONING_STATE'):
+        except Exception as e:
+            logger.error('Unable to get data from backend for cluster {}'.format(self.name))
+            cluster = {}
+
+        if 'state' in cluster:
+            if cluster['state'] == self.state:
                 return self.state
             self.state = cluster['state']
             self.save()
-        except:
-            pass
+
         return self.state
 
     @property
@@ -52,9 +55,24 @@ class Cluster(Model, metaclass=ModelMeta):
         if self.provisioner:
             _class = self.provisioner.get_engine_cls()
             if _class:
-                parameters = self.provisioner.parameters or {}
+                parameters = {}
+                for i in [self.provisioner.parameters, self.metadata]:
+                    if isinstance(i, dict):
+                        parameters.update(i)
+
                 return _class(self, **parameters)
-        return None
+        else:
+            raise Exception('Missing provisioner')
+
+    def delete(self):
+        """Deprovision cluster and delete object from database"""
+
+        deprov_status, deprov_msg = self.engine.deprovision()
+
+        if deprov_status:
+            super(Cluster, self).delete()
+        else:
+            raise Exception('Unable to deprovision cluster: {}'.format(deprov_msg))
 
     def get_kubeconfig(self):
         if self.kubeconfig:
@@ -74,6 +92,7 @@ class Cluster(Model, metaclass=ModelMeta):
                 'cluster_roles': kubernetes.list_cluster_roles(),
                 'cluster_role_bindings': kubernetes.list_cluster_role_bindings(),
                 'deployments': kubernetes.list_deployments(),
+                'namespaces': kubernetes.list_namespaces(),
                 'nodes': kubernetes.list_nodes(),
                 'nodes_pods': kubernetes.count_pods_by_node(),
                 'persistent_volumes': kubernetes.list_persistent_volumes(),
@@ -85,7 +104,7 @@ class Cluster(Model, metaclass=ModelMeta):
                 'version': kubernetes.get_version(),
             }
 
-        except:
+        except Exception:
             out = {}
 
         return out
@@ -203,7 +222,7 @@ class Cluster(Model, metaclass=ModelMeta):
                             'source': resource_id,
                             'target': service_select_app_2_uid[resource['metadata']['labels']['app']]
                         })
-                    except:
+                    except Exception:
                         pass
 
         out = {
@@ -213,7 +232,7 @@ class Cluster(Model, metaclass=ModelMeta):
                 'Pod': '',
             }
         }
-#        except:
+#        except Exception:
 #            out = {
 #                'items': [],
 #                'relations': []
@@ -278,10 +297,24 @@ class Cluster(Model, metaclass=ModelMeta):
 class Provisioner(Model, metaclass=ModelMeta):
     id = IdField(required=True)
     name = StringField(required=True)
+    verbose_name = StringField(required=False)
     engine = StringField(required=True)
     state = StringField()
-    parameters = JSONField()
+    parameters = JSONField(encrypted=True)
     created_at = DatetimeField()
+    owner = RelationField(required=True)
+
+    @classmethod
+    def list_engines(self):
+        """Read engines and filter them according to whitelist"""
+
+        engines = config.get('PROVISIONER_ENGINE_WHITELIST')
+
+        if engines is None:
+            from kqueen.engines import __all__ as engines_available
+            engines = engines_available
+
+        return engines
 
     def get_engine_cls(self):
         """Return engine class"""
@@ -290,13 +323,10 @@ class Provisioner(Model, metaclass=ModelMeta):
             class_name = self.engine.split('.')[-1]
             module = import_module(module_path)
             _class = getattr(module, class_name)
-        except:
+        except Exception as e:
+            logger.error(repr(e))
             _class = None
         return _class
-
-    @property
-    def engine_name(self):
-        return getattr(self.get_engine_cls(), 'verbose_name', self.engine)
 
     def engine_status(self, save=True):
         state = config.get('PROVISIONER_UNKNOWN_STATE')
@@ -315,6 +345,7 @@ class Provisioner(Model, metaclass=ModelMeta):
     def save(self, check_status=True):
         if check_status:
             self.state = self.engine_status(save=False)
+        self.verbose_name = getattr(self.get_engine_cls(), 'verbose_name', self.engine)
         return super(Provisioner, self).save()
 
 
@@ -329,6 +360,7 @@ class Organization(Model, metaclass=ModelMeta):
     id = IdField(required=True)
     name = StringField(required=True)
     namespace = StringField(required=True)
+    policy = JSONField()
     created_at = DatetimeField()
 
 
@@ -338,10 +370,12 @@ class User(Model, metaclass=ModelMeta):
     id = IdField(required=True)
     username = StringField(required=True)
     email = StringField(required=False)
-    password = SecretField(required=True)
+    password = PasswordField(required=True)
     organization = RelationField(required=True)
     created_at = DatetimeField()
+    role = StringField(required=True)
     active = BoolField(required=True)
+    metadata = JSONField(required=False)
 
     @property
     def namespace(self):

@@ -21,13 +21,17 @@ stages:
 jobs:
   include:
   - stage: test
+    install:
+    - pip install -e ".[dev]"
+    script:
+    - python3 -m flake8
+  - stage: test
     before_install:
     - docker-compose -f docker-compose.yml -f docker-compose.kubernetes.yml up -d
     install:
     - pip install -e ".[dev]"
     script:
     - export prometheus_multiproc_dir=$(mktemp -d)
-    - python3 -m flake8
     - python3 -m pytest --cov=. --cov-report=term-missing:skip-covered
     - coveralls
     - pip3 install --editable .

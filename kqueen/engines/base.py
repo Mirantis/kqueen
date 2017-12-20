@@ -1,3 +1,8 @@
+from kqueen.config import current_config
+
+config = current_config()
+
+
 class BaseEngine:
     """Base Engine object.
 
@@ -24,9 +29,36 @@ class BaseEngine:
         this engine instance.
         name (str): Name of the engine usable by program.
         verbose_name (str): Human readable name of the engine.
+        parameter_schema (dict): Dictionary representation of the parameters with hints for form rendering.::
+
+            {
+                'provisioner': {
+                    'username': {
+                        'type': 'text',
+                        'validators': {
+                            'required': True
+                        }
+                    },
+                    'password': {
+                        'type': 'password',
+                        'validators': {
+                            'required': True
+                        }
+                    }
+                }
+                'cluster': {
+                    'node_count': {
+                        'type': 'integer',
+                        'validators: {
+                            'required': True
+                        }
+                    }
+                }
+            }
     """
     name = 'base'
     verbose_name = 'Base Engine'
+    parameter_schema = {}
 
     def __init__(self, cluster, **kwargs):
         self.cluster = cluster
@@ -63,7 +95,7 @@ class BaseEngine:
                     'key': key,     # (str) this record should be cached under this key if you choose to cache
                     'name': name,   # (str) name of the cluster in its respective backend
                     'id': id,       # (str or UUID) id of `kqueen.models.Cluster` object in KQueen database
-                    'state': state, # (str) cluster.state
+                    'state': state, # (str) state of cluster on backend represented by app.config['CLUSTER_[FOO]_STATE']
                     'metadata': {
                         'foo': bar  # any keys specific for the Provisioner implementation
                     }
@@ -122,24 +154,9 @@ class BaseEngine:
         in parameters attribute (JSONField) of the `kqueen.models.Provisioner` object.
 
         Returns:
-            dict: Dictionary representation of the parameters with hints for form rendering.::
-
-                {
-                    'username': {
-                        'type': 'text',
-                        'validators': {
-                            'required': True
-                        }
-                    },
-                    'password': {
-                        'type': 'password',
-                        'validators': {
-                            'required': True
-                        }
-                    }
-                }
+            dict:  Returns ``self.parameter_schema`` in default, but can be overridden.
         """
-        raise NotImplementedError
+        return cls.parameter_schema
 
     def get_progress(self):
         """Get progress of provisioning if its possible to determine.
@@ -152,7 +169,7 @@ class BaseEngine:
             dict: Dictionary representation of the provisioning provress.::
 
                 {
-                    'response': response, # (int) any number other than 0 means failure to determine progress
+                    'response': response, # (int) any number other than 200 means failure to determine progress
                     'progress': progress, # (int) provisioning progress in percents
                     'result': result      # (str) current state of the cluster, i.e. 'Deploying'
                 }
@@ -166,4 +183,4 @@ class BaseEngine:
         Returns:
             str: Return status of engine, should use statuses from ``app.config``
         """
-        raise NotImplementedError
+        return config.get('PROVISIONER_OK_STATE')

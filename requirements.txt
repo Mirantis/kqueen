@@ -1,13 +1,15 @@
+bcrypt
 Flask==0.12.2
 Flask-JWT==0.3.2
 flask-swagger-ui
+gunicorn
 kubernetes
+prometheus_client
+pycrypto
 python-etcd
 python-jenkins
-prometheus_client
 pyyaml
 requests
-gunicorn
 
 # dev
 coveralls
@@ -28,3 +30,7 @@ sphinx_rtd_theme
 google-api-python-client==1.6.4
 google-auth==1.2.1
 google-auth-httplib2==0.0.3
+
+#AKS
+azure==2.0.0
+azure-mgmt-containerservice
