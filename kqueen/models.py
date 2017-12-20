@@ -7,8 +7,8 @@ from kqueen.storages.etcd import IdField
 from kqueen.storages.etcd import JSONField
 from kqueen.storages.etcd import Model
 from kqueen.storages.etcd import ModelMeta
+from kqueen.storages.etcd import PasswordField
 from kqueen.storages.etcd import RelationField
-from kqueen.storages.etcd import SecretField
 from kqueen.storages.etcd import StringField
 from tempfile import mkstemp
 
@@ -30,21 +30,24 @@ class Cluster(Model, metaclass=ModelMeta):
     name = StringField(required=True)
     provisioner = RelationField()
     state = StringField()
-    kubeconfig = JSONField()
+    kubeconfig = JSONField(encrypted=True)
     metadata = JSONField()
     created_at = DatetimeField()
+    owner = RelationField(required=True)
 
     def get_state(self):
-        if self.state != config.get('CLUSTER_PROVISIONING_STATE'):
-            return self.state
         try:
             cluster = self.engine.cluster_get()
-            if cluster['state'] == config.get('CLUSTER_PROVISIONING_STATE'):
+        except Exception as e:
+            logger.error('Unable to get data from backend for cluster {}'.format(self.name))
+            cluster = {}
+
+        if 'state' in cluster:
+            if cluster['state'] == self.state:
                 return self.state
             self.state = cluster['state']
             self.save()
-        except Exception:
-            pass
+
         return self.state
 
     @property
@@ -291,10 +294,24 @@ class Cluster(Model, metaclass=ModelMeta):
 class Provisioner(Model, metaclass=ModelMeta):
     id = IdField(required=True)
     name = StringField(required=True)
+    verbose_name = StringField(required=False)
     engine = StringField(required=True)
     state = StringField()
-    parameters = JSONField()
+    parameters = JSONField(encrypted=True)
     created_at = DatetimeField()
+    owner = RelationField(required=True)
+
+    @classmethod
+    def list_engines(self):
+        """Read engines and filter them according to whitelist"""
+
+        engines = config.get('PROVISIONER_ENGINE_WHITELIST')
+
+        if engines is None:
+            from kqueen.engines import __all__ as engines_available
+            engines = engines_available
+
+        return engines
 
     def get_engine_cls(self):
         """Return engine class"""
@@ -307,10 +324,6 @@ class Provisioner(Model, metaclass=ModelMeta):
             logger.error(repr(e))
             _class = None
         return _class
-
-    @property
-    def engine_name(self):
-        return getattr(self.get_engine_cls(), 'verbose_name', self.engine)
 
     def engine_status(self, save=True):
         state = config.get('PROVISIONER_UNKNOWN_STATE')
@@ -329,7 +342,7 @@ class Provisioner(Model, metaclass=ModelMeta):
     def save(self, check_status=True):
         if check_status:
             self.state = self.engine_status(save=False)
-
+        self.verbose_name = getattr(self.get_engine_cls(), 'verbose_name', self.engine)
         return super(Provisioner, self).save()
 
 
@@ -344,6 +357,7 @@ class Organization(Model, metaclass=ModelMeta):
     id = IdField(required=True)
     name = StringField(required=True)
     namespace = StringField(required=True)
+    policy = JSONField()
     created_at = DatetimeField()
 
 
@@ -353,10 +367,12 @@ class User(Model, metaclass=ModelMeta):
     id = IdField(required=True)
     username = StringField(required=True)
     email = StringField(required=False)
-    password = SecretField(required=True)
+    password = PasswordField(required=True)
     organization = RelationField(required=True)
     created_at = DatetimeField()
+    role = StringField(required=True)
     active = BoolField(required=True)
+    metadata = JSONField(required=False)
 
     @property
     def namespace(self):

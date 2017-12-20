@@ -29,6 +29,7 @@ class ManualEngineBase:
             'name': 'Testing manual',
             'engine': 'kqueen.engines.ManualEngine',
             'parameters': PROVISIONER_PARAMETERS,
+            'owner': _user
         }
 
         prov = Provisioner(_user.namespace, **create_kwargs_provisioner)
@@ -40,6 +41,7 @@ class ManualEngineBase:
             'state': 'deployed',
             'kubeconfig': KUBECONFIG,
             'metadata': CLUSTER_METADATA,
+            'owner': _user
         }
 
         self.cluster = Cluster.create(_user.namespace, **self.create_kwargs_cluster)
@@ -52,13 +54,13 @@ class ManualEngineBase:
 
 class TestClusterAction(ManualEngineBase):
     def test_initialization(self):
-        assert self.engine.cluster == self.cluster
+        assert self.engine.cluster.get_dict(True) == self.cluster.get_dict(True)
 
     def test_cluster_list(self):
         assert self.engine.cluster_list() == []
 
     def test_cluster_get(self):
-        assert self.engine.cluster_get() == self.cluster
+        assert self.engine.cluster_get() == {}
 
     @pytest.mark.parametrize('action', ['provision', 'deprovision'])
     def test_actions(self, action):
@@ -90,6 +92,7 @@ class TestCreateOverAPI(ManualEngineBase):
         url = url_for('api.cluster_list')
         data = self.create_kwargs_cluster
         data['provisioner'] = 'Provisioner:{}'.format(data['provisioner'].id)
+        data['owner'] = 'User:{}'.format(data['owner'].id)
 
         # create
         response = self.client.post(

@@ -1,3 +1,8 @@
+from .generic_views import CreateView
+from .generic_views import DeleteView
+from .generic_views import GetView
+from .generic_views import ListView
+from .generic_views import UpdateView
 from .helpers import get_object
 from flask import abort
 from flask import Blueprint
@@ -10,12 +15,14 @@ from kqueen.models import Cluster
 from kqueen.models import Organization
 from kqueen.models import Provisioner
 from kqueen.models import User
-from .generic_views import ListView, CreateView, GetView, UpdateView, DeleteView
+from kqueen.config import current_config
 
+import asyncio
 import logging
 import os
 import yaml
 
+config = current_config()
 logger = logging.getLogger(__name__)
 
 api = Blueprint('api', __name__)
@@ -62,6 +69,28 @@ def index():
 class ListClusters(ListView):
     object_class = Cluster
 
+    async def _update_clusters(self, clusters):
+        loop = asyncio.get_event_loop()
+        futures = [loop.run_in_executor(None, c.get_state) for c in clusters]
+
+        for _ in await asyncio.gather(*futures):
+            pass
+
+    def get_content(self, *args, **kwargs):
+        clusters = super(ListClusters, self).get_content(*args, **kwargs)
+
+        if config.get('CLUSTER_STATE_ON_LIST'):
+            try:
+                loop = asyncio.get_event_loop()
+                loop.run_until_complete(self._update_clusters(clusters))
+            except RuntimeError:
+                logger.warning('Asyncio loop is NOT available, fallback to simple looping')
+
+                for c in clusters:
+                    c.get_state()
+
+        return clusters
+
 
 class CreateCluster(CreateView):
     object_class = Cluster
@@ -79,8 +108,9 @@ class GetCluster(GetView):
     object_class = Cluster
 
     def dispatch_request(self, *args, **kwargs):
-        self.check_access()
-
+        self.check_authentication()
+        self.set_object(*args, **kwargs)
+        self.check_authorization()
         cluster = self.get_content(*args, **kwargs)
         cluster.get_state()
 
@@ -126,6 +156,27 @@ def cluster_kubeconfig(pk):
     return jsonify(obj.kubeconfig)
 
 
+@api.route('/clusters/<uuid:pk>/progress', methods=['GET'])
+@jwt_required()
+def cluster_progress(pk):
+    obj = get_object(Cluster, pk, current_identity)
+    try:
+        progress = obj.engine.get_progress()
+    except NotImplementedError:
+        progress = {
+            'response': 501,
+            'progress': 0,
+            'result': obj.get_state()
+        }
+    except Exception:
+        progress = {
+            'response': 500,
+            'progress': 0,
+            'result': config.get('CLUSTER_UNKNOWN_STATE')
+        }
+    return jsonify(progress)
+
+
 # Provisioners
 class ListProvisioners(ListView):
     object_class = Provisioner
@@ -157,21 +208,24 @@ api.add_url_rule('/provisioners/<uuid:pk>', view_func=DeleteProvisioner.as_view(
 @api.route('/provisioners/engines', methods=['GET'])
 @jwt_required()
 def provisioner_engine_list():
-    from kqueen.engines import __all__ as ENGINES
     engine_cls = []
     module_path = 'kqueen.engines'
-    for engine in ENGINES:
+
+    for engine in Provisioner.list_engines():
         try:
             module = import_module(module_path)
             _class = getattr(module, engine)
             parameters = _class.get_parameter_schema()
+            name = '.'.join([module_path, engine])
             engine_cls.append({
-                'name': '.'.join([module_path, engine]),
+                'name': name,
+                'verbose_name': getattr(_class, 'verbose_name', name),
                 'parameters': parameters
             })
         except NotImplementedError:
             engine_cls.append({
                 'name': engine,
+                'verbose_name': engine,
                 'parameters': {
                     'provisioner': {},
                     'cluster': {}

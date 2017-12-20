@@ -39,12 +39,9 @@ class ManualEngine(BaseEngine):
     def cluster_get(self):
         """
         Implementation of :func:`~kqueen.engines.base.BaseEngine.cluster_get`
-
-        Returns:
-            Cluster:
         """
 
-        return self.cluster
+        return {}
 
     def provision(self):
         """

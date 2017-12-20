@@ -20,7 +20,7 @@ class BaseTestCRUD:
         return self.obj.__class__.__name__.lower()
 
     def get_create_data(self):
-        data = self.obj.get_dict()
+        data = self.obj.get_dict(expand=True)
         data['id'] = None
 
         return data
@@ -229,10 +229,38 @@ class BaseTestCRUD:
 
             # TODO: fix this
             # Dirty hack to make testing data namespaced.
+            organization_data = {
+                'name': 'Test organization',
+                'namespace': 'testorg',
+            }
+            response = self.client.post(
+                url_for('api.organization_create'),
+                data=json.dumps(organization_data),
+                headers=headers,
+                content_type='application/json',
+            )
+            organization_ref = 'Organization:{}'.format(response.json['id'])
+            owner_data = {
+                'username': 'Test owner',
+                'email': 'owner@pytest.org',
+                'password': 'pytest',
+                'organization': organization_ref,
+                'role': 'admin',
+                'active': True
+            }
+            response = self.client.post(
+                url_for('api.user_create'),
+                data=json.dumps(owner_data),
+                headers=headers,
+                content_type='application/json',
+            )
+            if 'owner' in data:
+                data['owner'] = 'User:{}'.format(response.json['id'])
             if 'provisioner' in data:
                 provisioner_data = {
                     'name': 'Test provisioner',
                     'engine': 'kqueen.engines.ManualEngine',
+                    'owner': 'User:{}'.format(response.json['id'])
                 }
                 response = self.client.post(
                     url_for('api.provisioner_create'),

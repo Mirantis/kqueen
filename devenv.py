@@ -42,12 +42,13 @@ with app.app_context():
         raise Exception('Adding DemoOrg organization failed')
 
     try:
-        user = User(
+        user = User.create(
             None,
             username='admin',
             password='default',
             organization=organization,
             created_at=datetime.utcnow(),
+            role='superadmin',
             active=True
         )
         user.save()
@@ -66,65 +67,12 @@ with app.app_context():
                 'username': 'demo',
                 'password': 'Demo123'
             },
-            created_at=datetime.utcnow()
+            created_at=datetime.utcnow(),
+            owner=user
         )
         provisioner.save(check_status=False)
     except:
         raise Exception('Adding AWS provisioner failed')
-
-    # GKE provisioner
-    try:
-        provisioner = Provisioner(
-            user.namespace,
-            id=uuid_provisioner_gke,
-            name='Google Kubernetes engine',
-            state='OK',
-            engine='kqueen.engines.GceEngine',
-            created_at=datetime.utcnow()
-        )
-        provisioner.save(check_status=False)
-    except:
-        raise Exception('Adding GKE provisioner failed')
-
-    try:
-        cluster = Cluster(
-            user.namespace,
-            id=uuid_gke,
-            state='OK',
-            name='GKE clustet, paused',
-            provisioner=provisioner,
-            created_at=datetime.utcnow()
-        )
-        cluster.save()
-    except:
-        raise Exception('Adding GKE provisioner failed')
-
-    # AKS provisioner
-    try:
-        provisioner = Provisioner(
-            user.namespace,
-            id=uuid_provisioner_aks,
-            name='Azure Kubernetes Service',
-            state='OK',
-            engine='kqueen.engines.AksEngine',
-            created_at=datetime.utcnow()
-        )
-        provisioner.save(check_status=False)
-    except:
-        raise Exception('Adding AKS provisioner failed')
-
-    try:
-        cluster = Cluster(
-            user.namespace,
-            id=uuid_aks,
-            state='OK',
-            name='AKS clustet, paused',
-            provisioner=provisioner,
-            created_at=datetime.utcnow()
-        )
-        cluster.save()
-    except:
-        raise Exception('Adding AKS cluster failed')
 
     try:
         # load kubeconfig file
@@ -142,12 +90,70 @@ with app.app_context():
             state='OK',
             provisioner=provisioner,
             kubeconfig=kubeconfig,
-            created_at=datetime.utcnow()
+            created_at=datetime.utcnow(),
+            owner=user
         )
         cluster.save()
     except:
         raise Exception('Adding AWS cluster failed')
 
+    # GKE provisioner
+    try:
+        provisioner = Provisioner(
+            user.namespace,
+            id=uuid_provisioner_gke,
+            name='Google Kubernetes engine',
+            state='OK',
+            engine='kqueen.engines.GceEngine',
+            created_at=datetime.utcnow(),
+            owner=user
+        )
+        provisioner.save(check_status=False)
+    except:
+        raise Exception('Adding GKE provisioner failed')
+
+    try:
+        cluster = Cluster(
+            user.namespace,
+            id=uuid_gke,
+            state='OK',
+            name='GKE cluster, paused',
+            provisioner=provisioner,
+            created_at=datetime.utcnow(),
+            owner=user
+        )
+        cluster.save()
+    except:
+        raise Exception('Adding GKE provisioner failed')
+
+    # AKS provisioner
+    try:
+        provisioner = Provisioner(
+            user.namespace,
+            id=uuid_provisioner_aks,
+            name='Azure Kubernetes Service',
+            state='OK',
+            engine='kqueen.engines.AksEngine',
+            created_at=datetime.utcnow(),
+            owner=user
+        )
+        provisioner.save(check_status=False)
+    except:
+        raise Exception('Adding AKS provisioner failed')
+
+    try:
+        cluster = Cluster(
+            user.namespace,
+            id=uuid_aks,
+            state='OK',
+            name='AKS cluster, paused',
+            provisioner=provisioner,
+            created_at=datetime.utcnow(),
+            owner=user
+        )
+        cluster.save()
+    except:
+        raise Exception('Adding AKS cluster failed')
 
     # Local cluster
     try:
@@ -158,7 +164,8 @@ with app.app_context():
             state='OK',
             engine='kqueen.engines.ManualEngine',
             parameters={},
-            created_at=datetime.utcnow()
+            created_at=datetime.utcnow(),
+            owner=user
         )
         provisioner.save(check_status=False)
     except:
@@ -173,7 +180,8 @@ with app.app_context():
             state='OK',
             provisioner=provisioner,
             kubeconfig=yaml.load(open('kubeconfig_localhost', 'r').read()),
-            created_at=datetime.utcnow()
+            created_at=datetime.utcnow(),
+            owner=user
         )
         cluster.save()
     except:
@@ -188,7 +196,8 @@ with app.app_context():
             state='OK',
             engine='kqueen.engines.ManualEngine',
             parameters={},
-            created_at=datetime.utcnow()
+            created_at=datetime.utcnow(),
+            owner=user
         )
         provisioner.save(check_status=False)
     except:
