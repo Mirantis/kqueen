@@ -3,6 +3,7 @@ from flask import url_for
 from kqueen.conftest import user
 from kqueen.config import current_config
 
+import bcrypt
 import json
 import pytest
 
@@ -17,7 +18,6 @@ class TestUserCRUD(BaseTestCRUD):
         return {
             'username': 'patched user',
             'email': 'root@localhost',
-            'password': 'password123',
         }
 
     def get_create_data(self):
@@ -61,6 +61,44 @@ class TestUserCRUD(BaseTestCRUD):
         user = self.get_object()
 
         assert user.namespace == user.organization.namespace
+
+    def test_password_update(self):
+        data = {'password': 'password123'}
+        url = url_for('api.user_password_update', pk=self.obj.id)
+
+        response = self.client.patch(
+            url,
+            data=json.dumps(data),
+            headers=self.auth_header,
+            content_type='application/json',
+        )
+
+        assert response.status_code == 200
+        patched = self.obj.__class__.load(
+            self.namespace,
+            self.obj.id,
+        )
+        user_password = patched.password.encode('utf-8')
+        given_password = "password123".encode('utf-8')
+        assert bcrypt.checkpw(given_password, user_password)
+
+    def test_crud_update(self):
+        data = self.get_edit_data()
+
+        response = self.client.patch(
+            self.urls['update'],
+            data=json.dumps(data),
+            headers=self.auth_header,
+            content_type='application/json',
+        )
+
+        assert response.status_code == 200
+        patched = self.obj.__class__.load(
+            self.namespace,
+            self.obj.id,
+        )
+        for key, value in data.items():
+            assert getattr(patched, key) == value
 
     @pytest.mark.last
     def test_crud_delete(self):
