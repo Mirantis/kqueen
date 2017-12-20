@@ -265,6 +265,17 @@ api.add_url_rule('/organizations/<uuid:pk>', view_func=UpdateOrganization.as_vie
 api.add_url_rule('/organizations/<uuid:pk>', view_func=DeleteOrganization.as_view('organization_delete'))
 
 
+@api.route('/organizations/<uuid:pk>/policy', methods=['GET'])
+@jwt_required()
+def organization_policy(pk):
+    obj = get_object(Organization, pk, current_identity)
+    policies = config.get('DEFAULT_POLICIES', {})
+    if hasattr(obj, 'policy') and obj.policy:
+        policies.update(obj.policy)
+
+    return jsonify(policies)
+
+
 # Users
 class ListUsers(ListView):
     object_class = User
