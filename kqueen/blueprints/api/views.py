@@ -207,21 +207,24 @@ api.add_url_rule('/provisioners/<uuid:pk>', view_func=DeleteProvisioner.as_view(
 @api.route('/provisioners/engines', methods=['GET'])
 @jwt_required()
 def provisioner_engine_list():
-    from kqueen.engines import __all__ as ENGINES
     engine_cls = []
     module_path = 'kqueen.engines'
-    for engine in ENGINES:
+
+    for engine in Provisioner.list_engines():
         try:
             module = import_module(module_path)
             _class = getattr(module, engine)
             parameters = _class.get_parameter_schema()
+            name = '.'.join([module_path, engine])
             engine_cls.append({
-                'name': '.'.join([module_path, engine]),
+                'name': name,
+                'verbose_name': getattr(_class, 'verbose_name', name),
                 'parameters': parameters
             })
         except NotImplementedError:
             engine_cls.append({
                 'name': engine,
+                'verbose_name': engine,
                 'parameters': {
                     'provisioner': {},
                     'cluster': {}
