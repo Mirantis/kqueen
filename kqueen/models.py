@@ -30,7 +30,7 @@ class Cluster(Model, metaclass=ModelMeta):
     name = StringField(required=True)
     provisioner = RelationField()
     state = StringField()
-    kubeconfig = JSONField()
+    kubeconfig = JSONField(encrypted=True)
     metadata = JSONField()
     created_at = DatetimeField()
     owner = RelationField(required=True)
@@ -297,7 +297,7 @@ class Provisioner(Model, metaclass=ModelMeta):
     verbose_name = StringField(required=False)
     engine = StringField(required=True)
     state = StringField()
-    parameters = JSONField()
+    parameters = JSONField(encrypted=True)
     created_at = DatetimeField()
     owner = RelationField(required=True)
 

@@ -15,7 +15,7 @@ class TestGetObject:
     def test_get_objects(self):
         obj = get_object(self.obj.__class__, self.obj.id, self.user)
 
-        assert obj == self.obj
+        assert obj.get_dict(True) == self.obj.get_dict(True)
 
     @pytest.mark.parametrize('bad_user', [
         'None',

@@ -54,7 +54,7 @@ class ManualEngineBase:
 
 class TestClusterAction(ManualEngineBase):
     def test_initialization(self):
-        assert self.engine.cluster == self.cluster
+        assert self.engine.cluster.get_dict(True) == self.cluster.get_dict(True)
 
     def test_cluster_list(self):
         assert self.engine.cluster_list() == []
