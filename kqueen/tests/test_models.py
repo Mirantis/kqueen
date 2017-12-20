@@ -31,7 +31,7 @@ class TestClusterModel:
         get_id = cluster.id
 
         loaded = Cluster.load(cluster._object_namespace, get_id)
-        assert loaded == cluster
+        assert loaded.get_dict(True) == cluster.get_dict(True)
         assert hasattr(loaded, '_key'), 'Loaded object is missing _key'
 
     def test_id_generation(self, provisioner, user):
