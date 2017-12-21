@@ -241,16 +241,3 @@ class AksEngine(BaseEngine):
         # TODO: it does, add list of clusters
 
         return []
-
-    def get_progress(self):
-        """
-        AKS engine don't report any progress.
-
-        Implementation of :func:`~kqueen.engines.base.BaseEngine.get_progress`
-        """
-
-        return {
-            'response': 0,
-            'progress': 100,
-            'result': config.get('CLUSTER_OK_STATE'),
-        }

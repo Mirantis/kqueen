@@ -8,9 +8,11 @@ from flask import abort
 from flask import Blueprint
 from flask import jsonify
 from flask import make_response
+from flask import request
 from flask_jwt import current_identity
 from flask_jwt import jwt_required
 from importlib import import_module
+from kqueen.auth import encrypt_password
 from kqueen.models import Cluster
 from kqueen.models import Organization
 from kqueen.models import Provisioner
@@ -108,8 +110,9 @@ class GetCluster(GetView):
     object_class = Cluster
 
     def dispatch_request(self, *args, **kwargs):
-        self.check_access()
-
+        self.check_authentication()
+        self.set_object(*args, **kwargs)
+        self.check_authorization()
         cluster = self.get_content(*args, **kwargs)
         cluster.get_state()
 
@@ -155,6 +158,27 @@ def cluster_kubeconfig(pk):
     return jsonify(obj.kubeconfig)
 
 
+@api.route('/clusters/<uuid:pk>/progress', methods=['GET'])
+@jwt_required()
+def cluster_progress(pk):
+    obj = get_object(Cluster, pk, current_identity)
+    try:
+        progress = obj.engine.get_progress()
+    except NotImplementedError:
+        progress = {
+            'response': 501,
+            'progress': 0,
+            'result': obj.get_state()
+        }
+    except Exception:
+        progress = {
+            'response': 500,
+            'progress': 0,
+            'result': config.get('CLUSTER_UNKNOWN_STATE')
+        }
+    return jsonify(progress)
+
+
 # Provisioners
 class ListProvisioners(ListView):
     object_class = Provisioner
@@ -186,21 +210,24 @@ api.add_url_rule('/provisioners/<uuid:pk>', view_func=DeleteProvisioner.as_view(
 @api.route('/provisioners/engines', methods=['GET'])
 @jwt_required()
 def provisioner_engine_list():
-    from kqueen.engines import __all__ as ENGINES
     engine_cls = []
     module_path = 'kqueen.engines'
-    for engine in ENGINES:
+
+    for engine in Provisioner.list_engines():
         try:
             module = import_module(module_path)
             _class = getattr(module, engine)
             parameters = _class.get_parameter_schema()
+            name = '.'.join([module_path, engine])
             engine_cls.append({
-                'name': '.'.join([module_path, engine]),
+                'name': name,
+                'verbose_name': getattr(_class, 'verbose_name', name),
                 'parameters': parameters
             })
         except NotImplementedError:
             engine_cls.append({
                 'name': engine,
+                'verbose_name': engine,
                 'parameters': {
                     'provisioner': {},
                     'cluster': {}
@@ -240,6 +267,17 @@ api.add_url_rule('/organizations/<uuid:pk>', view_func=UpdateOrganization.as_vie
 api.add_url_rule('/organizations/<uuid:pk>', view_func=DeleteOrganization.as_view('organization_delete'))
 
 
+@api.route('/organizations/<uuid:pk>/policy', methods=['GET'])
+@jwt_required()
+def organization_policy(pk):
+    obj = get_object(Organization, pk, current_identity)
+    policies = config.get('DEFAULT_POLICIES', {})
+    if hasattr(obj, 'policy') and obj.policy:
+        policies.update(obj.policy)
+
+    return jsonify(policies)
+
+
 # Users
 class ListUsers(ListView):
     object_class = User
@@ -256,6 +294,32 @@ class GetUser(GetView):
 class UpdateUser(UpdateView):
     object_class = User
 
+    def dispatch_request(self, *args, **kwargs):
+        self.check_authentication()
+
+        if not request.json:
+            abort(400, description='JSON data expected')
+
+        data = request.json
+        if not isinstance(data, dict):
+            abort(400)
+
+        self.set_object(*args, **kwargs)
+
+        if 'password' in data:
+            del data['password']
+
+        for key, value in data.items():
+            setattr(self.obj, key, value)
+
+        try:
+            self.obj.save()
+        except Exception:
+            abort(500)
+
+        output = self.get_content(*args, **kwargs)
+        return jsonify(output)
+
 
 class DeleteUser(DeleteView):
     object_class = User
@@ -266,6 +330,28 @@ api.add_url_rule('/users', view_func=CreateUser.as_view('user_create'))
 api.add_url_rule('/users/<uuid:pk>', view_func=GetUser.as_view('user_get'))
 api.add_url_rule('/users/<uuid:pk>', view_func=UpdateUser.as_view('user_update'))
 api.add_url_rule('/users/<uuid:pk>', view_func=DeleteUser.as_view('user_delete'))
+
+
+@api.route('/users/<uuid:pk>/updatepw', methods=['PATCH'])
+@jwt_required()
+def user_password_update(pk):
+    obj = get_object(User, pk, current_identity)
+
+    if not request.json:
+        abort(400, description='JSON data expected')
+
+    data = request.json
+    if not isinstance(data, dict):
+        abort(400)
+
+    obj.password = encrypt_password(data.get('password'))
+
+    try:
+        obj.save()
+    except Exception:
+        abort(500)
+
+    return jsonify(obj)
 
 
 @api.route('/users/whoami', methods=['GET'])

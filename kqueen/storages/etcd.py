@@ -1,14 +1,18 @@
+from .exceptions import BackendError
+from Crypto import Random
+from Crypto.Cipher import AES
+from datetime import datetime
+from dateutil.parser import parse as du_parse
+from flask import current_app
+from kqueen.config import current_config
+
+import base64
 import etcd
+import hashlib
+import importlib
 import json
 import logging
 import uuid
-import importlib
-import six
-from datetime import datetime
-from dateutil.parser import parse as du_parse
-from kqueen.config import current_config
-from flask import current_app
-from .exceptions import BackendError
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +49,16 @@ class Field:
         else:
             self.value = kwargs.get('value', None)
 
+        # set block size for crypto
+        self.bs = 16
+
+        # field parameters
         self.required = kwargs.get('required', False)
+        self.encrypted = kwargs.get('encrypted', False)
+
+    def on_create(self, **kwargs):
+        """Optional action that should be run only on newly created objects"""
+        pass
 
     def set_value(self, value, **kwargs):
         self.value = value
@@ -92,6 +105,61 @@ class Field:
         """
         return True
 
+    def _get_encryption_key(self):
+        """
+        Read encryption key and format it.
+
+        Returns:
+            Encryption key.
+        """
+
+        # check for key
+        config = current_config()
+        key = config.get('SECRET_KEY')
+
+        if key is None:
+            raise Exception('Missing SECRET_KEY')
+
+        # calculate hash passowrd
+        return hashlib.sha256(key.encode('utf-8')).digest()[:self.bs]
+
+    def _pad(self, s):
+        return s + (self.bs - len(s) % self.bs) * chr(self.bs - len(s) % self.bs)
+
+    def _unpad(self, s):
+        return s[:-ord(s[len(s) - 1:])]
+
+    def encrypt(self):
+        """Encrypt stored value"""
+
+        if not self.encrypted:
+            return self.serialize()
+
+        key = self._get_encryption_key()
+        padded = self._pad(str(self.serialize()))
+
+        iv = Random.new().read(self.bs)
+        suite = AES.new(key, AES.MODE_CBC, iv)
+        encrypted = suite.encrypt(padded)
+        encoded = base64.b64encode(iv + encrypted).decode('utf-8')
+
+        return encoded
+
+    def decrypt(self, crypted, **kwargs):
+
+        if not self.encrypted:
+            return self.deserialize(crypted, **kwargs)
+
+        key = self._get_encryption_key()
+        decoded = base64.b64decode(crypted)
+
+        iv = decoded[:self.bs]
+        suite = AES.new(key, AES.MODE_CBC, iv)
+        decrypted = suite.decrypt(decoded[self.bs:]).decode('utf-8')
+
+        serialized = self._unpad(decrypted)
+        self.deserialize(serialized, **kwargs)
+
     def __str__(self):
         return str(self.value)
 
@@ -110,7 +178,7 @@ class StringField(Field):
 class BoolField(Field):
 
     def deserialize(self, serialized, **kwargs):
-        if isinstance(serialized, six.string_types):
+        if isinstance(serialized, str):
             value = json.loads(serialized)
             self.set_value(value, **kwargs)
 
@@ -135,8 +203,11 @@ class IdField(Field):
             self.value = value
 
 
-class SecretField(Field):
-    pass
+class PasswordField(Field):
+
+    def on_create(self):
+        from kqueen.auth import encrypt_password
+        self.value = encrypt_password(self.value)
 
 
 class DatetimeField(Field):
@@ -146,10 +217,15 @@ class DatetimeField(Field):
 
     def deserialize(self, serialized, **kwargs):
         value = None
+
+        # convert to float if serialized is digit
+        if isinstance(serialized, str) and serialized.isdigit():
+            serialized = float(serialized)
+
         if isinstance(serialized, (float, int)):
             value = datetime.fromtimestamp(serialized)
             self.set_value(value, **kwargs)
-        elif isinstance(serialized, six.string_types):
+        elif isinstance(serialized, str):
             value = du_parse(serialized)
             self.set_value(value, **kwargs)
 
@@ -301,6 +377,9 @@ class Model:
             if hasattr(field_class, 'is_field'):
                 field_object = field_class(**field.__dict__)
                 field_object.set_value(kwargs.get(field_name), namespace=ns)
+                # Hash password field in case of new DB entry
+                if kwargs.get('__create__', False):
+                    field_object.on_create()
                 setattr(self, '_{}'.format(field_name), field_object)
 
     @classmethod
@@ -348,10 +427,11 @@ class Model:
         )
 
     @classmethod
-    def create(cls, namespace, **kwargs):
+    def create(cls, ns, **kwargs):
         """Create new object"""
 
-        o = cls(namespace, **kwargs)
+        kwargs['__create__'] = True
+        o = cls(ns, **kwargs)
 
         return o
 
@@ -408,7 +488,6 @@ class Model:
     @classmethod
     def deserialize(cls, serialized, **kwargs):
         object_kwargs = {}
-
         # deserialize toplevel dict and loop fields and deserialize them
         toplevel = json.loads(serialized)
 
@@ -416,7 +495,7 @@ class Model:
             field_class = field.__class__
             if hasattr(field_class, 'is_field') and toplevel.get(field_name) is not None:
                 field_object = field_class(**field.__dict__)
-                field_object.deserialize(toplevel[field_name], **kwargs)
+                field_object.decrypt(toplevel[field_name], **kwargs)
 
                 object_kwargs[field_name] = field_object.get_value()
 
@@ -521,6 +600,13 @@ class Model:
 
         return True
 
+    def _expand(self, obj):
+        expanded = obj.get_dict()
+        for key, value in expanded.items():
+            if hasattr(value, 'get_dict'):
+                expanded[key] = self._expand(value)
+        return expanded
+
     def get_dict(self, expand=False):
         """Return object properties represented by dict.
 
@@ -537,7 +623,7 @@ class Model:
             field = getattr(self, '_{}'.format(field_name))
 
             if expand and hasattr(field.value, 'get_dict'):
-                wr = field.value.get_dict()
+                wr = self._expand(field.value)
             elif hasattr(field, 'dict_value'):
                 wr = field.dict_value()
             else:
@@ -551,7 +637,7 @@ class Model:
     def serialize(self):
         serdict = {}
         for attr_name, attr in self.get_dict().items():
-            serdict[attr_name] = getattr(self, '_{}'.format(attr_name)).serialize()
+            serdict[attr_name] = getattr(self, '_{}'.format(attr_name)).encrypt()
 
         return json.dumps(serdict)
 

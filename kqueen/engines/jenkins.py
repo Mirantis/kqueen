@@ -274,7 +274,7 @@ class JenkinsEngine(BaseEngine):
         """
         Implementation of :func:`~kqueen.engines.base.BaseEngine.get_progress`
         """
-        response = 0
+        response = 200
         progress = 1
         result = config.get('CLUSTER_UNKNOWN_STATE')
         try:
@@ -293,5 +293,5 @@ class JenkinsEngine(BaseEngine):
             else:
                 progress = 100
         except Exception:
-            response = 1
+            response = 500
         return {'response': response, 'progress': progress, 'result': result}

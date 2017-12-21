@@ -23,7 +23,6 @@ class GceEngine(BaseEngine):
     """
     name = 'gce'
     verbose_name = 'Google Container engine'
-    # project = 'kqueen-186209'
     # TODO: only subset of possible choices for zone is listed in parameter_schema,
     # we could add more later, here is the list of possible choices:
     # https://cloud.google.com/compute/docs/regions-zones/
@@ -33,14 +32,34 @@ class GceEngine(BaseEngine):
                 'type': 'json_file',
                 'label': 'Service Account File (JSON)',
                 'validators': {
-                    'required': True
+                    'required': True,
+                    'jsonfile': [
+                        'private_key_id',
+                        'private_key',
+                        'client_email',
+                        'client_id',
+                        'auth_uri',
+                        'token_uri'
+                    ]
                 }
             },
             'project': {
                 'type': 'text',
                 'label': 'Project',
                 'validators': {
-                    'required': True
+                    'required': True,
+                }
+            }
+        },
+        'cluster': {
+            'node_count': {
+                'type': 'integer',
+                'label': 'Node Count',
+                'default': 1,
+                'validators': {
+                    'required': True,
+                    'min': 1,
+                    'number': True
                 }
             },
             'zone': {
@@ -56,18 +75,6 @@ class GceEngine(BaseEngine):
                 ],
                 'validators': {
                     'required': True
-                }
-            }
-        },
-        'cluster': {
-            'node_count': {
-                'type': 'integer',
-                'label': 'Node Count',
-                'default': 1,
-                'validators': {
-                    'required': True,
-                    'min': 1,
-                    'number': True
                 }
             }
         }
@@ -219,20 +226,6 @@ class GceEngine(BaseEngine):
         """GCE engine don't support list of clusters"""
 
         return []
-
-    def get_progress(self):
-        """
-        GCE engine don't report any progress because cluster is already provisioned before
-        cluster is imported
-
-        Implementation of :func:`~kqueen.engines.base.BaseEngine.get_progress`
-        """
-
-        return {
-            'response': 0,
-            'progress': 100,
-            'result': config.get('CLUSTER_OK_STATE'),
-        }
 
     @classmethod
     def engine_status(cls):

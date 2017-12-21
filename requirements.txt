@@ -1,13 +1,15 @@
+bcrypt
 Flask==0.12.2
 Flask-JWT==0.3.2
 flask-swagger-ui
+gunicorn
 kubernetes
+prometheus_client
+pycrypto
 python-etcd
 python-jenkins
-prometheus_client
 pyyaml
 requests
-gunicorn
 
 # dev
 coveralls
