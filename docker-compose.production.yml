@@ -2,8 +2,10 @@ version: '2'
 services:
   etcd:
     restart: always
+    volumes:
+      - /0.etcd/:/mnt/storage/kqueen/etcd/
   api:
-    image: kqueen/api:v0.11
+    image: kqueen/api:v0.14
     restart: always
     environment:
       KQUEEN_CONFIG_FILE: config/prod.py
@@ -13,9 +15,12 @@ services:
       KQUEEN_SECRET_KEY: ''
       BOOTSTRAP_ADMIN: 1
       BOOTSTRAP_ADMIN_USERNAME: admin
-      BOOTSTRAP_ADMIN_PASSWORD: default
+      # TODO: set admin password
+      BOOTSTRAP_ADMIN_PASSWORD:
       BOOTSTRAP_ADMIN_ORGANIZATION: DemoOrg
       BOOTSTRAP_ADMIN_NAMESPACE: demoorg
+    volumes:
+      - ./kqueen/config/prod.py:/code/kqueen/config/prod.py
   proxy:
     build: ./prod/nginx/
     restart: always
@@ -23,20 +28,22 @@ services:
       - 443:443
       - 80:80
     volumes:
-      - /mnt/storage/kqueen/certs/:/mnt/letsencrypt/demo.kqueen.net/:Z
+      - /mnt/storage/kqueen/certs/:/mnt/letsencrypt/demo.kqueen.net/:ro
     volumes_from:
       - ui:ro
   ui:
-    image: kqueen/ui:master
+    image: kqueen/ui:v0.2
     environment:
       KQUEENUI_PREFERRED_URL_SCHEME: https
       KQUEEN_UI_CONFIG_FILE: config/prod.py
       KQUEENUI_KQUEEN_API_URL: http://api:5000/api/v1/
       KQUEENUI_KQUEEN_AUTH_URL: http://api:5000/api/v1/auth
       KQUEENUI_KQUEEN_SERVICE_USER_USERNAME: admin
-      KQUEENUI_KQUEEN_SERVICE_USER_PASSWORD: default
+      # TODO: set same password as in api BOOTSTRAP_ADMIN_PASSWORD
+      KQUEENUI_KQUEEN_SERVICE_USER_PASSWORD:
       KQUEENUI_MAIL_SERVER: mail
       KQUEENUI_MAIL_PORT: 10025
+      KQUEENUI_ENABLE_PUBLIC_REGISTRATION: 1
       STATIC_DIR: /mnt/static/
     volumes:
       - /mnt/static/
@@ -56,6 +63,7 @@ services:
       - 127.0.0.1:9090:9090
     volumes:
       - ./prod/prometheus/:/etc/prometheus/:Z
+      - /mnt/storage/kqueen/prometheus/:/prometheus/
     links:
       - api
       - etcd

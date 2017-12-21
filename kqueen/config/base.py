@@ -32,6 +32,8 @@ class BaseConfig:
     PROVISIONER_OK_STATE = 'OK'
     PROVISIONER_UNKNOWN_STATE = 'Not Reachable'
 
+    PROVISIONER_ENGINE_WHITELIST = []
+
     PROMETHEUS_WHITELIST = '127.0.0.0/8'
 
     @classmethod
