@@ -39,6 +39,14 @@ Development
     etcdctl rm --recursive /kqueen
     ./devenv.py
 
+- Run flask shell
+
+::
+
+  export FLASK_APP=kqueen.server
+  export prometheus_multiproc_dir=$(mktemp -d)
+  flask shell
+
 Demo environment
 ----------------
 
