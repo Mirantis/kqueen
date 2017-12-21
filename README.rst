@@ -39,6 +39,12 @@ Development
     etcdctl rm --recursive /kqueen
     ./devenv.py
 
+- Test access token with `curl`
+
+::
+
+    TOKEN=$(curl -s -H "Content-Type: application/json" --data '{"username":"admin","password":"default"}' -X POST localhost:5000/api/v1/auth | jq -r '.access_token'); echo $TOKEN; curl -H "Authorization: Bearer $TOKEN" localhost:5000/api/v1/clusters
+
 Demo environment
 ----------------
 
