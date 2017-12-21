@@ -32,6 +32,58 @@ components:
           type: "integer"
           description: "HTTP error code"
           example: 401
+    # Policy model
+    PolicyRuleValue:
+      type: "string"
+      enum:
+        - "ALL"
+        - "ADMIN_OR_OWNER"
+        - "IS_ADMIN"
+        - "IS_OWNER"
+        - "IS_SUPERADMIN"
+    Policy:
+      type: "object"
+      properties:
+        cluster:create:
+          $ref: "#/components/schemas/PolicyRuleValue"
+        cluster:delete:
+          $ref: "#/components/schemas/PolicyRuleValue"
+        cluster:get:
+          $ref: "#/components/schemas/PolicyRuleValue"
+        cluster:list:
+          $ref: "#/components/schemas/PolicyRuleValue"
+        cluster:update:
+          $ref: "#/components/schemas/PolicyRuleValue"
+        organization:create:
+          $ref: "#/components/schemas/PolicyRuleValue"
+        organization:delete:
+          $ref: "#/components/schemas/PolicyRuleValue"
+        organization:get:
+          $ref: "#/components/schemas/PolicyRuleValue"
+        organization:list:
+          $ref: "#/components/schemas/PolicyRuleValue"
+        organization:update:
+          $ref: "#/components/schemas/PolicyRuleValue"
+        provisioner:create:
+          $ref: "#/components/schemas/PolicyRuleValue"
+        provisioner:delete:
+          $ref: "#/components/schemas/PolicyRuleValue"
+        provisioner:get:
+          $ref: "#/components/schemas/PolicyRuleValue"
+        provisioner:list:
+          $ref: "#/components/schemas/PolicyRuleValue"
+        provisioner:update:
+          $ref: "#/components/schemas/PolicyRuleValue"
+        user:create:
+          $ref: "#/components/schemas/PolicyRuleValue"
+        user:delete:
+          $ref: "#/components/schemas/PolicyRuleValue"
+        user:get:
+          $ref: "#/components/schemas/PolicyRuleValue"
+        user:list:
+          $ref: "#/components/schemas/PolicyRuleValue"
+        user:update:
+          $ref: "#/components/schemas/PolicyRuleValue"
     # Database objects
     Organization:
       type: "object"
@@ -43,9 +95,15 @@ components:
           type: "string"
         namespace:
           type: "string"
+        policy:
+          $ref: "#/components/schemas/Policy"
+        created_at:
+          type: "string"
+          format: "date-time"
       required:
         - "name"
         - "namespace"
+        - "created_at"
     getUser:
       type: "object"
       properties:
@@ -62,6 +120,17 @@ components:
           format: "password"
         organization:
           $ref: "#/components/schemas/Organization"
+        created_at:
+          type: "string"
+          format: "date-time"
+        role:
+          type: "string"
+          enum:
+            - "superadmin"
+            - "admin"
+            - "member"
+        active:
+          type: "boolean"
     postUser:
       type: "object"
       properties:
@@ -78,11 +147,33 @@ components:
           type: "string"
           description: "Reference to related Organization"
           example: "Organization:<uuid>"
+        created_at:
+          type: "string"
+          format: "date-time"
+        role:
+          type: "string"
+          enum:
+            - "superadmin"
+            - "admin"
+            - "member"
+        active:
+          type: "boolean"
       required:
         - "username"
         - "email"
         - "password"
         - "organization"
+        - "created_at"
+        - "role"
+        - "active"
+    clusterState:
+      type: "string"
+      enum:
+        - "OK"
+        - "Error"
+        - "Deploying"
+        - "Destroying"
+        - "Unknown"
     getCluster:
       type: "object"
       properties:
@@ -92,19 +183,18 @@ components:
         name:
           type: "string"
         provisioner:
-          $ref: "#/components/schemas/Provisioner"
+          $ref: "#/components/schemas/getProvisioner"
         state:
-          type: "string"
-          enum:
-            - "OK"
-            - "Error"
-            - "Deploying"
-            - "Destroying"
-            - "Unknown"
+          $ref: "#/components/schemas/clusterState"
         kubeconfig:
-          type: "string"
+          type: "object"
         metadata:
+          type: "object"
+        created_at:
           type: "string"
+          format: "date-time"
+        owner:
+          $ref: "#/components/schemas/getUser"
     postCluster:
       type: "object"
       properties:
@@ -118,22 +208,25 @@ components:
           description: "Reference to related Provisioner"
           example: "Provisioner:<uuid>"
         state:
-          type: "string"
-          enum:
-            - "OK"
-            - "Error"
-            - "Deploying"
-            - "Destroying"
-            - "Unknown"
+          $ref: "#/components/schemas/clusterState"
         kubeconfig:
           description: "Kubeconfig file in JSON format"
           type: "object"
         metadata:
           type: "object"
+        created_at:
+          type: "string"
+          format: "date-time"
+        owner:
+          type: "string"
+          description: "Reference to related User"
+          example: "User:<uuid>"
       required:
         - "name"
         - "provisioner"
-    Provisioner:
+        - "created_at"
+        - "owner"
+    getProvisioner:
       type: "object"
       properties:
         id:
@@ -152,9 +245,58 @@ components:
         parameters:
           description: "Engine-specific parameters"
           type: "object"
+        created_at:
+          type: "string"
+          format: "date-time"
+        owner:
+          $ref: "#/components/schemas/getUser"
+    postProvisioner:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+        name:
+          type: "string"
+        engine:
+          type: "string"
+        state:
+          type: "string"
+          enum:
+            - "OK"
+            - "Error"
+            - "Not Reachable"
+        parameters:
+          description: "Engine-specific parameters"
+          type: "object"
+        created_at:
+          type: "string"
+          format: "date-time"
+        owner:
+          type: "string"
+          description: "Reference to related User"
+          example: "User:<uuid>"
       required:
         - "name"
         - "engine"
+        - "created_at"
+        - "owner"
+    Engine:
+      type: "object"
+      properties:
+        name:
+          type: "string"
+        verbose_name:
+          type: "string"
+        parameters:
+          type: "object"
+          properties:
+            provisioner:
+              type: "object"
+              description: "Engine specific parameters required to create Provisioner"
+            cluster:
+              type: "object"
+              description: "Engine specific parameters required to create Cluster"
     # Kubernetes resources
     Addon:
       type: "object"
@@ -373,6 +515,28 @@ paths:
           description: "Organization not found"
         "500":
           description: "Could not delete Organization"
+  /organizations/{id}/policy:
+    get:
+      summary: "Get information about target Organization security policies"
+      tags:
+        - "Organizations"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          type: "string"
+          format: "uuid"
+      responses:
+        "200":
+          description: "Successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Policy"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          description: "Invalid ID or Organization not found"
   # users
   /users:
     get:
@@ -492,6 +656,37 @@ paths:
           description: "User not found"
         "500":
           description: "Could not delete User"
+  /users/{id}/updatepw:
+    patch:
+      summary: "Update password of target User"
+      tags:
+        - "Users"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          type: "string"
+          format: "uuid"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              properties:
+                password:
+                  type: "string"
+                  format: "password"
+      responses:
+        "200":
+          description: "Successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/getUser"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          description: "Invalid ID or User not found"
   # clusters
   /clusters:
     get:
@@ -655,6 +850,62 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           description: "Invalid ID or Cluster not found"
+  /clusters/{id}/topology-data:
+    get:
+      summary: "Get topology data for target Cluster for visualization purposes"
+      tags:
+        - "Clusters"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          type: "string"
+          format: "uuid"
+      responses:
+        "200":
+          description: "Successful operation"
+          content:
+            application/json:
+              schema:
+                type: "object"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          description: "Invalid ID or Cluster not found"
+  /clusters/{id}/progress:
+    get:
+      summary: "Get deployment progress of target Cluster"
+      tags:
+        - "Clusters"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          type: "string"
+          format: "uuid"
+      responses:
+        "200":
+          description: "Successful operation"
+          content:
+            application/json:
+              schema:
+                type: "object"
+                properties:
+                  response:
+                    type: "integer"
+                    enum:
+                      - 200
+                      - 500
+                      - 501
+                  progress:
+                    type: "integer"
+                    description: "Percentage of progress: 1 - 100"
+                  result:
+                    $ref: "#/components/schemas/clusterState"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          description: "Invalid ID or Cluster not found"
   # provisioners
   /provisioners:
     get:
@@ -669,7 +920,7 @@ paths:
               schema:
                 type: "array"
                 items:
-                  $ref: "#/components/schemas/Provisioner"
+                  $ref: "#/components/schemas/getProvisioner"
         "401":
           $ref: "#/components/responses/Unauthorized"
     post:
@@ -681,14 +932,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Provisioner"
+              $ref: "#/components/schemas/postProvisioner"
       responses:
         "200":
           description: "Successful operation"
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Provisioner"
+                $ref: "#/components/schemas/getProvisioner"
         "400":
           description: "Request body is not valid JSON."
         "401":
@@ -710,7 +961,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Provisioner"
+                $ref: "#/components/schemas/getProvisioner"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "404":
@@ -730,14 +981,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Provisioner"
+              $ref: "#/components/schemas/postProvisioner"
       responses:
         "200":
           description: "Successful operation"
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Provisioner"
+                $ref: "#/components/schemas/getProvisioner"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "404":
@@ -774,3 +1025,19 @@ paths:
           description: "Provisioner not found"
         "500":
           description: "Could not delete Provisioner"
+  /provisioners/engines:
+    get:
+      summary: "List all available engines for Provisioners"
+      tags:
+        - "Provisioners"
+      responses:
+        "200":
+          description: "Successful operation"
+          content:
+            application/json:
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/Engine"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
