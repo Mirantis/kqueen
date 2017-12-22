@@ -35,6 +35,58 @@ definitions:
         type: "integer"
         description: "HTTP error code"
         example: 401
+  # Policy model
+  PolicyRuleValue:
+    type: "string"
+    enum:
+      - "ALL"
+      - "ADMIN_OR_OWNER"
+      - "IS_ADMIN"
+      - "IS_OWNER"
+      - "IS_SUPERADMIN"
+  Policy:
+    type: "object"
+    properties:
+      cluster:create:
+        $ref: "#/definitions/PolicyRuleValue"
+      cluster:delete:
+        $ref: "#/definitions/PolicyRuleValue"
+      cluster:get:
+        $ref: "#/definitions/PolicyRuleValue"
+      cluster:list:
+        $ref: "#/definitions/PolicyRuleValue"
+      cluster:update:
+        $ref: "#/definitions/PolicyRuleValue"
+      organization:create:
+        $ref: "#/definitions/PolicyRuleValue"
+      organization:delete:
+        $ref: "#/definitions/PolicyRuleValue"
+      organization:get:
+        $ref: "#/definitions/PolicyRuleValue"
+      organization:list:
+        $ref: "#/definitions/PolicyRuleValue"
+      organization:update:
+        $ref: "#/definitions/PolicyRuleValue"
+      provisioner:create:
+        $ref: "#/definitions/PolicyRuleValue"
+      provisioner:delete:
+        $ref: "#/definitions/PolicyRuleValue"
+      provisioner:get:
+        $ref: "#/definitions/PolicyRuleValue"
+      provisioner:list:
+        $ref: "#/definitions/PolicyRuleValue"
+      provisioner:update:
+        $ref: "#/definitions/PolicyRuleValue"
+      user:create:
+        $ref: "#/definitions/PolicyRuleValue"
+      user:delete:
+        $ref: "#/definitions/PolicyRuleValue"
+      user:get:
+        $ref: "#/definitions/PolicyRuleValue"
+      user:list:
+        $ref: "#/definitions/PolicyRuleValue"
+      user:update:
+        $ref: "#/definitions/PolicyRuleValue"
   # Database objects
   Organization:
     type: "object"
@@ -46,9 +98,15 @@ definitions:
         type: "string"
       namespace:
         type: "string"
+      policy:
+        $ref: "#/definitions/Policy"
+      created_at:
+        type: "string"
+        format: "date-time"
     required:
       - "name"
       - "namespace"
+      - "created_at"
   getUser:
     type: "object"
     properties:
@@ -65,6 +123,17 @@ definitions:
         format: "password"
       organization:
         $ref: "#/definitions/Organization"
+      created_at:
+        type: "string"
+        format: "date-time"
+      role:
+        type: "string"
+        enum:
+          - "superadmin"
+          - "admin"
+          - "member"
+      active:
+        type: "boolean"
   postUser:
     type: "object"
     properties:
@@ -77,15 +146,38 @@ definitions:
         type: "string"
       password:
         type: "string"
+        format: "password"
       organization:
         type: "string"
         description: "Reference to related Organization"
         example: "Organization:<uuid>"
+      created_at:
+        type: "string"
+        format: "date-time"
+      role:
+        type: "string"
+        enum:
+          - "superadmin"
+          - "admin"
+          - "member"
+      active:
+        type: "boolean"
     required:
       - "username"
       - "email"
       - "password"
       - "organization"
+      - "created_at"
+      - "role"
+      - "active"
+  clusterState:
+    type: "string"
+    enum:
+      - "OK"
+      - "Error"
+      - "Deploying"
+      - "Destroying"
+      - "Unknown"
   getCluster:
     type: "object"
     properties:
@@ -95,19 +187,18 @@ definitions:
       name:
         type: "string"
       provisioner:
-        $ref: "#/definitions/Provisioner"
+        $ref: "#/definitions/getProvisioner"
       state:
-        type: "string"
-        enum:
-          - "OK"
-          - "Error"
-          - "Deploying"
-          - "Destroying"
-          - "Unknown"
+        $ref: "#/definitions/clusterState"
       kubeconfig:
-        type: "string"
+        type: "object"
       metadata:
+        type: "object"
+      created_at:
         type: "string"
+        format: "date-time"
+      owner:
+        $ref: "#/definitions/getUser"
   postCluster:
     type: "object"
     properties:
@@ -121,22 +212,25 @@ definitions:
         description: "Reference to related Provisioner"
         example: "Provisioner:<uuid>"
       state:
-        type: "string"
-        enum:
-          - "OK"
-          - "Error"
-          - "Deploying"
-          - "Destroying"
-          - "Unknown"
+        $ref: "#/definitions/clusterState"
       kubeconfig:
         description: "Kubeconfig file in JSON format"
         type: "object"
       metadata:
         type: "object"
+      created_at:
+        type: "string"
+        format: "date-time"
+      owner:
+        type: "string"
+        description: "Reference to related User"
+        example: "User:<uuid>"
     required:
       - "name"
       - "provisioner"
-  Provisioner:
+      - "created_at"
+      - "owner"
+  getProvisioner:
     type: "object"
     properties:
       id:
@@ -155,9 +249,58 @@ definitions:
       parameters:
         description: "Engine-specific parameters"
         type: "object"
+      created_at:
+        type: "string"
+        format: "date-time"
+      owner:
+        $ref: "#/definitions/getUser"
+  postProvisioner:
+    type: "object"
+    properties:
+      id:
+        type: "string"
+        format: "uuid"
+      name:
+        type: "string"
+      engine:
+        type: "string"
+      state:
+        type: "string"
+        enum:
+          - "OK"
+          - "Error"
+          - "Not Reachable"
+      parameters:
+        description: "Engine-specific parameters"
+        type: "object"
+      created_at:
+        type: "string"
+        format: "date-time"
+      owner:
+        type: "string"
+        description: "Reference to related User"
+        example: "User:<uuid>"
     required:
       - "name"
       - "engine"
+      - "created_at"
+      - "owner"
+  Engine:
+    type: "object"
+    properties:
+      name:
+        type: "string"
+      verbose_name:
+        type: "string"
+      parameters:
+        type: "object"
+        properties:
+          provisioner:
+            type: "object"
+            description: "Engine specific parameters required to create Provisioner"
+          cluster:
+            type: "object"
+            description: "Engine specific parameters required to create Cluster"
   # Kubernetes resources
   Addon:
     type: "object"
@@ -379,6 +522,28 @@ paths:
           description: "Organization not found"
         "500":
           description: "Could not delete Organization"
+  /organizations/{id}/policy:
+    get:
+      description: "Get information about target Organization security policies"
+      tags:
+        - "Organizations"
+      produces:
+        - "application/json"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          type: "string"
+          format: "uuid"
+      responses:
+        "200":
+          description: "Successful operation"
+          schema:
+            $ref: "#/definitions/Policy"
+        "401":
+          $ref: "#/responses/Unauthorized"
+        "404":
+          description: "Invalid ID or Organization not found"
   # users
   /users:
     get:
@@ -501,6 +666,38 @@ paths:
           description: "User not found"
         "500":
           description: "Could not delete User"
+  /users/{id}/updatepw:
+    patch:
+      description: "Update password of target User"
+      tags:
+        - "Users"
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          type: "string"
+          format: "uuid"
+        - name: "body"
+          in: "body"
+          required: true
+          schema:
+            properties:
+              password:
+                type: "string"
+                format: "password"
+      responses:
+        "200":
+          description: "Successful operation"
+          schema:
+            $ref: "#/definitions/getUser"
+        "401":
+          $ref: "#/responses/Unauthorized"
+        "404":
+          description: "Invalid ID or User not found"
   # clusters
   /clusters:
     get:
@@ -667,6 +864,62 @@ paths:
           $ref: "#/responses/Unauthorized"
         "404":
           description: "Invalid ID or Cluster not found"
+  /clusters/{id}/topology-data:
+    get:
+      description: "Get topology data for target Cluster for visualization purposes"
+      tags:
+        - "Clusters"
+      produces:
+        - "application/json"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          type: "string"
+          format: "uuid"
+      responses:
+        "200":
+          description: "Successful operation"
+          schema:
+            type: "object"
+        "401":
+          $ref: "#/responses/Unauthorized"
+        "404":
+          description: "Invalid ID or Cluster not found"
+  /clusters/{id}/progress:
+    get:
+      description: "Get deployment progress of target Cluster"
+      tags:
+        - "Clusters"
+      produces:
+        - "application/json"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          type: "string"
+          format: "uuid"
+      responses:
+        "200":
+          description: "Successful operation"
+          schema:
+            type: "object"
+            properties:
+              response:
+                type: "integer"
+                enum:
+                  - 200
+                  - 500
+                  - 501
+              progress:
+                type: "integer"
+                description: "Percentage of progress: 1 - 100"
+              result:
+                $ref: "#/definitions/clusterState"
+        "401":
+          $ref: "#/responses/Unauthorized"
+        "404":
+          description: "Invalid ID or Cluster not found"
   # provisioners
   /provisioners:
     get:
@@ -681,7 +934,7 @@ paths:
           schema:
             type: "array"
             items:
-              $ref: "#/definitions/Provisioner"
+              $ref: "#/definitions/getProvisioner"
         "401":
           $ref: "#/responses/Unauthorized"
     post:
@@ -697,12 +950,12 @@ paths:
           in: "body"
           required: true
           schema:
-            $ref: "#/definitions/Provisioner"
+            $ref: "#/definitions/postProvisioner"
       responses:
         "200":
           description: "Successful operation"
           schema:
-            $ref: "#/definitions/Provisioner"
+            $ref: "#/definitions/getProvisioner"
         "400":
           description: "Request body is not valid JSON."
         "401":
@@ -724,7 +977,7 @@ paths:
         "200":
           description: "Successful operation"
           schema:
-            $ref: "#/definitions/Provisioner"
+            $ref: "#/definitions/getProvisioner"
         "401":
           $ref: "#/responses/Unauthorized"
         "404":
@@ -747,12 +1000,12 @@ paths:
           in: "body"
           required: true
           schema:
-            $ref: "#/definitions/Provisioner"
+            $ref: "#/definitions/postProvisioner"
       responses:
         "200":
           description: "Successful operation"
           schema:
-            $ref: "#/definitions/Provisioner"
+            $ref: "#/definitions/getProvisioner"
         "401":
           $ref: "#/responses/Unauthorized"
         "404":
@@ -789,3 +1042,19 @@ paths:
           description: "Provisioner not found"
         "500":
           description: "Could not delete Provisioner"
+  /provisioners/engines:
+    get:
+      description: "List all available engines for Provisioners"
+      tags:
+        - "Provisioners"
+      produces:
+        - "application/json"
+      responses:
+        "200":
+          description: "Successful operation"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/Engine"
+        "401":
+          $ref: "#/responses/Unauthorized"
