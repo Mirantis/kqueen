@@ -39,6 +39,8 @@ jobs:
     - sleep 2
     - wget -O - http://localhost:5000/api/v1/health
   - stage: build
+    install:
+    - /bin/true
     script:
     - export IMAGE="kqueen/api:${TRAVIS_BRANCH/\//-}"
     - echo "Building image $IMAGE"
@@ -47,6 +49,8 @@ jobs:
     - docker push $IMAGE
     - docker logout
   - stage: test
+    install:
+    - /bin/true
     script:
     - docker-compose -f docker-compose.etcd-volume.yml up -d
     - docker-compose -f docker-compose.etcd-volume.yml exec etcd etcdctl mkdir /travis/
@@ -62,8 +66,10 @@ jobs:
         echo "$VALUE == $TRAVIS_COMMIT";
         [ "$VALUE" == "$TRAVIS_COMMIT" ] && exit 0 || exit 1
   - stage: publish
+    install:
+    - /bin/true
     script:
-    - "/bin/true"
+    - /bin/true
     deploy:
       provider: pypi
       user: tomkukral
