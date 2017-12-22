@@ -1,5 +1,6 @@
 """Authentication methods for API."""
 
+from kqueen.config import current_config
 from kqueen.models import Organization, User
 from uuid import uuid4
 
@@ -47,6 +48,14 @@ def identity(payload):
     except Exception:
         user = None
     return user
+
+
+def encrypt_password(_password):
+    config = current_config()
+    rounds = config.get('BCRYPT_ROUNDS', 12)
+    password = str(_password).encode('utf-8')
+    encrypted = bcrypt.hashpw(password, bcrypt.gensalt(rounds)).decode('utf-8')
+    return encrypted
 
 
 def is_authorized(_user, policy_value, resource=None):
