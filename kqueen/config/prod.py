@@ -7,8 +7,8 @@ class Config(BaseConfig):
 
     KQUEEN_HOST = '0.0.0.0'
 
-    # App secret
-    SECRET_KEY = 'secret'
+    # App secret - set this to random string >= 16 chars
+    # SECRET_KEY = 'secret'
 
     # Jenkins engine settings
     JENKINS_API_URL = 'https://ci.mcp.mirantis.net'
