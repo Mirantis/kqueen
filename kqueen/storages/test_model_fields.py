@@ -437,7 +437,7 @@ class TestFieldEncryption:
         assert len(key) == KEY_LENGTH
 
     @pytest.mark.parametrize('field_name', model_kwargs.keys())
-    def test_encrypt_none_raises(self, field_name):
+    def test_encrypt_none(self, field_name):
         field_value = None
 
         cls = create_model(False, False, True)
@@ -446,9 +446,7 @@ class TestFieldEncryption:
         field = getattr(obj, '_{}'.format(field_name))
         field.value = field_value
         assert field.encrypted
-
-        with pytest.raises(Exception, match='None value can\'t'):
-            field.encrypt()
+        assert field.encrypt() is None
 
     @pytest.mark.parametrize('field_value', [i * 'a' for i in range(35)])
     def test_string_various_lenght(self, field_value):

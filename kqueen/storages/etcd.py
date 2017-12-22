@@ -137,18 +137,16 @@ class Field:
         if not self.encrypted:
             return serialized
 
-        if self.value is None:
-            raise Exception('None value can\'t be encrypted')
+        if self.value is not None:
+            key = self._get_encryption_key()
+            padded = self._pad(str(serialized))
 
-        key = self._get_encryption_key()
-        padded = self._pad(str(serialized))
+            iv = Random.new().read(self.bs)
+            suite = AES.new(key, AES.MODE_CBC, iv)
+            encrypted = suite.encrypt(padded)
+            encoded = base64.b64encode(iv + encrypted).decode('utf-8')
 
-        iv = Random.new().read(self.bs)
-        suite = AES.new(key, AES.MODE_CBC, iv)
-        encrypted = suite.encrypt(padded)
-        encoded = base64.b64encode(iv + encrypted).decode('utf-8')
-
-        return encoded
+            return encoded
 
     def decrypt(self, crypted, **kwargs):
 
