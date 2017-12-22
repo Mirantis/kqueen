@@ -436,23 +436,31 @@ class TestFieldEncryption:
 
         assert len(key) == KEY_LENGTH
 
-    @pytest.mark.parametrize('field_name, field_value', model_kwargs.items())
-    def test_encryption_and_decryption(self, field_name, field_value):
+    @pytest.mark.parametrize('field_name', model_kwargs.keys())
+    def test_encrypt_none(self, field_name):
+        field_value = None
 
         cls = create_model(False, False, True)
         obj = cls(namespace, **model_kwargs)
 
         field = getattr(obj, '_{}'.format(field_name))
-        field.set_value(field_value)
+        field.value = field_value
+        assert field.encrypted
+        assert field.encrypt() is None
+
+    @pytest.mark.parametrize('field_value', [i * 'a' for i in range(35)])
+    def test_string_various_lenght(self, field_value):
+        field_name = 'string'
+        cls = create_model(False, False, True)
+        obj = cls(namespace, **model_kwargs)
+
+        field = getattr(obj, '_{}'.format(field_name))
+        field.value = field_value
         assert field.encrypted
 
-        # encryption
         encrypted = field.encrypt()
 
-        assert isinstance(encrypted, str)
-
-        # decryption
-        field.set_value(None)
+        field.value = None
         field.decrypt(encrypted)
 
         assert field.value == field_value

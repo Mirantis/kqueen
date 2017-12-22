@@ -43,9 +43,15 @@ Development
 
 ::
 
-  export FLASK_APP=kqueen.server
-  export prometheus_multiproc_dir=$(mktemp -d)
-  flask shell
+    export FLASK_APP=kqueen.server
+    export prometheus_multiproc_dir=$(mktemp -d)
+    flask shell
+
+- Test access token with `curl`
+
+::
+
+    TOKEN=$(curl -s -H "Content-Type: application/json" --data '{"username":"admin","password":"default"}' -X POST localhost:5000/api/v1/auth | jq -r '.access_token'); echo $TOKEN; curl -H "Authorization: Bearer $TOKEN" localhost:5000/api/v1/clusters
 
 Demo environment
 ----------------

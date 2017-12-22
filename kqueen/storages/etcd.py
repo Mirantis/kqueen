@@ -73,7 +73,7 @@ class Field:
 
     def serialize(self):
 
-        if self.value:
+        if self.value is not None:
             return str(self.value)
         else:
             return None
@@ -132,18 +132,21 @@ class Field:
     def encrypt(self):
         """Encrypt stored value"""
 
+        serialized = self.serialize()
+
         if not self.encrypted:
-            return self.serialize()
+            return serialized
 
-        key = self._get_encryption_key()
-        padded = self._pad(str(self.serialize()))
+        if self.value is not None:
+            key = self._get_encryption_key()
+            padded = self._pad(str(serialized))
 
-        iv = Random.new().read(self.bs)
-        suite = AES.new(key, AES.MODE_CBC, iv)
-        encrypted = suite.encrypt(padded)
-        encoded = base64.b64encode(iv + encrypted).decode('utf-8')
+            iv = Random.new().read(self.bs)
+            suite = AES.new(key, AES.MODE_CBC, iv)
+            encrypted = suite.encrypt(padded)
+            encoded = base64.b64encode(iv + encrypted).decode('utf-8')
 
-        return encoded
+            return encoded
 
     def decrypt(self, crypted, **kwargs):
 
@@ -155,9 +158,10 @@ class Field:
 
         iv = decoded[:self.bs]
         suite = AES.new(key, AES.MODE_CBC, iv)
-        decrypted = suite.decrypt(decoded[self.bs:]).decode('utf-8')
+        decrypted = suite.decrypt(decoded[self.bs:])
+        decrypted_decoded = decrypted.decode('utf-8')
 
-        serialized = self._unpad(decrypted)
+        serialized = self._unpad(decrypted_decoded)
         self.deserialize(serialized, **kwargs)
 
     def __str__(self):
@@ -197,7 +201,7 @@ class BoolField(Field):
 class IdField(Field):
     def set_value(self, value, **kwargs):
         """Don't serialize None"""
-        if value:
+        if value is not None:
             self.value = str(value)
         else:
             self.value = value
@@ -377,9 +381,11 @@ class Model:
             if hasattr(field_class, 'is_field'):
                 field_object = field_class(**field.__dict__)
                 field_object.set_value(kwargs.get(field_name), namespace=ns)
+
                 # Hash password field in case of new DB entry
                 if kwargs.get('__create__', False):
                     field_object.on_create()
+
                 setattr(self, '_{}'.format(field_name), field_object)
 
     @classmethod
@@ -493,6 +499,7 @@ class Model:
 
         for field_name, field in cls.get_fields().items():
             field_class = field.__class__
+
             if hasattr(field_class, 'is_field') and toplevel.get(field_name) is not None:
                 field_object = field_class(**field.__dict__)
                 field_object.decrypt(toplevel[field_name], **kwargs)
@@ -637,7 +644,9 @@ class Model:
     def serialize(self):
         serdict = {}
         for attr_name, attr in self.get_dict().items():
-            serdict[attr_name] = getattr(self, '_{}'.format(attr_name)).encrypt()
+            value = getattr(self, '_{}'.format(attr_name)).encrypt()
+            if value is not None:
+                serdict[attr_name] = value
 
         return json.dumps(serdict)
 
