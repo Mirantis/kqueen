@@ -137,7 +137,7 @@ class Field:
         if not self.encrypted:
             return serialized
 
-        if self.value is not None:
+        if serialized is not None:
             key = self._get_encryption_key()
             padded = self._pad(str(serialized))
 
@@ -162,6 +162,7 @@ class Field:
         decrypted_decoded = decrypted.decode('utf-8')
 
         serialized = self._unpad(decrypted_decoded)
+
         self.deserialize(serialized, **kwargs)
 
     def __str__(self):
@@ -264,7 +265,7 @@ class JSONField(Field):
             self.value = value
 
     def serialize(self):
-        if self.value and isinstance(self.value, dict):
+        if isinstance(self.value, dict):
             return json.dumps(self.value)
         else:
             return None

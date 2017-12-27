@@ -37,6 +37,12 @@ def create_model(required=False, global_ns=False, encrypted=False):
         else:
             _namespace = namespace
 
+    print('Creating model with: required: {}, global_ns: {}, encrypted: {}'.format(
+        required,
+        global_ns,
+        encrypted
+    ))
+
     return TestModel
 
 
@@ -79,12 +85,13 @@ def get_model(request):
 
 
 def create_object(required=False, global_ns=False, encrypted=False):
-    model = create_model()
+    model = create_model(required, global_ns, encrypted)
 
     obj1 = model(namespace, **model_kwargs)
     obj2 = model(namespace, **model_kwargs)
 
-    obj2.save()
+    # don't validate first object because we don't have relation field
+    obj2.save(False)
 
     obj1.relation = obj2
 
@@ -188,6 +195,9 @@ class TestSerialization:
     def test_serizalization(self, get_object):
         serialized = get_object.serialize()
 
+        if get_object.__class__._encrypted:
+            pytest.skip('Unable to check serialization for encrypted class')
+
         assert serialized == model_serialized(related=get_object.relation)
 
     def test_deserialization(self, get_object, monkeypatch):
@@ -200,7 +210,7 @@ class TestSerialization:
         get_object.save()
         new_object = object_class.deserialize(get_object.serialize(), namespace=namespace)
 
-        assert new_object.get_dict() == get_object.get_dict()
+        assert new_object.get_dict(True) == get_object.get_dict(True)
 
 
 class TestGetDict:
@@ -449,7 +459,7 @@ class TestFieldEncryption:
         assert field.encrypt() is None
 
     @pytest.mark.parametrize('field_value', [i * 'a' for i in range(35)])
-    def test_string_various_lenght(self, field_value):
+    def test_string_various_length(self, field_value):
         field_name = 'string'
         cls = create_model(False, False, True)
         obj = cls(namespace, **model_kwargs)
@@ -475,3 +485,31 @@ class TestFieldEncryption:
 
         assert '"{}"'.format(field.value) not in serialized
         assert '"{}"'.format(field.serialize()) not in serialized
+
+
+class TestModelEncryptionWithNone:
+    def test_serialization(self, monkeypatch, get_object):
+        def fake(self, class_name):
+            return get_object.__class__
+
+        monkeypatch.setattr(RelationField, '_get_related_class', fake)
+
+        # load information about test setup
+        namespace = get_object.__class__._namespace
+        required = get_object.__class__._required
+        encrypted = get_object.__class__._encrypted
+
+
+        # set None to fields if possible
+        if not required:
+            for field_name in get_object.__class__.get_fields().keys():
+                field = getattr(get_object, '_{}'.format(field_name))
+                field.value = None
+
+                assert field.value is None
+
+        get_object.save()
+
+        loaded = get_object.__class__.load(namespace, get_object.id)
+
+        assert get_object.get_dict(True) == loaded.get_dict(True)
