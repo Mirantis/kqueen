@@ -16,7 +16,7 @@ def authenticate(username, password):
 
     Args:
         username (str): Username to login
-        password (str): Passwore
+        password (str): Password
 
     Returns:
         user: authenticated user
@@ -25,10 +25,11 @@ def authenticate(username, password):
     users = list(User.list(None, return_objects=True).values())
     username_table = {u.username: u for u in users}
     user = username_table.get(username)
-    user_password = user.password.encode('utf-8')
-    given_password = password.encode('utf-8')
-    if user and user.active and bcrypt.checkpw(given_password, user_password):
-        return user
+    if user:
+        user_password = user.password.encode('utf-8')
+        given_password = password.encode('utf-8')
+        if user.active and bcrypt.checkpw(given_password, user_password):
+            return user
 
 
 def identity(payload):
