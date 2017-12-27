@@ -126,7 +126,9 @@ class TestSave:
         self.obj = model(namespace)
 
     def test_model_invalid(self):
-        assert not self.obj.validate()
+        validation, _ = self.obj.validate()
+
+        assert not validation
 
     def test_save_raises(self):
         with pytest.raises(ValueError, match='Validation for model failed'):
@@ -153,7 +155,8 @@ class TestRequiredFields:
         model = create_model(required=required)
         obj = model(namespace, **model_kwargs)
 
-        assert obj.validate() != required
+        validation, _ = obj.validate()
+        assert validation != required
 
 
 class TestGetFieldNames:

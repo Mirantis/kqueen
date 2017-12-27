@@ -23,7 +23,9 @@ class TestModelMethods:
 
 class TestClusterModel:
     def test_create(self, cluster):
-        assert cluster.validate()
+        validation, _ = cluster.validate()
+
+        assert validation
         assert cluster.save()
 
     def test_load(self, cluster):

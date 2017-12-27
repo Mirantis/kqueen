@@ -177,6 +177,7 @@ class CreateView(GenericView):
 
     def dispatch_request(self, *args, **kwargs):
         self.check_authentication()
+
         if not request.json:
             abort(400, description='JSON data expected')
         else:
