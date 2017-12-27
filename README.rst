@@ -11,6 +11,9 @@ KQueen - Kubernetes cluster manager
 .. image:: https://coveralls.io/repos/github/Mirantis/kqueen/badge.svg?branch=master
     :target: https://coveralls.io/github/Mirantis/kqueen?branch=master
 
+.. image:: https://readthedocs.org/projects/kqueen/badge/?version=master
+    :target: http://kqueen.readthedocs.io/en/master/?badge=master
+
 Overview
 --------
 
