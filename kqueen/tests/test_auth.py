@@ -1,6 +1,5 @@
 from kqueen.auth import authenticate
 
-import pytest
 
 def test_nonexisting_user():
     """

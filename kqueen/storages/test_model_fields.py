@@ -497,8 +497,6 @@ class TestModelEncryptionWithNone:
         # load information about test setup
         namespace = get_object.__class__._namespace
         required = get_object.__class__._required
-        encrypted = get_object.__class__._encrypted
-
 
         # set None to fields if possible
         if not required:

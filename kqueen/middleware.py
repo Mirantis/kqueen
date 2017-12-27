@@ -30,6 +30,7 @@ def record_request_data(response):
 
     return response
 
+
 def check_prometheus():
     is_gunicorn = "gunicorn" in os.environ.get("SERVER_SOFTWARE", "")
 
