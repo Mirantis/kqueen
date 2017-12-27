@@ -34,7 +34,6 @@ def record_request_data(response):
 def check_prometheus():
     is_gunicorn = "gunicorn" in os.environ.get("SERVER_SOFTWARE", "")
 
-
     if 'prometheus_multiproc_dir' in os.environ:
         os.makedirs(os.environ['prometheus_multiproc_dir'], exist_ok=True)
 

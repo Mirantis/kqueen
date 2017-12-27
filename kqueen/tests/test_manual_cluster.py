@@ -67,8 +67,6 @@ class TestInsertManualCluster:
             content_type='application/json',
         )
 
-        content = response.data.decode(response.charset)
-
         assert response.status_code == 200
         self.cluster_id = response.json['id']
 
