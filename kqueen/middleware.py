@@ -36,7 +36,7 @@ def setup_metrics(app):
     if 'prometheus_multiproc_dir' in os.environ:
         os.makedirs(os.environ['prometheus_multiproc_dir'], exist_ok=True)
     else:
-        raise Exception('Please set prometheus_multiproc_dir variable')
+        raise Exception('Please set prometheus_multiproc_dir variable using `export prometheus_multiproc_dir=$(mktemp -d)`')
 
     app.before_request(start_timer)
     app.after_request(record_request_data)
