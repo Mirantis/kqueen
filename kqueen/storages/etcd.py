@@ -137,7 +137,7 @@ class Field:
         if not self.encrypted:
             return serialized
 
-        if self.value is not None:
+        if serialized is not None:
             key = self._get_encryption_key()
             padded = self._pad(str(serialized))
 
@@ -162,6 +162,7 @@ class Field:
         decrypted_decoded = decrypted.decode('utf-8')
 
         serialized = self._unpad(decrypted_decoded)
+
         self.deserialize(serialized, **kwargs)
 
     def __str__(self):
@@ -264,7 +265,7 @@ class JSONField(Field):
             self.value = value
 
     def serialize(self):
-        if self.value and isinstance(self.value, dict):
+        if isinstance(self.value, dict):
             return json.dumps(self.value)
         else:
             return None
@@ -563,8 +564,9 @@ class Model:
         if assign_id:
             self.verify_id()
 
-        if validate and not self.validate():
-            raise ValueError('Validation for model failed')
+        validation_status, validation_msg = self.validate()
+        if validate and not validation_status:
+            raise ValueError('Validation for model failed with: {}'.format(validation_msg))
 
         key = self.get_db_key()
         logger.debug('Writing {} to {}'.format(self, key))
@@ -600,12 +602,12 @@ class Model:
             # validation
             # TODO: move to validate method of Field
             if field_object.required and field_object.value is None:
-                return False
+                return False, 'Required field {} is None'.format(field)
 
             if field_object.value and not field_object.validate():
-                return False
+                return False, 'Field {} validation failed'.format(field)
 
-        return True
+        return True, None
 
     def _expand(self, obj):
         expanded = obj.get_dict()

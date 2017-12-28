@@ -16,7 +16,7 @@ def authenticate(username, password):
 
     Args:
         username (str): Username to login
-        password (str): Passwore
+        password (str): Password
 
     Returns:
         user: authenticated user
@@ -25,10 +25,11 @@ def authenticate(username, password):
     users = list(User.list(None, return_objects=True).values())
     username_table = {u.username: u for u in users}
     user = username_table.get(username)
-    user_password = user.password.encode('utf-8')
-    given_password = password.encode('utf-8')
-    if user and user.active and bcrypt.checkpw(given_password, user_password):
-        return user
+    if user:
+        user_password = user.password.encode('utf-8')
+        given_password = password.encode('utf-8')
+        if user.active and bcrypt.checkpw(given_password, user_password):
+            return user
 
 
 def identity(payload):
@@ -90,19 +91,25 @@ def is_authorized(_user, policy_value, resource=None):
     ORGANIZATION = user['organization'].id  # noqa: F841
     ROLE = user['role']
     if resource:
-        if not resource.validate():
+        validation, _ = resource.validate()
+        if not validation:
             invalid = True
+
             # test if we are validating on create view and if so, patch missing object id
             if not resource.id:
                 resource.id = uuid4()
-                if resource.validate():
+                validation, _ = resource.validate()
+                if validation:
                     invalid = False
                 resource.id = None
+
             # if invalid resource is passed, let's just continue dispatch_request
             # so it can properly fail with 500 response code
             if invalid:
                 logger.error('Cannot evaluate policy for invalid object: {}'.format(str(resource.get_dict())))
                 return True
+
+        # TODO: check owner has id and, organization ...
         if hasattr(resource, 'owner'):
             OWNER = resource.owner.id                            # noqa: F841
             OWNER_ORGANIZATION = resource.owner.organization.id  # noqa: F841
