@@ -11,6 +11,7 @@ from kqueen.storages.etcd import PasswordField
 from kqueen.storages.etcd import RelationField
 from kqueen.storages.etcd import StringField
 from tempfile import mkstemp
+from datetime import datetime, timedelta
 
 import logging
 import os
@@ -47,6 +48,10 @@ class Cluster(Model, metaclass=ModelMeta):
                 return self.state
             self.state = cluster['state']
             self.save()
+
+        max_age = timedelta(hours=config.get('PROVISIONER_TIMEOUT'))
+        if datetime.now() - self.created_at > max_age:
+            self.state = config.get('CLUSTER_ERROR_STATE')
 
         return self.state
 

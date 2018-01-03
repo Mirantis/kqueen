@@ -39,6 +39,7 @@ class BaseConfig:
 
     PROVISIONER_ENGINE_WHITELIST = None
 
+    PROVISIONER_TIMEOUT = 1
     PROMETHEUS_WHITELIST = '127.0.0.0/8'
 
     @classmethod
