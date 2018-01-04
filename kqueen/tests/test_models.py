@@ -1,3 +1,4 @@
+from datetime import datetime
 from kqueen.engines import __all__ as all_engines
 from kqueen.models import Cluster
 from kqueen.models import Provisioner
@@ -22,7 +23,9 @@ class TestModelMethods:
 
 class TestClusterModel:
     def test_create(self, cluster):
-        assert cluster.validate()
+        validation, _ = cluster.validate()
+
+        assert validation
         assert cluster.save()
 
     def test_load(self, cluster):
@@ -178,3 +181,22 @@ class TestProvisioner:
         engines = Provisioner.list_engines()
 
         assert engines == all_engines
+
+
+class TestProvisionerSerialization:
+    def test_load_provisioner(self, user):
+        user.save()
+        provisioner = Provisioner(
+            user.namespace,
+            name='Manual provisioner',
+            state='OK',
+            engine='kqueen.engines.ManualEngine',
+            parameters={},
+            created_at=datetime.utcnow().replace(microsecond=0),
+            owner=user
+        )
+        provisioner.save()
+
+        loaded = Provisioner.load(user.namespace, provisioner.id)
+
+        assert loaded.get_dict(True) == provisioner.get_dict(True)

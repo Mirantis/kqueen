@@ -68,6 +68,7 @@ class GenericView(View):
 
     def set_object(self, *args, **kwargs):
         self.obj = get_object(self.get_class(), kwargs['pk'], current_identity)
+
         # check authorization for given object
         self.check_authorization()
 
@@ -143,6 +144,7 @@ class ListView(GenericView):
             namespace = current_identity.namespace
         except AttributeError:
             namespace = None
+
         self.obj = list(self.get_class().list(namespace, return_objects=True).values())
         self.check_authorization()
 
@@ -175,6 +177,7 @@ class CreateView(GenericView):
 
     def dispatch_request(self, *args, **kwargs):
         self.check_authentication()
+
         if not request.json:
             abort(400, description='JSON data expected')
         else:

@@ -3,9 +3,9 @@ services:
   etcd:
     restart: always
     volumes:
-      - /0.etcd/:/mnt/storage/kqueen/etcd/
+      - /mnt/storage/kqueen/etcd/:/0.etcd/
   api:
-    image: kqueen/api:v0.14
+    image: kqueen/api:v0.15
     restart: always
     environment:
       KQUEEN_CONFIG_FILE: config/prod.py
@@ -21,6 +21,8 @@ services:
       BOOTSTRAP_ADMIN_NAMESPACE: demoorg
     volumes:
       - ./kqueen/config/prod.py:/code/kqueen/config/prod.py
+    depends_on:
+      - etcd
   proxy:
     build: ./prod/nginx/
     restart: always
@@ -31,8 +33,10 @@ services:
       - /mnt/storage/kqueen/certs/:/mnt/letsencrypt/demo.kqueen.net/:ro
     volumes_from:
       - ui:ro
+    depends_on:
+      - ui
   ui:
-    image: kqueen/ui:v0.2
+    image: kqueen/ui:v0.3
     environment:
       KQUEENUI_PREFERRED_URL_SCHEME: https
       KQUEEN_UI_CONFIG_FILE: config/prod.py
@@ -48,6 +52,8 @@ services:
     volumes:
       - /mnt/static/
     restart: always
+    depends_on:
+      - api
   mail:
     image: modularitycontainers/postfix
     restart: always
