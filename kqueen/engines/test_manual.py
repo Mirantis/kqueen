@@ -107,7 +107,8 @@ class TestCreateOverAPI(ManualEngineBase):
         # load
         cluster_id = response.json['id']
         obj = Cluster.load(self.namespace, cluster_id)
-        assert obj.validate()
+        validation, _ = obj.validate()
+        assert validation
 
         # check parameters
         assert obj.kubeconfig == data['kubeconfig']

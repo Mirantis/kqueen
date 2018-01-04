@@ -326,6 +326,7 @@ class Provisioner(Model, metaclass=ModelMeta):
         except Exception as e:
             logger.error(repr(e))
             _class = None
+
         return _class
 
     def engine_status(self, save=True):

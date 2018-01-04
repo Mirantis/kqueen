@@ -32,13 +32,15 @@ def main():
         except Exception:
             raise Exception('Adding {} organization failed'.format(args.organization))
         try:
-            user = User(
+            user = User.create(
                 None,
                 id=user_id,
                 username=args.username,
                 password=args.password,
+                email='admin@kqueen.net',
                 organization=organization,
                 created_at=datetime.utcnow(),
+                role='superadmin',
                 active=True
             )
             user.save()

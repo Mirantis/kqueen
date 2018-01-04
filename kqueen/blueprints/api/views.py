@@ -8,9 +8,11 @@ from flask import abort
 from flask import Blueprint
 from flask import jsonify
 from flask import make_response
+from flask import request
 from flask_jwt import current_identity
 from flask_jwt import jwt_required
 from importlib import import_module
+from kqueen.auth import encrypt_password
 from kqueen.models import Cluster
 from kqueen.models import Organization
 from kqueen.models import Provisioner
@@ -265,6 +267,17 @@ api.add_url_rule('/organizations/<uuid:pk>', view_func=UpdateOrganization.as_vie
 api.add_url_rule('/organizations/<uuid:pk>', view_func=DeleteOrganization.as_view('organization_delete'))
 
 
+@api.route('/organizations/<uuid:pk>/policy', methods=['GET'])
+@jwt_required()
+def organization_policy(pk):
+    obj = get_object(Organization, pk, current_identity)
+    policies = config.get('DEFAULT_POLICIES', {})
+    if hasattr(obj, 'policy') and obj.policy:
+        policies.update(obj.policy)
+
+    return jsonify(policies)
+
+
 # Users
 class ListUsers(ListView):
     object_class = User
@@ -281,6 +294,32 @@ class GetUser(GetView):
 class UpdateUser(UpdateView):
     object_class = User
 
+    def dispatch_request(self, *args, **kwargs):
+        self.check_authentication()
+
+        if not request.json:
+            abort(400, description='JSON data expected')
+
+        data = request.json
+        if not isinstance(data, dict):
+            abort(400)
+
+        self.set_object(*args, **kwargs)
+
+        if 'password' in data:
+            del data['password']
+
+        for key, value in data.items():
+            setattr(self.obj, key, value)
+
+        try:
+            self.obj.save()
+        except Exception:
+            abort(500)
+
+        output = self.get_content(*args, **kwargs)
+        return jsonify(output)
+
 
 class DeleteUser(DeleteView):
     object_class = User
@@ -291,6 +330,28 @@ api.add_url_rule('/users', view_func=CreateUser.as_view('user_create'))
 api.add_url_rule('/users/<uuid:pk>', view_func=GetUser.as_view('user_get'))
 api.add_url_rule('/users/<uuid:pk>', view_func=UpdateUser.as_view('user_update'))
 api.add_url_rule('/users/<uuid:pk>', view_func=DeleteUser.as_view('user_delete'))
+
+
+@api.route('/users/<uuid:pk>/updatepw', methods=['PATCH'])
+@jwt_required()
+def user_password_update(pk):
+    obj = get_object(User, pk, current_identity)
+
+    if not request.json:
+        abort(400, description='JSON data expected')
+
+    data = request.json
+    if not isinstance(data, dict):
+        abort(400)
+
+    obj.password = encrypt_password(data.get('password'))
+
+    try:
+        obj.save()
+    except Exception:
+        abort(500)
+
+    return jsonify(obj)
 
 
 @api.route('/users/whoami', methods=['GET'])
