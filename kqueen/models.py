@@ -50,7 +50,7 @@ class Cluster(Model, metaclass=ModelMeta):
             self.save()
 
         max_age = timedelta(hours=config.get('PROVISIONER_TIMEOUT'))
-        if datetime.now() - self.created_at > max_age:
+        if datetime.utcnow() - self.created_at > max_age:
             self.state = config.get('CLUSTER_ERROR_STATE')
 
         return self.state
