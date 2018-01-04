@@ -22,7 +22,7 @@ swaggerui_blueprint = get_swaggerui_blueprint(
     swagger_url,
     api_url,
     config={
-        'docExpansion': 'none'
+        'docExpansion': 'list'
     }
 )
 

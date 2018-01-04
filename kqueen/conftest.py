@@ -130,7 +130,7 @@ def auth_header(client):
             token=token,
         ),
         'X-Test-Namespace': _user.namespace,
-        'X-User': str(_user),
+        'X-User': str(_user.id),
     }
 
 
