@@ -7,7 +7,6 @@ from flask import current_app
 from kqueen.config import current_config
 
 import base64
-import bcrypt
 import etcd
 import hashlib
 import importlib
@@ -74,7 +73,7 @@ class Field:
 
     def serialize(self):
 
-        if self.value:
+        if self.value is not None:
             return str(self.value)
         else:
             return None
@@ -133,18 +132,21 @@ class Field:
     def encrypt(self):
         """Encrypt stored value"""
 
+        serialized = self.serialize()
+
         if not self.encrypted:
-            return self.serialize()
+            return serialized
 
-        key = self._get_encryption_key()
-        padded = self._pad(str(self.serialize()))
+        if serialized is not None:
+            key = self._get_encryption_key()
+            padded = self._pad(str(serialized))
 
-        iv = Random.new().read(self.bs)
-        suite = AES.new(key, AES.MODE_CBC, iv)
-        encrypted = suite.encrypt(padded)
-        encoded = base64.b64encode(iv + encrypted).decode('utf-8')
+            iv = Random.new().read(self.bs)
+            suite = AES.new(key, AES.MODE_CBC, iv)
+            encrypted = suite.encrypt(padded)
+            encoded = base64.b64encode(iv + encrypted).decode('utf-8')
 
-        return encoded
+            return encoded
 
     def decrypt(self, crypted, **kwargs):
 
@@ -156,9 +158,11 @@ class Field:
 
         iv = decoded[:self.bs]
         suite = AES.new(key, AES.MODE_CBC, iv)
-        decrypted = suite.decrypt(decoded[self.bs:]).decode('utf-8')
+        decrypted = suite.decrypt(decoded[self.bs:])
+        decrypted_decoded = decrypted.decode('utf-8')
 
-        serialized = self._unpad(decrypted)
+        serialized = self._unpad(decrypted_decoded)
+
         self.deserialize(serialized, **kwargs)
 
     def __str__(self):
@@ -198,7 +202,7 @@ class BoolField(Field):
 class IdField(Field):
     def set_value(self, value, **kwargs):
         """Don't serialize None"""
-        if value:
+        if value is not None:
             self.value = str(value)
         else:
             self.value = value
@@ -207,10 +211,8 @@ class IdField(Field):
 class PasswordField(Field):
 
     def on_create(self):
-        config = current_config()
-        rounds = config.get('BCRYPT_ROUNDS', 12)
-        password = str(self.value).encode('utf-8')
-        self.value = bcrypt.hashpw(password, bcrypt.gensalt(rounds)).decode('utf-8')
+        from kqueen.auth import encrypt_password
+        self.value = encrypt_password(self.value)
 
 
 class DatetimeField(Field):
@@ -263,7 +265,7 @@ class JSONField(Field):
             self.value = value
 
     def serialize(self):
-        if self.value and isinstance(self.value, dict):
+        if isinstance(self.value, dict):
             return json.dumps(self.value)
         else:
             return None
@@ -380,9 +382,11 @@ class Model:
             if hasattr(field_class, 'is_field'):
                 field_object = field_class(**field.__dict__)
                 field_object.set_value(kwargs.get(field_name), namespace=ns)
+
                 # Hash password field in case of new DB entry
                 if kwargs.get('__create__', False):
                     field_object.on_create()
+
                 setattr(self, '_{}'.format(field_name), field_object)
 
     @classmethod
@@ -496,6 +500,7 @@ class Model:
 
         for field_name, field in cls.get_fields().items():
             field_class = field.__class__
+
             if hasattr(field_class, 'is_field') and toplevel.get(field_name) is not None:
                 field_object = field_class(**field.__dict__)
                 field_object.decrypt(toplevel[field_name], **kwargs)
@@ -559,8 +564,9 @@ class Model:
         if assign_id:
             self.verify_id()
 
-        if validate and not self.validate():
-            raise ValueError('Validation for model failed')
+        validation_status, validation_msg = self.validate()
+        if validate and not validation_status:
+            raise ValueError('Validation for model failed with: {}'.format(validation_msg))
 
         key = self.get_db_key()
         logger.debug('Writing {} to {}'.format(self, key))
@@ -596,12 +602,12 @@ class Model:
             # validation
             # TODO: move to validate method of Field
             if field_object.required and field_object.value is None:
-                return False
+                return False, 'Required field {} is None'.format(field)
 
             if field_object.value and not field_object.validate():
-                return False
+                return False, 'Field {} validation failed'.format(field)
 
-        return True
+        return True, None
 
     def _expand(self, obj):
         expanded = obj.get_dict()
@@ -640,7 +646,9 @@ class Model:
     def serialize(self):
         serdict = {}
         for attr_name, attr in self.get_dict().items():
-            serdict[attr_name] = getattr(self, '_{}'.format(attr_name)).encrypt()
+            value = getattr(self, '_{}'.format(attr_name)).encrypt()
+            if value is not None:
+                serdict[attr_name] = value
 
         return json.dumps(serdict)
 

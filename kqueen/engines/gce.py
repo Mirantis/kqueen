@@ -45,7 +45,7 @@ class GceEngine(BaseEngine):
             },
             'project': {
                 'type': 'text',
-                'label': 'Project',
+                'label': 'Project ID',
                 'validators': {
                     'required': True,
                 }

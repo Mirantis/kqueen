@@ -31,12 +31,19 @@ def record_request_data(response):
     return response
 
 
-def setup_metrics(app):
-    # TODO: detect multiprocess mode and raise only when needed
+def check_prometheus():
+    is_gunicorn = "gunicorn" in os.environ.get("SERVER_SOFTWARE", "")
+
     if 'prometheus_multiproc_dir' in os.environ:
         os.makedirs(os.environ['prometheus_multiproc_dir'], exist_ok=True)
-    else:
-        raise Exception('Please set prometheus_multiproc_dir variable')
+
+    elif is_gunicorn:
+        raise Exception('Please set prometheus_multiproc_dir variable using `export prometheus_multiproc_dir=$(mktemp -d)`')
+
+
+def setup_metrics(app):
+
+    check_prometheus()
 
     app.before_request(start_timer)
     app.after_request(record_request_data)

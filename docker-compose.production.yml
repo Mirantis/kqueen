@@ -1,0 +1,75 @@
+version: '2'
+services:
+  etcd:
+    restart: always
+    volumes:
+      - /mnt/storage/kqueen/etcd/:/0.etcd/
+  api:
+    image: kqueen/api:v0.15
+    restart: always
+    environment:
+      KQUEEN_CONFIG_FILE: config/prod.py
+      KQUEEN_ETCD_HOST: etcd
+      KQUEEN_PROMETHEUS_WHITELIST: '172.16.238.0/24'
+      # TODO: set SECRET_KEY
+      KQUEEN_SECRET_KEY: ''
+      BOOTSTRAP_ADMIN: 1
+      BOOTSTRAP_ADMIN_USERNAME: admin
+      # TODO: set admin password
+      BOOTSTRAP_ADMIN_PASSWORD:
+      BOOTSTRAP_ADMIN_ORGANIZATION: DemoOrg
+      BOOTSTRAP_ADMIN_NAMESPACE: demoorg
+    volumes:
+      - ./kqueen/config/prod.py:/code/kqueen/config/prod.py
+    depends_on:
+      - etcd
+  proxy:
+    build: ./prod/nginx/
+    restart: always
+    ports:
+      - 443:443
+      - 80:80
+    volumes:
+      - /mnt/storage/kqueen/certs/:/mnt/letsencrypt/demo.kqueen.net/:ro
+    volumes_from:
+      - ui:ro
+    depends_on:
+      - ui
+  ui:
+    image: kqueen/ui:v0.3
+    environment:
+      KQUEENUI_PREFERRED_URL_SCHEME: https
+      KQUEEN_UI_CONFIG_FILE: config/prod.py
+      KQUEENUI_KQUEEN_API_URL: http://api:5000/api/v1/
+      KQUEENUI_KQUEEN_AUTH_URL: http://api:5000/api/v1/auth
+      KQUEENUI_KQUEEN_SERVICE_USER_USERNAME: admin
+      # TODO: set same password as in api BOOTSTRAP_ADMIN_PASSWORD
+      KQUEENUI_KQUEEN_SERVICE_USER_PASSWORD:
+      KQUEENUI_MAIL_SERVER: mail
+      KQUEENUI_MAIL_PORT: 10025
+      KQUEENUI_ENABLE_PUBLIC_REGISTRATION: 1
+      STATIC_DIR: /mnt/static/
+    volumes:
+      - /mnt/static/
+    restart: always
+    depends_on:
+      - api
+  mail:
+    image: modularitycontainers/postfix
+    restart: always
+    volumes:
+      - /var/spool/postfix/
+      - /var/spool/mail/
+    environment:
+      MYHOSTNAME: 'mail'
+  prometheus:
+    image: prom/prometheus
+    restart: always
+    ports:
+      - 127.0.0.1:9090:9090
+    volumes:
+      - ./prod/prometheus/:/etc/prometheus/:Z
+      - /mnt/storage/kqueen/prometheus/:/prometheus/
+    links:
+      - api
+      - etcd
