@@ -59,7 +59,7 @@ class TestInsertManualCluster:
             'provisioner': 'Provisioner:{}'.format(self.provisioner_id),
             'kubeconfig': yaml.load(open('kubeconfig_localhost', 'r').read()),
             'owner': 'User:{}'.format(self.user.id),
-            'created_at': datetime.utcnow(),
+            'created_at': str(datetime.utcnow()),
         }
 
         response = self.client.post(
