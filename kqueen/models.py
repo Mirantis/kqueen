@@ -47,6 +47,9 @@ class Cluster(Model, metaclass=ModelMeta):
                 return self.state
             self.state = cluster['state']
             self.save()
+        else:
+            self.state = config.get('CLUSTER_UNKNOWN_STATE')
+            self.save()
 
         return self.state
 

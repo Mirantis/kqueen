@@ -1,14 +1,17 @@
 version: '2'
 services:
   api:
-    image: kqueen/api:v0.11
+    image: kqueen/api:v0.15
     ports:
       - 127.0.0.1:5000:5000
     depends_on:
       - etcd
+    volumes:
+      - ./kqueen/config/demo.py:/code/kqueen/config/prod.py:Z
     environment:
       KQUEEN_CONFIG_FILE: config/prod.py
       KQUEEN_ETCD_HOST: etcd
+      KQUEEN_SECRET_KEY: 'secret'
       #KQUEEN_DEBUG: 'True'
       BOOTSTRAP_ADMIN: 1
       BOOTSTRAP_ADMIN_USERNAME: admin
@@ -18,7 +21,7 @@ services:
     extra_hosts:
       - "ci.mcp.mirantis.net:172.16.48.254"
   ui:
-    image: kqueen/ui:v0.1
+    image: kqueen/ui:v0.3
     ports:
       - 127.0.0.1:5080:5080
     depends_on:
@@ -31,6 +34,7 @@ services:
       KQUEENUI_KQUEEN_SERVICE_USER_PASSWORD: default
       KQUEENUI_MAIL_SERVER: mail
       KQUEENUI_MAIL_PORT: 10025
+#  Uncomment this to enable sending validation emails
 #  mail:
 #    image: modularitycontainers/postfix
 #    volumes:
