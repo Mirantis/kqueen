@@ -6,7 +6,7 @@ class Config(BaseConfig):
     LOG_LEVEL = 'DEBUG'
 
     # App secret
-    SECRET_KEY = 'secret'
+    SECRET_KEY = 'SecretSecretSecret123'
 
     # Etcd settings
     ETCD_PREFIX = '/kqueen_test'
