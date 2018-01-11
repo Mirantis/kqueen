@@ -23,6 +23,7 @@ jobs:
   - stage: test
     install:
     - pip install -e ".[test]"
+    - pip check
     script:
     - python3 -m flake8
   - stage: test
