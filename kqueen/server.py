@@ -39,8 +39,11 @@ def create_app(config_file=None):
     # load configuration
     config = current_config(config_file)
     config.setup_policies()
-    if not config.get('SECRET_KEY'):
-        raise ImproperlyConfigured('The SECRET_KEY setting must not be empty')
+
+    secret_key = config.get('SECRET_KEY')
+    if not secret_key or len(secret_key) < 16:
+        raise ImproperlyConfigured('The SECRET_KEY must be set and longer than 16 chars.')
+
     app.config.from_mapping(config.to_dict())
     app.logger.setLevel(getattr(logging, app.config.get('LOG_LEVEL')))
     app.logger.info('Loading configuration from {}'.format(config.source_file))
