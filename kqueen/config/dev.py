@@ -13,7 +13,9 @@ class Config(BaseConfig):
     JENKINS_PROVISION_JOB_NAME = 'deploy_aws_k8s_kqueen_job'
     JENKINS_PROVISION_JOB_CTX = {}
     JENKINS_DEPROVISION_JOB_NAME = 'deploy-stack-cleanup'
-    JENKINS_DEPROVISION_JOB_CTX = {}
+    JENKINS_DEPROVISION_JOB_CTX = {
+        'STACK_TYPE': 'aws'
+    }
     JENKINS_PARAMETER_MAP = {
         'cluster_name': 'STACK_NAME',
         'cluster_uuid': 'KQUEEN_BUILD_ID'
