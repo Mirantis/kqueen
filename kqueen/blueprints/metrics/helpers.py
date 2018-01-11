@@ -22,7 +22,7 @@ class MetricUpdater:
 
         self.get_data()
 
-    async def update_metrics(self):
+    def update_metrics(self):
         loop = asyncio.get_event_loop()
         futures = []
 
@@ -46,12 +46,11 @@ class MetricUpdater:
                 raise Exception(msg)
 
             # run update function
-            future = loop.run_in_executor(None, fnc(metric))
+            future = loop.run_in_executor(None, fnc, metric)
             futures.append(future)
 
         # run all updates
-        for _ in await asyncio.gather(*futures):
-            pass
+        asyncio.wait(futures)
 
     def get_data(self):
         # users
