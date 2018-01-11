@@ -28,7 +28,8 @@ class JenkinsEngine(BaseEngine):
     username = config.get('JENKINS_USERNAME')
     password = config.get('JENKINS_PASSWORD')
     provision_job_name = config.get('JENKINS_PROVISION_JOB_NAME')
-    anchor_parameter = config.get('JENKINS_ANCHOR_PARAMETER')
+    deprovision_job_name = config.get('JENKINS_DEPROVISION_JOB_NAME')
+    job_parameter_map = config.get('JENKINS_PARAMETER_MAP')
     parameter_schema = {
         'provisioner': {
             'username': {
@@ -107,10 +108,12 @@ class JenkinsEngine(BaseEngine):
         """
         Implementation of :func:`~kqueen.engines.base.BaseEngine.provision`
         """
-        cluster_id = self.cluster.id
         ctx = config.get('JENKINS_PROVISION_JOB_CTX')
-        # PATCH THE CTX TO CONTAIN ANCHOR WITH OBJ UUID
-        ctx['STACK_NAME'] = 'KQUEEN__{}'.format(cluster_id)
+        cluster_name = self.job_parameter_map['cluster_name']
+        cluster_uuid = self.job_parameter_map['cluster_uuid']
+        # PATCH THE CTX TO CONTAIN CLUSTER NAME AND UUID
+        ctx[cluster_name] = self.cluster.name
+        ctx[cluster_uuid] = self.cluster.id
         try:
             self.client.build_job(self.provision_job_name, ctx)
             return True, None
@@ -126,20 +129,29 @@ class JenkinsEngine(BaseEngine):
 
         Implementation of :func:`~kqueen.engines.base.BaseEngine.deprovision`
         """
-
-        return True, None
+        ctx = config.get('JENKINS_DEPROVISION_JOB_CTX')
+        cluster_name = self.job_parameter_map['cluster_name']
+        ctx[cluster_name] = self.cluster.name
+        try:
+            self.client.build_job(self.deprovision_job_name, ctx)
+            return True, None
+        except Exception as e:
+            msg = 'Creating cluster {} failed with following reason: {}'.format(cluster_id, repr(e))
+            logger.error(msg)
+            return False, msg
+        return None, None
 
     def get_kubeconfig(self):
         """
         Implementation of :func:`~kqueen.engines.base.BaseEngine.get_kubeconfig`
         """
-        cluster_external_id = self._get_external_id()
-        if not cluster_external_id:
+        cluster_build_number = self._get_build_number()
+        if not cluster_build_number:
             return {}
         kubeconfig_url = '{jenkins_url}/job/{job_name}/{build_id}/artifact/kubeconfig'.format(
             jenkins_url=self.jenkins_url,
             job_name=self.provision_job_name,
-            build_id=str(cluster_external_id),
+            build_id=str(cluster_build_number),
         )
         kubeconfig = {}
         try:
@@ -148,32 +160,32 @@ class JenkinsEngine(BaseEngine):
             logger.error(repr(e))
         return kubeconfig
 
-    def _get_external_id(self):
+    def _get_build_number(self):
         """
         Get external ID of cluster, in this case Jenkins job ID.
 
-        First we try to get external_id from related object metadata, if there is no external_id
+        First we try to get build_number from related object metadata, if there is no build_number
         yet, we need to look it up in build history of our configured provisioning Jenkins job
 
         Returns:
             int: Jenkins job ID
         """
         metadata = self.cluster.metadata or {}
-        external_id = metadata.get('external_id', None)
-        if external_id:
-            return external_id
+        build_number = metadata.get('build_number', None)
+        if build_number:
+            return build_number
         try:
             cluster = self._get_by_id()
-            external_id = cluster['metadata']['external_id']
+            build_number = cluster['metadata']['build_number']
             # Get fresh data just in case to avoid conflict
             metadata = self.cluster.metadata or {}
-            metadata['external_id'] = external_id
+            metadata['build_number'] = build_number
             self.cluster.metadata = metadata
             self.cluster.save()
-            return external_id
+            return build_number
         except Exception:
             pass
-        return external_id
+        return build_number
 
     def _get_by_id(self):
         cluster_id = self.cluster.id
@@ -181,18 +193,18 @@ class JenkinsEngine(BaseEngine):
         cluster = [c for c in _list if c['id'] == cluster_id]
         return cluster[0] if cluster else {}
 
-    def _get_by_external_id(self):
-        cluster_external_id = self._get_external_id()
-        # Cannot get by external_id if there is no external_id on self.cluster
-        if not cluster_external_id:
+    def _get_by_build_number(self):
+        cluster_build_number = self._get_build_number()
+        # Cannot get by build_number if there is no build_number on self.cluster
+        if not cluster_build_number:
             return {}
         # Try to get the data from cache
-        cluster_cache_key = 'cluster-{}-{}'.format(self.name, cluster_external_id)
+        cluster_cache_key = 'cluster-{}-{}'.format(self.name, cluster_build_number)
         cluster = cache.get(cluster_cache_key)
         if cluster:
             return cluster
-        # Get build info for the given job ID (external_id)
-        build = self.client.get_build_info(self.provision_job_name, int(cluster_external_id))
+        # Get build info for the given job ID (build_number)
+        build = self.client.get_build_info(self.provision_job_name, int(cluster_build_number))
         cluster = self._get_cluster_from_build(build)
         return cluster or {}
 
@@ -200,10 +212,10 @@ class JenkinsEngine(BaseEngine):
         """
         Implementation of :func:`~kqueen.engines.base.BaseEngine.cluster_get`
 
-        First we try to get cluster by external_id, because its much more efficient in this
+        First we try to get cluster by build_number, because its much more efficient in this
         implementation. If its not possible yet, we return from the slower method
         """
-        cluster = self._get_by_external_id()
+        cluster = self._get_by_build_number()
         if cluster:
             return cluster
         return self._get_by_id()
@@ -225,9 +237,10 @@ class JenkinsEngine(BaseEngine):
                 stack_name = build['description'].split(' ')[0]
 
             # Try to determine cluster_id
+            cluster_uuid_parameter = self.job_parameter_map['cluster_uuid']
             _cluster_id = [p.get('value', '') for p in parameters
-                           if p.get('name', '') == 'STACK_NAME' and p.get('value', '').startswith('KQUEEN')]
-            cluster_id = _cluster_id[0].split('__')[1] if _cluster_id else None
+                           if p.get('name', '') == cluster_uuid_parameter]
+            cluster_id = _cluster_id[0] if _cluster_id else None
 
             # Try to determine cluster state
             if build['result']:
@@ -245,7 +258,7 @@ class JenkinsEngine(BaseEngine):
                 'id': cluster_id,
                 'state': state,
                 'metadata': {
-                    'external_id': build['number'],
+                    'build_number': build['number'],
                     'build_timestamp': build['timestamp'],
                     'build_estimated_duration': build['estimatedDuration']
                 }
@@ -288,10 +301,14 @@ class JenkinsEngine(BaseEngine):
                 start = cluster['metadata']['build_timestamp']
                 estimate = cluster['metadata']['build_estimated_duration']
                 progress = int(((now - start) / estimate) * 100)
+                if estimate == -1:
+                    raise ArithmeticError
                 if progress > 99:
                     progress = 99
             else:
                 progress = 100
+        except ArithmeticError:
+            raise NotImplementedError
         except Exception:
             response = 500
         return {'response': response, 'progress': progress, 'result': result}
