@@ -118,7 +118,7 @@ class JenkinsEngine(BaseEngine):
             self.client.build_job(self.provision_job_name, ctx)
             return True, None
         except Exception as e:
-            msg = 'Creating cluster {} failed with following reason: {}'.format(cluster_id, repr(e))
+            msg = 'Creating cluster {} failed with following reason: {}'.format(self.cluster.id, repr(e))
             logger.error(msg)
             return False, msg
         return None, None
@@ -136,7 +136,7 @@ class JenkinsEngine(BaseEngine):
             self.client.build_job(self.deprovision_job_name, ctx)
             return True, None
         except Exception as e:
-            msg = 'Creating cluster {} failed with following reason: {}'.format(cluster_id, repr(e))
+            msg = 'Creating cluster {} failed with following reason: {}'.format(self.cluster.id, repr(e))
             logger.error(msg)
             return False, msg
         return None, None
