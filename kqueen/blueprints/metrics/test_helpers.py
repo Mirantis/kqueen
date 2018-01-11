@@ -6,20 +6,22 @@ import pytest
 
 class TestMetricUpdates:
     @pytest.fixture(scope='class')
-    def latest(self):
+    def latest(self, user):
+        user.save()
+
         m = MetricUpdater()
         m.update_metrics()
 
         return generate_latest().decode('utf-8')
 
-    @pytest.mark.parametrize('metric, value', [
-        ('users_by_namespace{namespace="demoorg"}', 1.0),
-        ('users_by_role{role="superadmin"}', 1.0),
-        ('users_active', 1.0),
-        ('organization_count', 1.0),
+    @pytest.mark.parametrize('metric', [
+        ('users_by_namespace{namespace="demoorg"}'),
+        ('users_by_role{role="superadmin"}'),
+        ('users_active'),
+        ('organization_count'),
     ])
-    def test_metrics_exist(user, latest, metric, value):
+    def test_metrics_exist(user, latest, metric):
 
-        req = "{metric} {value}".format(metric=metric, value=value)
+        req = "{metric} ".format(metric=metric)
 
         assert req in latest
