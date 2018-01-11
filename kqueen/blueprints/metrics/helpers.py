@@ -3,6 +3,7 @@ from kqueen.models import Organization
 from kqueen.models import User
 from prometheus_client import Gauge
 
+import asyncio
 import logging
 
 logger = logging.getLogger(__name__)
@@ -21,7 +22,10 @@ class MetricUpdater:
 
         self.get_data()
 
-    def update_metrics(self):
+    async def update_metrics(self):
+        loop = asyncio.get_event_loop()
+        futures = []
+
         for metric_name, metric in metrics.items():
 
             update_function_name = 'update_metric_{}'.format(metric_name)
@@ -42,8 +46,12 @@ class MetricUpdater:
                 raise Exception(msg)
 
             # run update function
-            # TODO: use asyncio for concurrent updates
-            fnc(metric)
+            future = loop.run_in_executor(None, fnc(metric))
+            futures.append(future)
+
+        # run all updates
+        for _ in await asyncio.gather(*futures):
+            pass
 
     def get_data(self):
         # users
