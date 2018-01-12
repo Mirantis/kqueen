@@ -53,7 +53,7 @@ class Cluster(Model, metaclass=ModelMeta):
             self.save()
 
         # check for stale clusters
-        max_age = timedelta(hours=config.get('PROVISIONER_TIMEOUT'))
+        max_age = timedelta(seconds=config.get('PROVISIONER_TIMEOUT'))
         if self.state == config.get('CLUSTER_PROVISIONING_STATE') and datetime.utcnow() - self.created_at > max_age:
             self.state = config.get('CLUSTER_ERROR_STATE')
 
