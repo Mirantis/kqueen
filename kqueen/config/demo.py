@@ -2,11 +2,13 @@ from .base import BaseConfig
 
 
 class Config(BaseConfig):
-    DEBUG = True
-    LOG_LEVEL = 'DEBUG'
+    DEBUG = False
+    LOG_LEVEL = 'INFO'
 
-    # App secret
-    SECRET_KEY = 'SecretSecretSecret123'
+    KQUEEN_HOST = '0.0.0.0'
+
+    # App secret - set this to random string >= 16 chars
+    # SECRET_KEY = 'secret'
 
     # Jenkins engine settings
     JENKINS_API_URL = 'https://ci.mcp.mirantis.net'
