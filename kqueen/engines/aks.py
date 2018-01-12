@@ -25,7 +25,6 @@ class AksEngine(BaseEngine):
     """
     name = 'aks'
     verbose_name = 'Azure Kubernetes Managed Service'
-    resource_group_name = 'test-cluster'
     parameter_schema = {
         'provisioner': {
             'client_id': {
@@ -44,7 +43,7 @@ class AksEngine(BaseEngine):
             },
             'tenant': {
                 'type': 'text',
-                'label': 'Tenant',
+                'label': 'Tenant ID',
                 'validators': {
                     'required': True
                 }
@@ -56,6 +55,13 @@ class AksEngine(BaseEngine):
                     'required': True
                 }
             },
+            'resource_group_name': {
+                'type': 'text',
+                'label': 'Resource Group Name',
+                'validators': {
+                    'required': True
+                }
+            }
         },
         'cluster': {
             'location': {
@@ -100,7 +106,7 @@ class AksEngine(BaseEngine):
         self.secret = kwargs.get('secret', '')
         self.tenant = kwargs.get('tenant', '')
         self.subscription_id = kwargs.get('subscription_id', '')
-        self.resource_group_name = kwargs.get('resource_group_name', self.resource_group_name)
+        self.resource_group_name = kwargs.get('resource_group_name', '')
         self.location = kwargs.get('location', '')
         self.ssh_key = kwargs.get('ssh_key', '')
         self.node_count = kwargs.get('node_count', 1)
@@ -129,37 +135,35 @@ class AksEngine(BaseEngine):
             'location': self.location,
             'type': 'Microsoft.ContainerService/ManagedClusters',
             'name': self.cluster.id,
-            'properties': {
-                # TODO: fix hardcoded params
-                'kubernetes_version': '1.7.7',
-                'dns_prefix': 'test-cluster',
-                'agent_pool_profiles': [
-                    {
-                        'fqdn': None,
-                        'vnet_subnet_id': None,
-                        'storage_profile': 'ManagedDisks',
-                        'name': 'agentpool',
-                        'count': self.node_count,
-                        'dns_prefix': None,
-                        'ports': None,
-                        'vm_size': 'Standard_D2_v2',
-                        'os_type': 'Linux',
-                        'os_disk_size_gb': None
-                    }
-                ],
-                'service_principal_profile': {
-                    'client_id': self.client_id,
-                    'secret': self.secret
-                },
-                'linux_profile': {
-                    'admin_username': 'azureuser',
-                    'ssh': {
-                        'public_keys': [
-                            {
-                                'key_data': self.ssh_key
-                            }
-                        ]
-                    }
+            # TODO: fix hardcoded params
+            'kubernetes_version': '1.7.7',
+            'dns_prefix': 'test-cluster',
+            'agent_pool_profiles': [
+                {
+                    'fqdn': None,
+                    'vnet_subnet_id': None,
+                    'storage_profile': 'ManagedDisks',
+                    'name': 'agentpool',
+                    'count': self.node_count,
+                    'dns_prefix': None,
+                    'ports': None,
+                    'vm_size': 'Standard_D2_v2',
+                    'os_type': 'Linux',
+                    'os_disk_size_gb': None
+                }
+            ],
+            'service_principal_profile': {
+                'client_id': self.client_id,
+                'secret': self.secret
+            },
+            'linux_profile': {
+                'admin_username': 'azureuser',
+                'ssh': {
+                    'public_keys': [
+                        {
+                            'key_data': self.ssh_key
+                        }
+                    ]
                 }
             }
         }
@@ -197,14 +201,12 @@ class AksEngine(BaseEngine):
 
             kubeconfig = {}
 
-            if cluster.properties.provisioning_state != "Succeeded":
+            if cluster.provisioning_state != "Succeeded":
                 return self.cluster.kubeconfig
 
-            access_profiles = cluster.properties.access_profiles.as_dict()
-            access_profile = access_profiles.get('cluster_admin')
-            encoded_kubeconfig = access_profile.get("kube_config")
+            access_profile = self.client.managed_clusters.get_access_profiles(self.resource_group_name, self.cluster.id, 'clusterAdmin')
+            encoded_kubeconfig = access_profile.kube_config
             kubeconfig = base64.b64decode(encoded_kubeconfig).decode(encoding='UTF-8')
-
             self.cluster.kubeconfig = yaml.load(kubeconfig)
             self.cluster.save()
 
@@ -223,8 +225,7 @@ class AksEngine(BaseEngine):
             msg = 'Fetching data from backend for cluster {} failed with following reason: {}'.format(self.cluster.id, repr(e))
             logger.error(msg)
             return {}
-        properties = response.properties.as_dict()
-        state = STATE_MAP.get(properties.get('provisioning_state'), config.get('CLUSTER_UNKNOWN_STATE'))
+        state = STATE_MAP.get(response.provisioning_state, config.get('CLUSTER_UNKNOWN_STATE'))
 
         key = 'cluster-{}-{}'.format(self.name, self.cluster.id)
         cluster = {
