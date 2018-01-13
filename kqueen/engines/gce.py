@@ -156,6 +156,9 @@ class GceEngine(BaseEngine):
             logger.error(msg)
             return False, msg
 
+        self.cluster.metadata['node_count'] = node_count
+        self.cluster.save()
+
         return True, None
 
     def get_kubeconfig(self):
