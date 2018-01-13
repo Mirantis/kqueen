@@ -39,6 +39,8 @@ class BaseConfig:
 
     PROVISIONER_ENGINE_WHITELIST = None
 
+    # Timeout for cluster operations (in seconds)
+    PROVISIONER_TIMEOUT = 3600
     PROMETHEUS_WHITELIST = '127.0.0.0/8'
 
     @classmethod
