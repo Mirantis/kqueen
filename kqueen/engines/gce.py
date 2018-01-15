@@ -223,7 +223,12 @@ class GceEngine(BaseEngine):
         First we try to get cluster by external_id, because its much more efficient in this
         implementation. If its not possible yet, we return from the slower method
         """
-        request = self.client.projects().zones().clusters().get(projectId=self.project, zone=self.zone, clusterId=self.cluster_id)
+        request = self.client.projects().zones().clusters().get(
+            projectId=self.project,
+            zone=self.zone,
+            clusterId=self.cluster_id
+        )
+
         try:
             response = request.execute()
         except Exception as e:
