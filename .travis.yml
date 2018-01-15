@@ -5,12 +5,6 @@ python:
 - '3.6'
 service:
 - docker
-notifications:
-  slack:
-    secure: imXU/zt9IjKk5OvjZkTICTmxOTKGaZIej2kf7m5iSAKrdM7Lsjhj1m464qOViH3AMjMMZeprC1SL/jFF5azu2DNkQe5j1UlUu1ZxQpwnpmXJaLyTznDZSa76LPoY/R4sqJYozZLzfMQivnIUe6NGTP5vDX8CXpndaOgfAulDzks6xXDTw8q1dyKTtqFx8aPbAFAYRPagaNpy62j09aeNXDY8OVUSJsx8xylRmbHY+t1AH5AMkDPY5AeI0D/CJH1Hnbq88MmvdgUn8OqjvWMgiXsrDFAPZ4WdZCgJZuP2D4jrDuAsnchrOrVi6wKJWA9rNqJD8TqqF8Q8JhdeVAJ098GXAyhkJlDtfeEbh8TYIkLNgpW7e/auh5rzHk5MvH7kTVzyZjGMb7Vo+7c7nypFoWeom1m8Pg5rCT7vx7+0NhQjg1moMQ2kPWzaZkITDdblxuf6rpraEx2ydqPh6pAAto+VWXRrdbJJTGSTVIfPFDHYeqkCq+QVGfdCi2BucnnQVZJLUqEdGxnn86ICwhjJ5uC4Ah7Czd/pZOrdgFMWTT6DS9fjRiIHOnAAp1wKYzAoRBKQkhltDFMrayDxN5dp+IXDnnlQWPm14mwAyNd/zt8pWCue5hT2oK7oeuQsNfSemSPg92DCZRZNZ684UbJGKn0RJlSpXLyQRjja0IjA+Kk=
-    on_success: change
-    on_failure: always
-    on_pull_requests: false
 stages:
 - name: test
 - name: build
