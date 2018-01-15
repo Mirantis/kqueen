@@ -13,7 +13,8 @@ config = current_config()
 STATE_MAP = {
     'PROVISIONING': config.get('CLUSTER_PROVISIONING_STATE'),
     'RUNNING': config.get('CLUSTER_OK_STATE'),
-    'STOPPING': config.get('CLUSTER_DEPROVISIONING_STATE')
+    'STOPPING': config.get('CLUSTER_DEPROVISIONING_STATE'),
+    'RECONCILING': config.get('CLUSTER_RESIZING_STATE')
 }
 
 
@@ -137,6 +138,26 @@ class GceEngine(BaseEngine):
             msg = 'Deleting cluster {} failed with following reason: {}'.format(self.cluster_id, repr(e))
             logger.error(msg)
             return False, msg
+
+        return True, None
+
+    def resize(self, node_count, **kwargs):
+        request = self.client.projects().zones().clusters().nodePools().setSize(
+            nodePoolId='default-pool',
+            clusterId=self.cluster_id,
+            zone=self.zone,
+            body={'nodeCount': node_count},
+            projectId=self.project
+        )
+        try:
+            request.execute()
+        except Exception as e:
+            msg = 'Resizing cluster {} failed with following reason: {}'.format(self.cluster_id, repr(e))
+            logger.error(msg)
+            return False, msg
+
+        self.cluster.metadata['node_count'] = node_count
+        self.cluster.save()
 
         return True, None
 
