@@ -121,6 +121,7 @@ class AksEngine(BaseEngine):
                 'count': kwargs.get('node_count', 1),
                 'dns_prefix': None,
                 'ports': None,
+                # TODO: fix hardcoded params
                 'vm_size': 'Standard_D2_v2',
                 'os_type': 'Linux',
                 'os_disk_size_gb': None
