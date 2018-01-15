@@ -133,6 +133,21 @@ class BaseEngine:
         """
         raise NotImplementedError
 
+    def resize(self, node_count):
+        """Resize the cluster related to this engine instance.
+
+        Although this function doesn't take any arguments, it is expected that
+        the implementation of the Provisioner gets ``self.cluster`` to provide the
+        relevant object which we want to resize.
+
+        Returns:
+            tuple: First item is bool (success/failure), second item is error, can be None::
+
+                (True, None)                            # successful provisioning
+                (False, 'Could not connect to backend') # failed provisioning
+        """
+        raise NotImplementedError
+
     def get_kubeconfig(self):
         """Get kubeconfig of the cluster related to this engine from backend.
 
