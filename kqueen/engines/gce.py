@@ -150,7 +150,7 @@ class GceEngine(BaseEngine):
             projectId=self.project
         )
         try:
-            response = request.execute()
+            request.execute()
         except Exception as e:
             msg = 'Resizing cluster {} failed with following reason: {}'.format(self.cluster_id, repr(e))
             logger.error(msg)
