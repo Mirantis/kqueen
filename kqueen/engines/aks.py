@@ -27,7 +27,7 @@ class AksEngine(BaseEngine):
     Azure Container Service
     """
     name = 'aks'
-    verbose_name = 'Azure Kubernetes Managed Service'
+    verbose_name = 'Azure Managed Kubernetes Service'
     parameter_schema = {
         'provisioner': {
             'client_id': {
@@ -93,6 +93,20 @@ class AksEngine(BaseEngine):
                     'min': 1,
                     'number': True
                 }
+            },
+            'vm_size': {
+                'type': 'select',
+                'label': 'VM Size',
+                'choices': [
+                    ('Standard_D1_v2', 'Standart: 1 vCPU, 3.5 GiB RAM, 50 GiB SSD'),
+                    ('Standard_D2_v2', 'Standart: 2 vCPU, 7 GiB RAM, 100 GiB SSD'),
+                    ('Standard_D3_v2', 'Standart: 4 vCPU, 14 GiB RAM, 200 GiB SSD'),
+                    ('Standard_D4_v2', 'Standart: 8 vCPU, 28 GiB RAM, 400 GiB SSD'),
+                    ('Standard_D5_v2', 'Standart: 16 vCPU, 56 GiB RAM, 800 GiB SSD')
+                ],
+                'validators': {
+                    'required': True
+                }
             }
         }
     }
@@ -122,7 +136,7 @@ class AksEngine(BaseEngine):
                 'dns_prefix': None,
                 'ports': None,
                 # TODO: fix hardcoded params
-                'vm_size': 'Standard_D2_v2',
+                'vm_size': kwargs.get('vm_size', 'Standard_D1_v2'),
                 'os_type': 'Linux',
                 'os_disk_size_gb': None
             }
