@@ -1,6 +1,9 @@
 from kqueen.config import current_config
 
+import logging
+
 config = current_config()
+logger = logging.getLogger(__name__)
 
 
 class BaseEngine:
@@ -131,7 +134,19 @@ class BaseEngine:
                 (True, None)                            # successful provisioning
                 (False, 'Could not connect to backend') # failed provisioning
         """
-        raise NotImplementedError
+        try:
+            cluster = self.cluster_get()
+        except NotImplementedError:
+            pass
+        except Exception as e:
+            msg = 'Fetching data from backend for cluster {} failed with following reason: {}'.format(self.cluster_id, repr(e))
+            logger.error(msg)
+        else:
+            if not cluster:
+                return True, None
+
+        msg = 'Deprovision method on engine {} is not implemented'.format(self.verbose_name)
+        return False, msg
 
     def resize(self, node_count):
         """Resize the cluster related to this engine instance.
