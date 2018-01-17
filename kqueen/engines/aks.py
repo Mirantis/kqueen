@@ -184,6 +184,11 @@ class AksEngine(BaseEngine):
         """
         Implementation of :func:`~kqueen.engines.base.BaseEngine.deprovision`
         """
+        # test if cluster is considered deprovisioned by the base method
+        result, error = super(AksEngine, self).deprovision(**kwargs)
+        if result:
+            return result, error
+
         try:
             self.client.managed_clusters.delete(self.resource_group_name, self.cluster.id)
             # TODO: check if deprovisioning response is healthy

@@ -131,6 +131,11 @@ class GceEngine(BaseEngine):
         """
         Implementation of :func:`~kqueen.engines.base.BaseEngine.deprovision`
         """
+        # test if cluster is considered deprovisioned by the base method
+        result, error = super(GceEngine, self).deprovision(**kwargs)
+        if result:
+            return result, error
+
         try:
             self.client.projects().zones().clusters().delete(projectId=self.project, zone=self.zone, clusterId=self.cluster_id).execute()
             # TODO: check if provisioning response is healthy
