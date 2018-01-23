@@ -13,6 +13,7 @@ from flask_jwt import current_identity
 from flask_jwt import jwt_required
 from importlib import import_module
 from kqueen.auth import encrypt_password
+from kqueen.helm import HelmWrapper
 from kqueen.models import Cluster
 from kqueen.models import Organization
 from kqueen.models import Provisioner
@@ -398,3 +399,40 @@ def swagger_json():
         abort(500)
 
     return jsonify(data)
+
+
+# Helm
+
+@api.route('/clusters/<uuid:pk>/helm/install', methods=['POST'])
+@jwt_required()
+def helm_install(pk):
+    obj = get_object(Cluster, pk, current_identity)
+
+    data = request.json
+    if not isinstance(data, dict) or (isinstance(data, dict) and 'name' not in data):
+        abort(400)
+
+    helm = HelmWrapper(obj.kubeconfig)
+    return jsonify(helm.install(data['name']))
+
+
+@api.route('/clusters/<uuid:pk>/helm/delete', methods=['POST'])
+@jwt_required()
+def helm_delete(pk):
+    obj = get_object(Cluster, pk, current_identity)
+
+    data = request.json
+    if not isinstance(data, dict) or (isinstance(data, dict) and 'name' not in data):
+        abort(400)
+
+    helm = HelmWrapper(obj.kubeconfig)
+    return jsonify(helm.delete(data['name']))
+
+
+@api.route('/clusters/<uuid:pk>/helm/list', methods=['GET'])
+@jwt_required()
+def helm_list(pk):
+    obj = get_object(Cluster, pk, current_identity)
+
+    helm = HelmWrapper(obj.kubeconfig)
+    return jsonify(helm.list())

@@ -100,3 +100,7 @@ class HelmWrapper:
     def reset(self):
         raw = self._call('helm reset')
         return self._no_parse(raw)
+
+    def version(self):
+        raw = self._call('helm version')
+        return self._no_parse(raw)
