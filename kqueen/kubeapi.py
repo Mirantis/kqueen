@@ -127,7 +127,9 @@ class KubernetesAPI:
         return out
 
     def list_pods_by_node(self):
-        out = {}
+        out = {
+            'Unknown': []
+        }
         try:
             nodes = self.list_nodes()
             pods = self.list_pods()
@@ -138,7 +140,7 @@ class KubernetesAPI:
             out[node['metadata']['name']] = []
 
         for pod in pods:
-            node = pod['spec'].get('node_name', 'Unknown')
+            node = pod['spec'].get('node_name', 'Unknown') or 'Unknown'
             out[node].append(pod)
 
         return out
