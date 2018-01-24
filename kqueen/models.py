@@ -112,8 +112,8 @@ class Cluster(Model, metaclass=ModelMeta):
                 'services': kubernetes.list_services(),
                 'version': kubernetes.get_version(),
             }
-
-        except Exception:
+        except Exception as e:
+            logger.exception(e)
             out = {}
 
         return out
