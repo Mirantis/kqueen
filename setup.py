@@ -2,7 +2,7 @@
 
 from setuptools import setup, find_packages
 
-version = '0.15'
+version = '0.16'
 
 with open('README.rst') as f:
     long_description = ''.join(f.readlines())
@@ -48,7 +48,7 @@ setup(
         'google-auth==1.2.1',
         'google-auth-httplib2==0.0.3',
         'azure==2.0.0',
-        'azure-mgmt-containerservice',
+        'azure-mgmt-containerservice==3.0.0',
     ],
     setup_requires=[
         'pytest-runner',
