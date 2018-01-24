@@ -13,7 +13,8 @@ config = current_config()
 STATE_MAP = {
     'PROVISIONING': config.get('CLUSTER_PROVISIONING_STATE'),
     'RUNNING': config.get('CLUSTER_OK_STATE'),
-    'STOPPING': config.get('CLUSTER_DEPROVISIONING_STATE')
+    'STOPPING': config.get('CLUSTER_DEPROVISIONING_STATE'),
+    'RECONCILING': config.get('CLUSTER_RESIZING_STATE')
 }
 
 
@@ -22,10 +23,13 @@ class GceEngine(BaseEngine):
     Google Container Engine
     """
     name = 'gce'
-    verbose_name = 'Google Container engine'
-    # TODO: only subset of possible choices for zone is listed in parameter_schema,
+    verbose_name = 'Google Kubernetes Engine'
+    # TODO: only subset of possible choices for zone are listed in parameter_schema,
     # we could add more later, here is the list of possible choices:
     # https://cloud.google.com/compute/docs/regions-zones/
+    # TODO: only subset of possible choices for machine_type are listed in parameter_schema,
+    # we could add more later, here is the list of possible choices:
+    # https://cloud.google.com/compute/docs/machine-types
     parameter_schema = {
         'provisioner': {
             'service_account_info': {
@@ -68,10 +72,34 @@ class GceEngine(BaseEngine):
                 'choices': [
                     ('us-central1-a', 'US - Central 1 - A'),
                     ('us-west1-a', 'US - West 1 - A'),
-                    ('us-east1-a', 'US - East 1 - A'),
+                    ('us-east1-b', 'US - East 1 - B'),
+                    ('us-east4-a', 'US - East 4 - A'),
+                    ('northamerica-northeast1-a', 'North America - Northeast 1 - A'),
                     ('southamerica-east1-a', 'South America - East 1 - A'),
                     ('europe-west1-b', 'Europe - West 1 - B'),
-                    ('asia-southeast1-a', 'Asia - Southeast 1 - A')
+                    ('europe-west2-a', 'Europe - West 2 - A'),
+                    ('europe-west3-a', 'Europe - West 3 - A'),
+                    ('europe-west4-b', 'Europe - West 4 - B'),
+                    ('asia-northeast1-a', 'Asia - Northeast 1 - A'),
+                    ('asia-east1-a', 'Asia - East 1 - A'),
+                    ('asia-southeast1-a', 'Asia - Southeast 1 - A'),
+                    ('australia-southeast1-a', 'Australia Southeast 1 - A')
+                ],
+                'validators': {
+                    'required': True
+                }
+            },
+            'machine_type': {
+                'type': 'select',
+                'label': 'Machine Type',
+                'choices': [
+                    ('n1-standard-1', 'Standart: 1 vCPU, 3.75 GB RAM'),
+                    ('n1-standard-2', 'Standart: 2 vCPU, 7.5 GB RAM'),
+                    ('n1-standard-4', 'Standart: 4 vCPU, 15 GB RAM'),
+                    ('n1-standard-8', 'Standart: 8 vCPU, 30 GB RAM'),
+                    ('n1-standard-16', 'Standart: 16 vCPU, 60 GB RAM'),
+                    ('n1-standard-32', 'Standart: 32 vCPU, 120 GB RAM'),
+                    ('n1-standard-64', 'Standart: 64 vCPU, 240 GB RAM')
                 ],
                 'validators': {
                     'required': True
@@ -94,7 +122,10 @@ class GceEngine(BaseEngine):
         self.cluster_config = {
             'cluster': {
                 'name': self.cluster_id,
-                'initialNodeCount': kwargs.get('node_count', 1)
+                'initialNodeCount': kwargs.get('node_count', 1),
+                'nodeConfig': {
+                    'machineType': kwargs.get('machine_type', 'n1-standard-1')
+                }
             }
         }
         self.client = self._get_client()
@@ -130,6 +161,11 @@ class GceEngine(BaseEngine):
         """
         Implementation of :func:`~kqueen.engines.base.BaseEngine.deprovision`
         """
+        # test if cluster is considered deprovisioned by the base method
+        result, error = super(GceEngine, self).deprovision(**kwargs)
+        if result:
+            return result, error
+
         try:
             self.client.projects().zones().clusters().delete(projectId=self.project, zone=self.zone, clusterId=self.cluster_id).execute()
             # TODO: check if provisioning response is healthy
@@ -137,6 +173,26 @@ class GceEngine(BaseEngine):
             msg = 'Deleting cluster {} failed with following reason: {}'.format(self.cluster_id, repr(e))
             logger.error(msg)
             return False, msg
+
+        return True, None
+
+    def resize(self, node_count, **kwargs):
+        request = self.client.projects().zones().clusters().nodePools().setSize(
+            nodePoolId='default-pool',
+            clusterId=self.cluster_id,
+            zone=self.zone,
+            body={'nodeCount': node_count},
+            projectId=self.project
+        )
+        try:
+            request.execute()
+        except Exception as e:
+            msg = 'Resizing cluster {} failed with following reason: {}'.format(self.cluster_id, repr(e))
+            logger.error(msg)
+            return False, msg
+
+        self.cluster.metadata['node_count'] = node_count
+        self.cluster.save()
 
         return True, None
 
@@ -202,7 +258,12 @@ class GceEngine(BaseEngine):
         First we try to get cluster by external_id, because its much more efficient in this
         implementation. If its not possible yet, we return from the slower method
         """
-        request = self.client.projects().zones().clusters().get(projectId=self.project, zone=self.zone, clusterId=self.cluster_id)
+        request = self.client.projects().zones().clusters().get(
+            projectId=self.project,
+            zone=self.zone,
+            clusterId=self.cluster_id
+        )
+
         try:
             response = request.execute()
         except Exception as e:

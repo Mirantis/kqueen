@@ -1,6 +1,7 @@
 from flask import url_for
 from kqueen.conftest import auth_header
 from kqueen.models import User
+from datetime import datetime
 
 import json
 import pytest
@@ -58,6 +59,7 @@ class TestInsertManualCluster:
             'provisioner': 'Provisioner:{}'.format(self.provisioner_id),
             'kubeconfig': yaml.load(open('kubeconfig_localhost', 'r').read()),
             'owner': 'User:{}'.format(self.user.id),
+            'created_at': str(datetime.utcnow()),
         }
 
         response = self.client.post(

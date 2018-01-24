@@ -37,4 +37,4 @@ google-auth-httplib2==0.0.3
 
 #AKS
 azure==2.0.0
-azure-mgmt-containerservice
+azure-mgmt-containerservice==3.0.0

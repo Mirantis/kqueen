@@ -1,5 +1,8 @@
 from datetime import datetime
+from datetime import timedelta
+from kqueen.config import current_config
 from kqueen.engines import __all__ as all_engines
+from kqueen.engines import ManualEngine
 from kqueen.models import Cluster
 from kqueen.models import Provisioner
 from kqueen.storages.etcd import Field
@@ -8,6 +11,8 @@ from kqueen.storages.etcd import Model
 import pytest
 import subprocess
 import yaml
+
+config = current_config()
 
 
 class TestModelMethods:
@@ -200,3 +205,24 @@ class TestProvisionerSerialization:
         loaded = Provisioner.load(user.namespace, provisioner.id)
 
         assert loaded.get_dict(True) == provisioner.get_dict(True)
+
+
+class TestClusterState:
+    @pytest.fixture(autouse=True)
+    def prepare(self, cluster, monkeypatch):
+        def fake_cluster_get(self):
+            return {'state': config.get('CLUSTER_PROVISIONING_STATE')}
+
+        monkeypatch.setattr(ManualEngine, 'cluster_get', fake_cluster_get)
+
+        stale_date = datetime.utcnow() - timedelta(days=365)
+        cluster.created_at = stale_date
+        cluster.save()
+
+        self.cluster = cluster
+
+    def test_stale_cluster(self):
+        cluster_state = self.cluster.get_state()
+        print(self.cluster.get_state())
+
+        assert cluster_state == config.get('CLUSTER_ERROR_STATE')

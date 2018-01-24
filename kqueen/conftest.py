@@ -14,7 +14,6 @@ import pytest
 import uuid
 import yaml
 
-config_file = 'config/test.py'
 config = current_config()
 fake = Faker()
 
@@ -56,9 +55,9 @@ def cluster():
         'id': _uuid,
         'name': 'Name for cluster {}'.format(_uuid),
         'provisioner': prov,
-        'state': 'deployed',
+        'state': config.get('CLUSTER_UNKNOWN_STATE'),
         'kubeconfig': yaml.load(open('kubeconfig_localhost', 'r').read()),
-        'created_at': datetime.datetime(2017, 11, 15, 13, 36, 24),
+        'created_at': datetime.datetime.utcnow().replace(microsecond=0),
         'owner': _user
     }
 
