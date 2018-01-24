@@ -81,8 +81,22 @@ class HelmWrapper:
         raw = self._call('helm init')
         return self._no_parse(raw)
 
-    def install(self, chart):
-        raw = self._call('helm install {}'.format(chart))
+    def install(self, chart, release_name=None, overrides=None):
+        cmd = 'helm install'
+        if release_name:
+            cmd = cmd + ' --name={}'.format(release_name)
+        if overrides and isinstance(overrides, dict):
+            ovrdhandle, ovrdpath = mkstemp(prefix='khelm-ovrd-')
+            with open(ovrdpath, 'w') as outfile:
+                json.dump(overrides, outfile)
+            cmd = cmd + ' -f {}'.format(ovrdpath)
+        cmd = cmd + ' {}'.format(chart)
+        raw = self._call(cmd)
+        try:
+            os.close(ovrdhandle)
+            os.remove(ovrdpath)
+        except Exception:
+            pass
         return self._no_parse(raw)
 
     def _parse_list(self, response):
