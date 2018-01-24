@@ -19,12 +19,11 @@ class TestKubeApi:
         with pytest.raises(ValueError, match='Missing parameter cluster'):
             KubernetesAPI()
 
-    def test_get_kubeconfig(self, cluster):
-        """Test get_kubeconfig returns YAML"""
-
-        cluster.save()
+    def test_get_api_client(self, cluster):
         api = KubernetesAPI(cluster=cluster)
-        print(api.get_kubeconfig_file())
+
+        api_client = api.get_api_client()
+        print(api_client)
 
     def test_init(self, cluster):
         cluster.save()

@@ -1,12 +1,12 @@
 """Kubernetes client wrapper."""
 
 
-from kubernetes import config, client
+from kubernetes import client
+from kubernetes.config.kube_config import KubeConfigLoader
 from kubernetes.client.rest import ApiException
 from kqueen.helpers import prefix_to_num
 
 import logging
-import yaml
 
 # define logging
 logger = logging.getLogger(__name__)
@@ -29,30 +29,34 @@ class KubernetesAPI:
             raise ValueError('Missing parameter cluster')
 
         logger.debug('Initialized KubernetesAPI for {}'.format(self.cluster))
-        self.kubeconfig_file = self.get_kubeconfig_file()
 
         # set apis
-        api_client = config.new_client_from_config(config_file=self.kubeconfig_file)
+        api_client = self.get_api_client()
+
         self.api_corev1 = client.CoreV1Api(api_client=api_client)
         self.api_extensionsv1beta1 = client.ExtensionsV1beta1Api(api_client=api_client)
+        self.api_rbacauthorizationv1beta1 = client.RbacAuthorizationV1beta1Api(api_client=api_client)
         self.api_version = client.VersionApi(api_client=api_client)
 
-    def get_kubeconfig_file(self):
+    def get_api_client(self):
         """
-        Write kubeconfig file on filesystem.
+        Create Kubernetes API client with configuration from string.
 
         Returns:
             str: Kubeconfig file path
 
         """
-        # TODO: make configfile name random
-        configfile = '/tmp/kubernetes'
-        f = open(configfile, 'w')
-        kubeconfig = self.cluster.get_kubeconfig()
-        f.write(yaml.dump(kubeconfig, indent=2))
-        f.close()
 
-        return configfile
+        # This super-ugly code configuration is causes by wrong design of config-loading
+        # functions in https://github.com/kubernetes-client/python
+        client_config = type.__call__(client.Configuration)
+        kubeconfig = self.cluster.get_kubeconfig()
+        kcl = KubeConfigLoader(
+            config_dict=kubeconfig,
+        )
+        kcl.load_and_set(client_config)
+
+        return client.ApiClient(configuration=client_config)
 
     def get_version(self):
         """Return Kubernetes version."""
@@ -81,6 +85,45 @@ class KubernetesAPI:
 
         for pv in response:
             out.append(pv.to_dict())
+
+        return out
+
+    def list_service_accounts(self):
+        out = []
+
+        try:
+            response = self.api_corev1.list_service_account_for_all_namespaces().items
+        except ApiException:
+            raise
+
+        for service_account in response:
+            out.append(service_account.to_dict())
+
+        return out
+
+    def list_cluster_roles(self):
+        out = []
+
+        try:
+            response = self.api_rbacauthorizationv1beta1.list_cluster_role().items
+        except ApiException:
+            raise
+
+        for cluster_role in response:
+            out.append(cluster_role.to_dict())
+
+        return out
+
+    def list_cluster_role_bindings(self):
+        out = []
+
+        try:
+            response = self.api_rbacauthorizationv1beta1.list_cluster_role_binding().items
+        except ApiException:
+            raise
+
+        for cluster_rb in response:
+            out.append(cluster_rb.to_dict())
 
         return out
 
