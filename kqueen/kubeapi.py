@@ -35,6 +35,7 @@ class KubernetesAPI:
 
         self.api_corev1 = client.CoreV1Api(api_client=api_client)
         self.api_extensionsv1beta1 = client.ExtensionsV1beta1Api(api_client=api_client)
+        self.api_rbacauthorizationv1beta1 = client.RbacAuthorizationV1beta1Api(api_client=api_client)
         self.api_version = client.VersionApi(api_client=api_client)
 
     def get_api_client(self):
@@ -87,6 +88,45 @@ class KubernetesAPI:
 
         return out
 
+    def list_service_accounts(self):
+        out = []
+
+        try:
+            response = self.api_corev1.list_service_account_for_all_namespaces().items
+        except ApiException:
+            raise
+
+        for service_account in response:
+            out.append(service_account.to_dict())
+
+        return out
+
+    def list_cluster_roles(self):
+        out = []
+
+        try:
+            response = self.api_rbacauthorizationv1beta1.list_cluster_role().items
+        except ApiException:
+            raise
+
+        for cluster_role in response:
+            out.append(cluster_role.to_dict())
+
+        return out
+
+    def list_cluster_role_bindings(self):
+        out = []
+
+        try:
+            response = self.api_rbacauthorizationv1beta1.list_cluster_role_binding().items
+        except ApiException:
+            raise
+
+        for cluster_rb in response:
+            out.append(cluster_rb.to_dict())
+
+        return out
+
     def list_persistent_volume_claims(self):
         out = []
 
@@ -130,7 +170,9 @@ class KubernetesAPI:
         return out
 
     def list_pods_by_node(self):
-        out = {}
+        out = {
+            'Unknown': []
+        }
         try:
             nodes = self.list_nodes()
             pods = self.list_pods()
@@ -141,7 +183,7 @@ class KubernetesAPI:
             out[node['metadata']['name']] = []
 
         for pod in pods:
-            node = pod['spec'].get('node_name', 'Unknown')
+            node = pod['spec'].get('node_name', 'Unknown') or 'Unknown'
             out[node].append(pod)
 
         return out
