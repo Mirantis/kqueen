@@ -178,6 +178,26 @@ def cluster_progress(pk):
     return jsonify(progress)
 
 
+@api.route('/clusters/<uuid:pk>/resize', methods=['PATCH'])
+@jwt_required()
+def cluster_resize(pk):
+    obj = get_object(Cluster, pk, current_identity)
+
+    data = request.json
+    if not isinstance(data, dict) or (isinstance(data, dict) and 'node_count' not in data):
+        abort(400)
+
+    res_status, res_msg = obj.engine.resize(data['node_count'])
+
+    if not res_status:
+        logger.error('Resizing failed: {}'.format(res_msg))
+        abort(500, description=res_msg)
+
+    # get object with updated metadata
+    output = obj.engine.cluster
+    return jsonify(output)
+
+
 # Provisioners
 class ListProvisioners(ListView):
     object_class = Provisioner

@@ -1,3 +1,5 @@
+from datetime import datetime
+from datetime import timedelta
 from importlib import import_module
 from kqueen.config import current_config
 from kqueen.kubeapi import KubernetesAPI
@@ -37,18 +39,25 @@ class Cluster(Model, metaclass=ModelMeta):
 
     def get_state(self):
         try:
-            cluster = self.engine.cluster_get()
+            remote_cluster = self.engine.cluster_get()
         except Exception as e:
             logger.error('Unable to get data from backend for cluster {}'.format(self.name))
-            cluster = {}
+            remote_cluster = {}
 
-        if 'state' in cluster:
-            if cluster['state'] == self.state:
+        if 'state' in remote_cluster:
+            if remote_cluster['state'] == self.state:
                 return self.state
-            self.state = cluster['state']
+
+            self.state = remote_cluster['state']
             self.save()
         else:
             self.state = config.get('CLUSTER_UNKNOWN_STATE')
+            self.save()
+
+        # check for stale clusters
+        max_age = timedelta(seconds=config.get('PROVISIONER_TIMEOUT'))
+        if self.state == config.get('CLUSTER_PROVISIONING_STATE') and datetime.utcnow() - self.created_at > max_age:
+            self.state = config.get('CLUSTER_ERROR_STATE')
             self.save()
 
         return self.state
@@ -92,6 +101,8 @@ class Cluster(Model, metaclass=ModelMeta):
 
             out = {
                 'addons': kubernetes.list_services(filter_addons=True),
+                'cluster_roles': kubernetes.list_cluster_roles(),
+                'cluster_role_bindings': kubernetes.list_cluster_role_bindings(),
                 'deployments': kubernetes.list_deployments(),
                 'namespaces': kubernetes.list_namespaces(),
                 'nodes': kubernetes.list_nodes(),
@@ -100,11 +111,12 @@ class Cluster(Model, metaclass=ModelMeta):
                 'persistent_volume_claims': kubernetes.list_persistent_volume_claims(),
                 'pods': kubernetes.list_pods(),
                 'replica_sets': kubernetes.list_replica_sets(),
+                'service_accounts': kubernetes.list_service_accounts(),
                 'services': kubernetes.list_services(),
                 'version': kubernetes.get_version(),
             }
-
-        except Exception:
+        except Exception as e:
+            logger.exception(e)
             out = {}
 
         return out

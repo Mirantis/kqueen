@@ -8,7 +8,6 @@ required_methods = [
     'cluster_list',
     'cluster_get',
     'provision',
-    'deprovision',
     'get_kubeconfig',
     'get_progress',
 ]
@@ -40,6 +39,11 @@ class TestBaseEngine:
     def test_get_parameter_schema(self, cluster):
         engine = BaseEngine(cluster)
         assert engine.get_parameter_schema() == engine.parameter_schema
+
+    def test_deprovision(self, cluster):
+        engine = BaseEngine(cluster)
+        result, error = engine.deprovision()
+        assert result is False
 
 
 class TestAllEngines:

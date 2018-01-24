@@ -57,7 +57,7 @@ def cluster():
         'provisioner': prov,
         'state': config.get('CLUSTER_UNKNOWN_STATE'),
         'kubeconfig': yaml.load(open('kubeconfig_localhost', 'r').read()),
-        'created_at': datetime.datetime(2017, 11, 15, 13, 36, 24),
+        'created_at': datetime.datetime.utcnow().replace(microsecond=0),
         'owner': _user
     }
 
