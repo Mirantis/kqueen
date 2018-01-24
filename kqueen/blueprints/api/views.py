@@ -403,17 +403,25 @@ def swagger_json():
 
 # Helm
 
+@api.route('/clusters/<uuid:pk>/helm/init', methods=['GET'])
+@jwt_required()
+def helm_init(pk):
+    obj = get_object(Cluster, pk, current_identity)
+    helm = HelmWrapper(obj.kubeconfig)
+    return jsonify(helm.init())
+
+
 @api.route('/clusters/<uuid:pk>/helm/install', methods=['POST'])
 @jwt_required()
 def helm_install(pk):
     obj = get_object(Cluster, pk, current_identity)
 
     data = request.json
-    if not isinstance(data, dict) or (isinstance(data, dict) and 'name' not in data):
+    if not isinstance(data, dict):
         abort(400)
 
     helm = HelmWrapper(obj.kubeconfig)
-    return jsonify(helm.install(data['name']))
+    return jsonify(helm.install(**data))
 
 
 @api.route('/clusters/<uuid:pk>/helm/delete', methods=['POST'])
