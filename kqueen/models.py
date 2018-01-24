@@ -101,6 +101,8 @@ class Cluster(Model, metaclass=ModelMeta):
 
             out = {
                 'addons': kubernetes.list_services(filter_addons=True),
+                'cluster_roles': kubernetes.list_cluster_roles(),
+                'cluster_role_bindings': kubernetes.list_cluster_role_bindings(),
                 'deployments': kubernetes.list_deployments(),
                 'namespaces': kubernetes.list_namespaces(),
                 'nodes': kubernetes.list_nodes(),
@@ -109,6 +111,7 @@ class Cluster(Model, metaclass=ModelMeta):
                 'persistent_volume_claims': kubernetes.list_persistent_volume_claims(),
                 'pods': kubernetes.list_pods(),
                 'replica_sets': kubernetes.list_replica_sets(),
+                'service_accounts': kubernetes.list_service_accounts(),
                 'services': kubernetes.list_services(),
                 'version': kubernetes.get_version(),
             }
