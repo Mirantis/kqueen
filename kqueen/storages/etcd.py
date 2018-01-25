@@ -43,18 +43,29 @@ class Field:
 
         """
 
+        # field parameters
+        self.required = kwargs.get('required', False)
+        self.encrypted = kwargs.get('encrypted', False)
+        self.default = kwargs.get('default', None)
+
         # value can be passed as args[0] or kwargs['value']
         if len(args) >= 1:
             self.value = args[0]
         else:
-            self.value = kwargs.get('value', None)
+            self.value = kwargs.get('value', self._default_value())
 
         # set block size for crypto
         self.bs = 16
 
-        # field parameters
-        self.required = kwargs.get('required', False)
-        self.encrypted = kwargs.get('encrypted', False)
+    def _default_value(self):
+        """Return default value directly or by calling return function"""
+
+        if self.default is None:
+            return
+        elif callable(self.default):
+            return self.default()
+        else:
+            return self.default
 
     def on_create(self, **kwargs):
         """Optional action that should be run only on newly created objects"""
@@ -381,7 +392,7 @@ class Model:
             field_class = field.__class__
             if hasattr(field_class, 'is_field'):
                 field_object = field_class(**field.__dict__)
-                field_object.set_value(kwargs.get(field_name), namespace=ns)
+                field_object.set_value(kwargs.get(field_name, field_object._default_value()), namespace=ns)
 
                 # Hash password field in case of new DB entry
                 if kwargs.get('__create__', False):
