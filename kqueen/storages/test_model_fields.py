@@ -9,10 +9,11 @@ from kqueen.storages.etcd import PasswordField
 from kqueen.storages.etcd import RelationField
 from kqueen.storages.etcd import StringField
 from kqueen.storages.exceptions import BackendError
+from kqueen.storages.exceptions import FieldError
 
 import datetime
-import pytest
 import itertools
+import pytest
 
 
 def create_model(required=False, global_ns=False, encrypted=False):
@@ -326,6 +327,44 @@ class TestRelationField:
         assert isinstance(loaded, self.obj1.__class__)
         assert hasattr(loaded, 'relation')
         assert loaded.relation == self.obj2
+
+    def test_deserialization_full(self, monkeypatch):
+        def fake_related_class(their, class_name):
+            return self.obj1.__class__
+
+        monkeypatch.setattr(RelationField, '_get_related_class', fake_related_class)
+
+        serialized = '{cls}:{id}'.format(
+            cls=self.obj2.__class__,
+            id=self.obj2.id,
+        )
+
+        self.obj1._relation.deserialize(serialized, namespace=namespace)
+
+        assert self.obj2.get_dict(True) == self.obj1.relation.get_dict(True)
+
+
+class TestRelationRemoteMismatch:
+    @pytest.fixture(autouse=True)
+    def prepare(self, monkeypatch):
+        self.field = RelationField(remote_class_name="RemoteClass")
+        self.field.value = "MyClass:27ef44b5-0776-4e08-93d4-074717e7e965"
+
+        def fake_related_class(their, class_name):
+            class TestObj:
+                pass
+
+            return TestObj
+
+        monkeypatch.setattr(RelationField, '_get_related_class', fake_related_class)
+
+    def test_serialize_raises(self):
+        with pytest.raises(FieldError):
+            self.field.serialize()
+
+    def test_deserialize_raises(self):
+        with pytest.raises(FieldError):
+            self.field.deserialize(self.field.value)
 
 
 class TestNamespaces:
