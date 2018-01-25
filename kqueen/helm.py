@@ -1,10 +1,13 @@
 from tempfile import mkstemp
 
+import asyncio
+import concurrent.futures
 import json
 import os
 import re
 import six
 import subprocess
+import yaml
 
 
 class HelmMissingDependency(Exception):
@@ -61,6 +64,31 @@ class HelmWrapper:
                 parsed.append(item)
         return parsed
 
+    async def _get_catalog(self, loop, chart_names):
+        results = []
+        with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
+            futures = [
+                loop.run_in_executor(
+                    executor,
+                    self.inspect,
+                    cname
+                )
+                for cname in chart_names
+            ]
+        for result in await asyncio.gather(*futures):
+            results.append(result)
+        return results
+
+    def catalog(self):
+        charts = self.search()
+        chart_names = [c['name'] for c in charts]
+        try:
+            loop = asyncio.get_event_loop()
+        except RuntimeError:
+            loop = asyncio.SelectorEventLoop()
+        charts = loop.run_until_complete(self._get_catalog(loop, chart_names))
+        return charts
+
     def delete(self, release):
         raw = self._call('helm delete {}'.format(release))
         return self._no_parse(raw)
@@ -80,6 +108,26 @@ class HelmWrapper:
     def init(self):
         raw = self._call('helm init')
         return self._no_parse(raw)
+
+    def _parse_inspect(self, response):
+        _chart = response.split('\n---')[0]
+        _values = response.split('\n---')[1]
+        try:
+            chart = yaml.load(_chart)
+        except Exception:
+            chart = {}
+        try:
+            values = yaml.load(_values)
+        except Exception:
+            values = {}
+        return {
+            'chart': chart,
+            'values': values
+        }
+
+    def inspect(self, chart):
+        raw = self._call('helm inspect {}'.format(chart))
+        return self._parse_inspect(raw)
 
     def install(self, chart, release_name=None, overrides=None):
         cmd = 'helm install'
@@ -114,6 +162,17 @@ class HelmWrapper:
     def reset(self):
         raw = self._call('helm reset')
         return self._no_parse(raw)
+
+    def _parse_search(self, response):
+        keys = ['name', 'version', 'description']
+        return self._parse_helm_horizontal_list(response, keys)
+
+    def search(self, chart=None):
+        cmd = 'helm search'
+        if chart:
+            cmd = cmd + ' {}'.format(chart)
+        raw = self._call(cmd)
+        return self._parse_search(raw)
 
     def version(self):
         raw = self._call('helm version')

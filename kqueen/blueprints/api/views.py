@@ -444,3 +444,12 @@ def helm_list(pk):
 
     helm = HelmWrapper(obj.kubeconfig)
     return jsonify(helm.list())
+
+
+@api.route('/clusters/<uuid:pk>/helm/catalog', methods=['GET'])
+@jwt_required()
+def helm_catalog(pk):
+    obj = get_object(Cluster, pk, current_identity)
+
+    helm = HelmWrapper(obj.kubeconfig)
+    return jsonify(helm.catalog())
