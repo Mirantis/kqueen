@@ -34,7 +34,7 @@ class Cluster(Model, metaclass=ModelMeta):
     state = StringField()
     kubeconfig = JSONField(encrypted=True)
     metadata = JSONField()
-    created_at = DatetimeField()
+    created_at = DatetimeField(default=datetime.utcnow)
     owner = RelationField(required=True)
 
     def get_state(self):
@@ -311,9 +311,9 @@ class Provisioner(Model, metaclass=ModelMeta):
     name = StringField(required=True)
     verbose_name = StringField(required=False)
     engine = StringField(required=True)
-    state = StringField()
+    state = StringField(default=config.get('PROVISIONER_UNKNOWN_STATE'))
     parameters = JSONField(encrypted=True)
-    created_at = DatetimeField()
+    created_at = DatetimeField(default=datetime.utcnow)
     owner = RelationField(required=True)
 
     @classmethod
@@ -374,7 +374,7 @@ class Organization(Model, metaclass=ModelMeta):
     name = StringField(required=True)
     namespace = StringField(required=True)
     policy = JSONField()
-    created_at = DatetimeField()
+    created_at = DatetimeField(default=datetime.utcnow)
 
 
 class User(Model, metaclass=ModelMeta):
@@ -385,7 +385,7 @@ class User(Model, metaclass=ModelMeta):
     email = StringField(required=False)
     password = PasswordField(required=True)
     organization = RelationField(required=True)
-    created_at = DatetimeField()
+    created_at = DatetimeField(default=datetime.utcnow)
     role = StringField(required=True)
     active = BoolField(required=True)
     metadata = JSONField(required=False)
