@@ -247,7 +247,7 @@ class DatetimeField(Field):
 
     def set_value(self, value, **kwargs):
         if value and isinstance(value, datetime):
-            self.value = value
+            self.value = value.replace(microsecond=0)
         else:
             self.deserialize(value)
 
