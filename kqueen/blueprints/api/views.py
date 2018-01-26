@@ -411,6 +411,14 @@ def helm_init(pk):
     return jsonify(helm.init())
 
 
+@api.route('/clusters/<uuid:pk>/helm/inspect/<path:chart>', methods=['GET'])
+@jwt_required()
+def helm_inspect(pk, chart):
+    obj = get_object(Cluster, pk, current_identity)
+    helm = HelmWrapper(obj.kubeconfig)
+    return jsonify(helm.inspect(chart))
+
+
 @api.route('/clusters/<uuid:pk>/helm/install', methods=['POST'])
 @jwt_required()
 def helm_install(pk):
