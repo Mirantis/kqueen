@@ -514,3 +514,39 @@ class TestModelEncryptionWithNone:
         loaded = get_object.__class__.load(namespace, get_object.id)
 
         assert get_object.get_dict(True) == loaded.get_dict(True)
+
+#
+# Default value
+#
+
+
+def model_default(default=None):
+    class TestDefault(Model, metaclass=ModelMeta):
+        global_namespace = True
+
+        string = StringField(default=default)
+
+    return TestDefault
+
+
+def callable_function():
+    return 'abcd'
+
+
+class TestDefaultValue:
+    def setup(self):
+        pass
+
+    @pytest.mark.parametrize('default, req', [
+        (None, None),
+        ('abc123', 'abc123'),
+        ('', ''),
+        (callable_function, callable_function()),
+    ])
+    def test_default_none(self, default, req):
+        model_class = model_default(default)
+
+        obj = model_class(None)
+
+        assert obj._string._default_value() == req
+        assert obj.string == req
