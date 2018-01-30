@@ -294,7 +294,6 @@ class RelationField(Field):
 
         self.remote_class_name = kwargs.get('remote_class_name')
 
-    # TODO: make Model property - limit relation objects only to one model
     def serialize(self):
         model_name = self.value.__class__.__name__
 
@@ -317,7 +316,6 @@ class RelationField(Field):
         """Deserialize relation to real object"""
 
         # TODO: CRITICAL make namespaced and check it
-
         if ':' in serialized:
             class_name, object_id = serialized.split(':')
 
