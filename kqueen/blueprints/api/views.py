@@ -79,7 +79,7 @@ class ListClusters(ListView):
             pass
 
     def get_content(self, *args, **kwargs):
-        clusters = super(ListClusters, self).get_content(*args, **kwargs)
+        clusters = self.obj
 
         if config.get('CLUSTER_STATE_ON_LIST'):
             try:
@@ -90,8 +90,9 @@ class ListClusters(ListView):
 
                 for c in clusters:
                     c.get_state()
+                self.obj = clusters
 
-        return clusters
+        return super().get_content(self, *args, **kwargs)
 
 
 class CreateCluster(CreateView):
