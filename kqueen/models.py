@@ -378,6 +378,15 @@ class Organization(Model, metaclass=ModelMeta):
 
     def is_deletable(self):
         remaining = []
+        if User.list(self.namespace, return_objects=False):
+            all_users = User.list(None).values()
+            users = [u for u in all_users if u.namespace == self.namespace]
+            for user in users:
+                remaining.append({
+                    'object': 'User',
+                    'name': user.username,
+                    'uuid': user.id
+                })
         if Provisioner.list(self.namespace, return_objects=False):
             provisioners = Provisioner.list(self.namespace).values()
             for provisioner in provisioners:
@@ -401,9 +410,6 @@ class Organization(Model, metaclass=ModelMeta):
     def delete(self):
         deletable, remaining = self.is_deletable()
         if deletable:
-            users = User.list(self.namespace).values()
-            for user in users:
-                user.delete()
             return super().delete()
         resources = ','.join(['{} {}'.format(r['object'], r['uuid']) for r in remaining])
         raise Exception('Cannot delete Organization {}, following resources needs to be deleted first: {}'.format(self.id, resources))
