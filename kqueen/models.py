@@ -30,12 +30,12 @@ config = current_config()
 class Cluster(Model, metaclass=ModelMeta):
     id = IdField(required=True)
     name = StringField(required=True)
-    provisioner = RelationField()
+    provisioner = RelationField(remote_class_name='Provisioner')
     state = StringField()
     kubeconfig = JSONField(encrypted=True)
     metadata = JSONField()
-    created_at = DatetimeField()
-    owner = RelationField(required=True)
+    created_at = DatetimeField(default=datetime.utcnow)
+    owner = RelationField(required=True, remote_class_name='User')
 
     def get_state(self):
         try:
@@ -311,10 +311,10 @@ class Provisioner(Model, metaclass=ModelMeta):
     name = StringField(required=True)
     verbose_name = StringField(required=False)
     engine = StringField(required=True)
-    state = StringField()
+    state = StringField(default=config.get('PROVISIONER_UNKNOWN_STATE'))
     parameters = JSONField(encrypted=True)
-    created_at = DatetimeField()
-    owner = RelationField(required=True)
+    created_at = DatetimeField(default=datetime.utcnow)
+    owner = RelationField(required=True, remote_class_name='User')
 
     @classmethod
     def list_engines(self):
@@ -374,7 +374,7 @@ class Organization(Model, metaclass=ModelMeta):
     name = StringField(required=True)
     namespace = StringField(required=True)
     policy = JSONField()
-    created_at = DatetimeField()
+    created_at = DatetimeField(default=datetime.utcnow)
 
 
 class User(Model, metaclass=ModelMeta):
@@ -384,8 +384,8 @@ class User(Model, metaclass=ModelMeta):
     username = StringField(required=True)
     email = StringField(required=False)
     password = PasswordField(required=True)
-    organization = RelationField(required=True)
-    created_at = DatetimeField()
+    organization = RelationField(required=True, remote_class_name='Organization')
+    created_at = DatetimeField(default=datetime.utcnow)
     role = StringField(required=True)
     active = BoolField(required=True)
     metadata = JSONField(required=False)
