@@ -298,6 +298,18 @@ def organization_policy(pk):
     return jsonify(policies)
 
 
+@api.route('/organizations/<uuid:pk>/deletable', methods=['GET'])
+@jwt_required()
+def organization_deletable(pk):
+    obj = get_object(Organization, pk, current_identity)
+    deletable, remaining = obj.is_deletable()
+    response = {
+        'deletable': deletable,
+        'remaining': remaining
+    }
+    return jsonify(response)
+
+
 # Users
 class ListUsers(ListView):
     object_class = User
