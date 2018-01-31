@@ -22,3 +22,10 @@ class Config(BaseConfig):
     }
     JENKINS_USERNAME = None
     JENKINS_PASSWORD = None
+
+    # Cache config
+    CACHE_TYPE = 'redis'
+    CACHE_REDIS_HOST = 'localhost'
+    CACHE_REDIS_PORT = 6379
+    CACHE_REDIS_DB = 1
+    CACHE_REDIS_URL = 'redis://localhost:6379/1'

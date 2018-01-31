@@ -44,6 +44,19 @@ class BaseConfig:
     PROVISIONER_TIMEOUT = 3600
     PROMETHEUS_WHITELIST = '127.0.0.0/8'
 
+    # Cache config
+    CACHE_TYPE = 'simple'
+
+    # Celery config
+    CELERY_BROKER_URL = 'redis://localhost:6379'
+    CELERY_RESULT_BACKEND = 'redis://localhost:6379'
+    CELERY_BEAT_SCHEDULE = {
+        'update-cluster-every-10': {
+            'task': 'update_clusters',
+            'schedule': 10.0
+        },
+    }
+
     @classmethod
     def get(cls, name, default=None):
         """Emulate get method from dict"""
