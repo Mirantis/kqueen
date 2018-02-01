@@ -1,13 +1,26 @@
 """Authentication methods for API."""
 
 from kqueen.config import current_config
-from kqueen.models import Organization, User
+from kqueen.models import Organization
+from kqueen.models import User
 from uuid import uuid4
 
 import bcrypt
+import importlib
 import logging
 
 logger = logging.getLogger('kqueen_api')
+
+
+def get_auth_instance(name):
+    config = current_config()
+
+    auth_config = config.get("AUTH", {}).get(name, {})
+
+    module = importlib.import_module('kqueen.auth')
+    auth_class = getattr(module, name)
+
+    return auth_class(**auth_config)
 
 
 def authenticate(username, password):
@@ -22,14 +35,36 @@ def authenticate(username, password):
         user: authenticated user
 
     """
+
+    # find user by username
     users = list(User.list(None, return_objects=True).values())
     username_table = {u.username: u for u in users}
     user = username_table.get(username)
+
     if user:
-        user_password = user.password.encode('utf-8')
         given_password = password.encode('utf-8')
-        if user.active and bcrypt.checkpw(given_password, user_password):
-            return user
+
+        # fallback to local auth, this options is default if nothing is specified
+        if not user.auth:
+            user.auth = "LocalAuth"
+
+        logger.debug("User {} will be authenticated using {}".format(username, user.auth))
+
+        auth_instance = get_auth_instance(user.auth)
+        try:
+            verified_user, verification_error = auth_instance.verify(user, given_password)
+        except Exception as e:
+            logger.exception("Verification method {} failed".format(user.auth))
+            verified_user, verification_error = None, str(e)
+
+        if isinstance(verified_user, User) and verified_user.active:
+            return verified_user
+        else:
+            logger.info("User {user} failed auth using {method} auth method with error {error}".format(
+                user=user,
+                method=user.auth,
+                error=verification_error,
+            ))
 
 
 def identity(payload):
