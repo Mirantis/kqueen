@@ -112,3 +112,5 @@ kqueen/config/local.py
 # Remote kubeconfig
 kubeconfig_remote
 
+.cache
+.pytest_cache
