@@ -71,22 +71,18 @@ def index():
 class ListClusters(ListView):
     object_class = Cluster
 
-    async def _update_clusters(self, clusters):
-        loop = asyncio.get_event_loop()
-        futures = [loop.run_in_executor(None, c.get_state) for c in clusters]
-
-        for _ in await asyncio.gather(*futures):
-            pass
+    async def _update_cluster(self, cluster):
+        cluster.get_state()
+        return True
 
     def get_content(self, *args, **kwargs):
         clusters = self.obj
-
         if config.get('CLUSTER_STATE_ON_LIST'):
             try:
                 loop = asyncio.get_event_loop()
-                loop.run_until_complete(self._update_clusters(clusters))
-            except RuntimeError:
-                logger.warning('Asyncio loop is NOT available, fallback to simple looping')
+                loop.run_until_complete(asyncio.gather(*[self._update_cluster(c) for c in clusters]))
+            except Exception as e:
+                logger.warning('Asyncio loop is NOT available, fallback to simple looping: {}'.format(e))
 
                 for c in clusters:
                     c.get_state()
