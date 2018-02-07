@@ -411,7 +411,11 @@ class Organization(Model, metaclass=ModelMeta):
         deletable, remaining = self.is_deletable()
         if deletable:
             return super().delete()
-        resources = ','.join(['{} {}'.format(r['object'], r['uuid']) for r in remaining])
+        resource_list = []
+        for resource in remaining:
+            resource_string = '{} {}'.format(resource['object'].lower(), resource['uuid'])
+            resource_list.append(resource_string)
+        resources = ', '.join(resource_list)
         raise Exception('Cannot delete Organization {}, following resources needs to be deleted first: {}'.format(self.id, resources))
 
 
