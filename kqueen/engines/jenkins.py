@@ -112,7 +112,7 @@ class JenkinsEngine(BaseEngine):
         cluster_name = self.job_parameter_map['cluster_name']
         cluster_uuid = self.job_parameter_map['cluster_uuid']
         # PATCH THE CTX TO CONTAIN CLUSTER NAME AND UUID
-        ctx[cluster_name] = self.cluster.name
+        ctx[cluster_name] = 'kqueen-{}'.format(self.cluster.id)
         ctx[cluster_uuid] = self.cluster.id
         try:
             self.client.build_job(self.provision_job_name, ctx)
@@ -131,7 +131,7 @@ class JenkinsEngine(BaseEngine):
         """
         ctx = config.get('JENKINS_DEPROVISION_JOB_CTX')
         cluster_name = self.job_parameter_map['cluster_name']
-        ctx[cluster_name] = self.cluster.name
+        ctx[cluster_name] = 'kqueen-{}'.format(self.cluster.id)
         try:
             self.client.build_job(self.deprovision_job_name, ctx)
             return True, None
