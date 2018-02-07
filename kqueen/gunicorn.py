@@ -10,6 +10,7 @@ bind = "{host}:{port}".format(
     host=app_config.get('KQUEEN_HOST'),
     port=app_config.get('KQUEEN_PORT'),
 )
+timeout = 180
 workers = multiprocessing.cpu_count() * 2 + 1
 
 # check for prometheus settings
