@@ -11,4 +11,8 @@ if [[ "$BOOTSTRAP_ADMIN" > 0 ]] ; then
     python bootstrap_admin.py ${BOOTSTRAP_ADMIN_ORGANIZATION} ${BOOTSTRAP_ADMIN_NAMESPACE} ${BOOTSTRAP_ADMIN_USERNAME} ${BOOTSTRAP_ADMIN_PASSWORD}
 fi
 
-exec gunicorn --config kqueen/gunicorn.py kqueen.wsgi
+# Setup permissions
+chown -R kqueen:kqueen /tmp /code /var/log/kqueen 2>/dev/null || :
+chmod -R 700 /tmp /code /var/log/kqueen 2>/dev/null || :
+
+exec gosu kqueen "$@"

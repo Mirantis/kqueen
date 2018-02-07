@@ -14,7 +14,22 @@ from werkzeug.contrib.cache import SimpleCache
 
 import logging
 
+#Logging Configuration
+config = current_config(config_file=None)
+config.setup_policies()
+
+log_path = config.get('LOG_PATH')
+log_file = config.get('LOG_FILE')
+
+logging.basicConfig(level=logging.DEBUG,
+                    format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
+                    datefmt='%m-%d %H:%M',
+                    handlers=[
+                        logging.FileHandler("{0}/{1}".format(log_path, log_file)),
+                        logging.StreamHandler()
+                    ])
 logger = logging.getLogger(__name__)
+
 cache = SimpleCache()
 swagger_url = '/api/docs'
 api_url = '/api/v1/swagger'
