@@ -19,6 +19,18 @@ Overview
 
 More information about KQueen Architecture and use cases is described in `RATIONALE <RATIONALE.md>`_ file.
 
+Requirements
+-----------
+
+-  Python v3.6 and higher.
+-  Pip v3 and higher.
+-  Docker stable release (v17.03 and higher is preferable).
+-  Docker-compose stable release (v1.16.0 and higher is preferable).
+
+::
+
+    mkvirtualenv -p /usr/bin/python3 kqueen
+
 Development
 -----------
 
@@ -26,7 +38,8 @@ Development
 
 ::
 
-    mkvirtualenv -p /usr/bin/python3 kqueen
+    virtualenv -p /usr/bin/python3 kqueen
+    source ./kqueen/bin/activate
     pip3 install -e ".[dev]"
     pip3 install --editable .
     # start etcd in container
@@ -39,6 +52,7 @@ Development
 
 ::
 
+    # exec in kqueen-api container
     etcdctl rm --recursive /kqueen
     ./devenv.py
 
@@ -46,6 +60,7 @@ Development
 
 ::
 
+    # exec in kqueen-api container
     export FLASK_APP=kqueen.server
     export prometheus_multiproc_dir=$(mktemp -d)
     flask shell
@@ -55,6 +70,14 @@ Development
 ::
 
     TOKEN=$(curl -s -H "Content-Type: application/json" --data '{"username":"admin","password":"default"}' -X POST localhost:5000/api/v1/auth | jq -r '.access_token'); echo $TOKEN; curl -H "Authorization: Bearer $TOKEN" localhost:5000/api/v1/clusters
+
+- Image updating
+
+There are two ways to test development changes. Its possible to create a separate branch and push PR, then TravisCI build image and push it on Docker Hub automatically. Or just rebuild kqueen api-image locally:
+
+::
+
+   docker build -t kqueen/api:your_tag kqueen/
 
 Demo environment
 ----------------
