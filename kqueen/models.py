@@ -373,6 +373,48 @@ class Organization(Model, metaclass=ModelMeta):
     policy = JSONField()
     created_at = DatetimeField(default=datetime.utcnow)
 
+    def is_deletable(self):
+        remaining = []
+        if User.list(self.namespace, return_objects=False):
+            all_users = User.list(None).values()
+            users = [u for u in all_users if u.namespace == self.namespace]
+            for user in users:
+                remaining.append({
+                    'object': 'User',
+                    'name': user.username,
+                    'uuid': user.id
+                })
+        if Provisioner.list(self.namespace, return_objects=False):
+            provisioners = Provisioner.list(self.namespace).values()
+            for provisioner in provisioners:
+                remaining.append({
+                    'object': 'Provisioner',
+                    'name': provisioner.name,
+                    'uuid': provisioner.id
+                })
+        if Cluster.list(self.namespace, return_objects=False):
+            clusters = Cluster.list(self.namespace).values()
+            for cluster in clusters:
+                remaining.append({
+                    'object': 'Cluster',
+                    'name': cluster.name,
+                    'uuid': cluster.id
+                })
+        if remaining:
+            return False, remaining
+        return True, remaining
+
+    def delete(self):
+        deletable, remaining = self.is_deletable()
+        if deletable:
+            return super().delete()
+        resource_list = []
+        for resource in remaining:
+            resource_string = '{} {}'.format(resource['object'].lower(), resource['uuid'])
+            resource_list.append(resource_string)
+        resources = ', '.join(resource_list)
+        raise Exception('Cannot delete Organization {}, following resources needs to be deleted first: {}'.format(self.id, resources))
+
 
 class User(Model, metaclass=ModelMeta):
     global_namespace = True
