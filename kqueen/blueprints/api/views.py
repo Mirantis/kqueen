@@ -79,7 +79,7 @@ class ListClusters(ListView):
             pass
 
     def get_content(self, *args, **kwargs):
-        clusters = super(ListClusters, self).get_content(*args, **kwargs)
+        clusters = self.obj
 
         if config.get('CLUSTER_STATE_ON_LIST'):
             try:
@@ -90,8 +90,9 @@ class ListClusters(ListView):
 
                 for c in clusters:
                     c.get_state()
+                self.obj = clusters
 
-        return clusters
+        return super().get_content(self, *args, **kwargs)
 
 
 class CreateCluster(CreateView):
@@ -296,6 +297,18 @@ def organization_policy(pk):
         policies.update(obj.policy)
 
     return jsonify(policies)
+
+
+@api.route('/organizations/<uuid:pk>/deletable', methods=['GET'])
+@jwt_required()
+def organization_deletable(pk):
+    obj = get_object(Organization, pk, current_identity)
+    deletable, remaining = obj.is_deletable()
+    response = {
+        'deletable': deletable,
+        'remaining': remaining
+    }
+    return jsonify(response)
 
 
 # Users
