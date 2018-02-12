@@ -173,7 +173,7 @@ class ListView(GenericView):
             for obj in self.obj:
                 namespace = obj._object_namespace
                 obj_dict = obj.get_dict(expand=True)
-                obj_dict['namespace'] = namespace
+                obj_dict['_namespace'] = namespace
                 objs.append(obj_dict)
             return objs
         return self.obj
