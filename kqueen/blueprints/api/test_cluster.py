@@ -41,10 +41,38 @@ class TestClusterCRUD(BaseTestCRUD):
             headers=self.auth_header
         )
 
-        print('JSON response:', response.json, sep='\n')
-        print('get_dict:', self.obj.get_dict(expand=True), sep='\n')
+        # object might have been updated during GET
+        obj = self.obj.__class__.load(
+            self.namespace,
+            self.obj.id
+        )
 
-        assert response.json == self.obj.get_dict(expand=True)
+        print('JSON response:', response.json, sep='\n')
+        print('get_dict:', obj.get_dict(expand=True), sep='\n')
+
+        assert response.json == obj.get_dict(expand=True)
+
+    def test_crud_list(self):
+        response = self.client.get(
+            self.urls['list'],
+            headers=self.auth_header,
+        )
+
+        data = response.json
+
+        # object might have been updated during LIST
+        obj = self.obj.__class__.load(
+            self.namespace,
+            self.obj.id
+        )
+        obj.get_state()
+
+        assert isinstance(data, list)
+        assert len(data) == len(self.obj.__class__.list(
+            self.namespace,
+            return_objects=False)
+        )
+        assert obj.get_dict(expand=True) in data
 
     @pytest.mark.parametrize('cluster_id,status_code', [
         (uuid4(), 404),
