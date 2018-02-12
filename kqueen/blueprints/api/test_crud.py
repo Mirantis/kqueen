@@ -105,8 +105,14 @@ class BaseTestCRUD:
             headers=self.auth_header,
         )
 
+        # object might have been updated during GET
+        obj = self.obj.__class__.load(
+            self.namespace,
+            self.obj.id
+        )
+
         assert response.status_code == 200
-        assert response.json == self.obj.get_dict(expand=True)
+        assert response.json == obj.get_dict(expand=True)
 
     def test_crud_list(self):
         response = self.client.get(
@@ -116,12 +122,18 @@ class BaseTestCRUD:
 
         data = response.json
 
+        # object might have been updated during LIST
+        obj = self.obj.__class__.load(
+            self.namespace,
+            self.obj.id
+        )
+
         assert isinstance(data, list)
         assert len(data) == len(self.obj.__class__.list(
             self.namespace,
             return_objects=False)
         )
-        assert self.obj.get_dict(expand=True) in data
+        assert obj.get_dict(expand=True) in data
 
     def test_crud_update(self):
         data = self.get_edit_data()
