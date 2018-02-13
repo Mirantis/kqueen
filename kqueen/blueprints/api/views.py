@@ -79,8 +79,17 @@ class ListClusters(ListView):
         clusters = self.obj
         if config.get('CLUSTER_STATE_ON_LIST'):
             try:
-                loop = asyncio.get_event_loop()
+                # get or establish event loop
+                try:
+                    loop = asyncio.get_event_loop()
+                    if loop.is_closed():
+                        raise RuntimeError('Loop already closed')
+                except RuntimeError:
+                    loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(loop)
+                # run coroutines and close loop
                 loop.run_until_complete(asyncio.gather(*[self._update_cluster(c) for c in clusters]))
+                loop.close()
             except Exception as e:
                 logger.warning('Asyncio loop is NOT available, fallback to simple looping: {}'.format(e))
 
