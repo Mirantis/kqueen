@@ -11,6 +11,10 @@ python-jenkins
 pyyaml
 requests
 
+# heat provisioner
+python-keystoneclient
+python-heatclient
+
 # dev
 coveralls
 faker
