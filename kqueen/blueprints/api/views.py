@@ -104,6 +104,7 @@ class CreateCluster(CreateView):
 
         if not prov_status:
             logger.error('Provisioning failed: {}'.format(prov_msg))
+            self.obj.state = config.get('CLUSTER_ERROR_STATE')
             abort(500, description=prov_msg)
 
 

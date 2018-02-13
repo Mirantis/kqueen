@@ -79,7 +79,8 @@ class JenkinsEngine(BaseEngine):
         """
         conn_kw = {
             'username': config.get('JENKINS_USERNAME'),
-            'password': config.get('JENKINS_PASSWORD')
+            'password': config.get('JENKINS_PASSWORD'),
+            'timeout': 10
         }
         status = config.get('PROVISIONER_UNKNOWN_STATE')
         try:
@@ -101,7 +102,8 @@ class JenkinsEngine(BaseEngine):
         """
         return jenkins.Jenkins(self.jenkins_url, **{
             'username': self.username,
-            'password': self.password
+            'password': self.password,
+            'timeout': 10
         })
 
     def provision(self, **kwargs):
