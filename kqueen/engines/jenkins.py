@@ -79,7 +79,8 @@ class JenkinsEngine(BaseEngine):
         """
         conn_kw = {
             'username': config.get('JENKINS_USERNAME'),
-            'password': config.get('JENKINS_PASSWORD')
+            'password': config.get('JENKINS_PASSWORD'),
+            'timeout': 10
         }
         status = config.get('PROVISIONER_UNKNOWN_STATE')
         try:
@@ -101,7 +102,8 @@ class JenkinsEngine(BaseEngine):
         """
         return jenkins.Jenkins(self.jenkins_url, **{
             'username': self.username,
-            'password': self.password
+            'password': self.password,
+            'timeout': 10
         })
 
     def provision(self, **kwargs):
@@ -112,7 +114,7 @@ class JenkinsEngine(BaseEngine):
         cluster_name = self.job_parameter_map['cluster_name']
         cluster_uuid = self.job_parameter_map['cluster_uuid']
         # PATCH THE CTX TO CONTAIN CLUSTER NAME AND UUID
-        ctx[cluster_name] = self.cluster.name
+        ctx[cluster_name] = 'kqueen-{}'.format(self.cluster.id)
         ctx[cluster_uuid] = self.cluster.id
         try:
             self.client.build_job(self.provision_job_name, ctx)
@@ -131,7 +133,7 @@ class JenkinsEngine(BaseEngine):
         """
         ctx = config.get('JENKINS_DEPROVISION_JOB_CTX')
         cluster_name = self.job_parameter_map['cluster_name']
-        ctx[cluster_name] = self.cluster.name
+        ctx[cluster_name] = 'kqueen-{}'.format(self.cluster.id)
         try:
             self.client.build_job(self.deprovision_job_name, ctx)
             return True, None

@@ -5,6 +5,7 @@ from flask import request
 from flask.views import View
 from flask_jwt import _jwt_required, current_identity, JWTError
 from kqueen.auth import is_authorized
+from kqueen.models import Organization
 from .helpers import get_object
 
 
@@ -19,6 +20,13 @@ class GenericView(View):
 
     def get_content(self, *args, **kwargs):
         raise NotImplementedError
+
+    def get_namespaces(self, *args, **kwargs):
+        try:
+            organizations = Organization.list(None).values()
+        except Exception:
+            organizations = []
+        return [o.namespace for o in organizations]
 
     def check_authentication(self):
         _jwt_required(current_app.config['JWT_DEFAULT_REALM'])
@@ -140,8 +148,19 @@ class ListView(GenericView):
     action = 'list'
 
     def set_object(self, *args, **kwargs):
+        if request.args.get('all_namespaces'):
+            objects = []
+            for namespace in self.get_namespaces():
+                objects = objects + list(self.get_class().list(namespace, return_objects=True).values())
+            self.obj = objects
+            self.check_authorization()
+            return
+
         try:
-            namespace = current_identity.namespace
+            if request.args.get('namespace'):
+                namespace = request.args.get('namespace')
+            else:
+                namespace = current_identity.namespace
         except AttributeError:
             namespace = None
 
@@ -149,6 +168,14 @@ class ListView(GenericView):
         self.check_authorization()
 
     def get_content(self, *args, **kwargs):
+        if request.args.get('all_namespaces'):
+            objs = []
+            for obj in self.obj:
+                namespace = obj._object_namespace
+                obj_dict = obj.get_dict(expand=True)
+                obj_dict['_namespace'] = namespace
+                objs.append(obj_dict)
+            return objs
         return self.obj
 
 
