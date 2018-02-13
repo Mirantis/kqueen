@@ -4,6 +4,8 @@ from .base import BaseConfig
 class Config(BaseConfig):
     DEBUG = True
     LOG_LEVEL = 'DEBUG'
+    LOG_PATH = 'log/kqueen'
+    LOG_FILE = 'kqueen.log'
 
     # App secret
     SECRET_KEY = 'SecretSecretSecret123'
