@@ -10,11 +10,16 @@ from .storages.etcd import EtcdBackend
 from flask import Flask
 from flask_jwt import JWT
 from flask_swagger_ui import get_swaggerui_blueprint
+from kqueen.utils.loggers import setup_logging
 from werkzeug.contrib.cache import SimpleCache
 
 import logging
 
-logger = logging.getLogger(__name__)
+# Logging configuration
+config = current_config(config_file=None)
+setup_logging(config.get('LOG_CONFIG'), config.get('LOG_LEVEL'))
+logger = logging.getLogger('kqueen_api')
+
 cache = SimpleCache()
 swagger_url = '/api/docs'
 api_url = '/api/v1/swagger'

@@ -6,7 +6,7 @@ from prometheus_client import Gauge
 import asyncio
 import logging
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('kqueen_api')
 
 metrics = {
     'users_by_namespace': Gauge('users_by_namespace', 'Number of users in namespace', ['namespace']),

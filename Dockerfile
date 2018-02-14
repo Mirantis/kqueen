@@ -5,8 +5,6 @@ WORKDIR /code
 
 # copy app
 COPY . .
-
-# install from local file
 RUN pip install .
 
 # run app

@@ -4,7 +4,7 @@ from kqueen.kubeapi import KubernetesAPI
 
 import logging
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('kqueen_api')
 config = current_config()
 
 

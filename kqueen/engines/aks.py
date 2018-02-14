@@ -10,7 +10,7 @@ import logging
 import base64
 import yaml
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('kqueen_api')
 config = current_config()
 
 STATE_MAP = {

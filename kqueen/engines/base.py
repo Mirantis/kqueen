@@ -3,7 +3,7 @@ from kqueen.config import current_config
 import logging
 
 config = current_config()
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('kqueen_api')
 
 
 class BaseEngine:

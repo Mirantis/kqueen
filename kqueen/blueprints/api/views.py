@@ -25,7 +25,7 @@ import os
 import yaml
 
 config = current_config()
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('kqueen_api')
 
 api = Blueprint('api', __name__)
 

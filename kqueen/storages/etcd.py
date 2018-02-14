@@ -15,7 +15,7 @@ import json
 import logging
 import uuid
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('kqueen_api')
 
 
 class EtcdBackend:

@@ -6,7 +6,7 @@ import googleapiclient.discovery
 import logging
 import requests
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('kqueen_api')
 config = current_config()
 
 
