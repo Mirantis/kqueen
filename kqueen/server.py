@@ -8,14 +8,14 @@ from .middleware import setup_metrics
 from .serializers import KqueenJSONEncoder
 from .storages.etcd import EtcdBackend
 from flask import Flask
+from flask_caching import Cache
 from flask_jwt import JWT
 from flask_swagger_ui import get_swaggerui_blueprint
-from werkzeug.contrib.cache import SimpleCache
 
 import logging
 
 logger = logging.getLogger(__name__)
-cache = SimpleCache()
+cache = Cache(config=current_config().to_dict())
 swagger_url = '/api/docs'
 api_url = '/api/v1/swagger'
 
@@ -50,6 +50,9 @@ def create_app(config_file=None):
 
     # setup database
     app.db = EtcdBackend()
+
+    # setup caching
+    cache.init_app(app)
 
     # setup JWT
     JWT(app, authenticate, identity)

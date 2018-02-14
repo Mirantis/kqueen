@@ -38,11 +38,14 @@ class Cluster(Model, metaclass=ModelMeta):
     owner = RelationField(required=True, remote_class_name='User')
 
     def get_state(self):
-        try:
-            remote_cluster = self.engine.cluster_get()
-        except Exception as e:
-            logger.error('Unable to get data from backend for cluster {}'.format(self.name))
-            remote_cluster = {}
+        from kqueen.server import cache
+        remote_cluster = cache.get('task-cluster-backend-data-{}'.format(self.id))
+        if not remote_cluster:
+            try:
+                remote_cluster = self.engine.cluster_get()
+            except Exception as e:
+                logger.error('Unable to get data from backend for cluster {}'.format(self.name))
+                remote_cluster = {}
 
         if 'state' in remote_cluster:
             if remote_cluster['state'] == self.state:
@@ -96,6 +99,14 @@ class Cluster(Model, metaclass=ModelMeta):
 
     def status(self):
         """Return information about Kubernetes cluster"""
+        if self.state == config.get('CLUSTER_PROVISIONING_STATE'):
+            return {}
+
+        from kqueen.server import cache
+        cached_status = cache.get('task-cluster-status-{}'.format(self.id))
+        if cached_status:
+            return cached_status
+
         try:
             kubernetes = KubernetesAPI(cluster=self)
 
