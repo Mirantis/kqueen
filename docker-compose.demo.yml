@@ -1,7 +1,7 @@
 version: '2'
 services:
   api:
-    image: kqueen/api:v0.16
+    image: kqueen/api:v0.18
     ports:
       - 127.0.0.1:5000:5000
     depends_on:
@@ -19,7 +19,7 @@ services:
     extra_hosts:
       - "ci.mcp.mirantis.net:172.16.48.254"
   ui:
-    image: kqueen/ui:v0.5.1
+    image: kqueen/ui:v0.6.1
     ports:
       - 127.0.0.1:5080:5080
     depends_on:
