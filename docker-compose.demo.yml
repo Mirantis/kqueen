@@ -19,13 +19,13 @@ services:
     extra_hosts:
       - "ci.mcp.mirantis.net:172.16.48.254"
   ui:
-    image: kqueen/ui:v0.6.1
+    image: kqueen/ui:v0.7
     ports:
       - 127.0.0.1:5080:5080
     depends_on:
       - api
     environment:
-      KQUEEN_UI_CONFIG_FILE: config/prod.py
+      KQUEEN_UI_CONFIG_FILE: config/demo.py
       KQUEENUI_KQUEEN_API_URL: http://api:5000/api/v1/
       KQUEENUI_KQUEEN_AUTH_URL: http://api:5000/api/v1/auth
       KQUEENUI_KQUEEN_SERVICE_USER_USERNAME: admin
