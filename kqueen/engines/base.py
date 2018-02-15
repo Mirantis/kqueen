@@ -139,8 +139,8 @@ class BaseEngine:
         except NotImplementedError:
             pass
         except Exception as e:
-            msg = 'Fetching data from backend for cluster {} failed with following reason: {}'.format(self.cluster_id, repr(e))
-            logger.error(msg)
+            msg = 'Fetching data from backend for cluster {} failed with following reason:'.format(self.cluster_id)
+            logger.exception(msg)
         else:
             if not cluster:
                 return True, None

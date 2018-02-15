@@ -151,8 +151,8 @@ class GceEngine(BaseEngine):
             self.client.projects().zones().clusters().create(projectId=self.project, zone=self.zone, body=self.cluster_config).execute()
             # TODO: check if provisioning response is healthy
         except Exception as e:
-            msg = 'Creating cluster {} failed with following reason: {}'.format(self.cluster_id, repr(e))
-            logger.error(msg)
+            msg = 'Creating cluster {} failed with following reason:'.format(self.cluster_id)
+            logger.exception(msg)
             return False, msg
 
         return True, None
@@ -171,7 +171,7 @@ class GceEngine(BaseEngine):
             # TODO: check if provisioning response is healthy
         except Exception as e:
             msg = 'Deleting cluster {} failed with following reason: {}'.format(self.cluster_id, repr(e))
-            logger.error(msg)
+            logger.exception(msg)
             return False, msg
 
         return True, None
@@ -188,7 +188,7 @@ class GceEngine(BaseEngine):
             request.execute()
         except Exception as e:
             msg = 'Resizing cluster {} failed with following reason: {}'.format(self.cluster_id, repr(e))
-            logger.error(msg)
+            logger.exception(msg)
             return False, msg
 
         self.cluster.metadata['node_count'] = node_count
@@ -268,7 +268,7 @@ class GceEngine(BaseEngine):
             response = request.execute()
         except Exception as e:
             msg = 'Fetching data from backend for cluster {} failed with following reason: {}'.format(self.cluster_id, repr(e))
-            logger.error(msg)
+            logger.exception(msg)
             return {}
 
         state = STATE_MAP.get(response['status'], config.get('CLUSTER_UNKNOWN_STATE'))

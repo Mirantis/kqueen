@@ -91,7 +91,7 @@ class ListClusters(ListView):
                 loop.run_until_complete(asyncio.gather(*[self._update_cluster(c) for c in clusters]))
                 loop.close()
             except Exception as e:
-                logger.warning('Asyncio loop is NOT available, fallback to simple looping: {}'.format(e))
+                logger.exception('Asyncio loop is NOT available, fallback to simple looping: ')
 
                 for c in clusters:
                     c.get_state()
@@ -261,7 +261,7 @@ def provisioner_engine_list():
                 }
             })
         except Exception:
-            logger.error('Unable to read parameters for engine {}'.format(engine))
+            logger.exception('Unable to read parameters for engine: ')
 
     return jsonify(engine_cls)
 
@@ -410,10 +410,10 @@ def swagger_json():
             _yaml = f.read()
         data = yaml.safe_load(_yaml)
     except FileNotFoundError:
-        logger.error('Swagger YAML not found on {}.'.format(file_path))
+        logger.exception('Swagger YAML not found on {}.'.format(file_path))
         abort(404)
     except Exception as e:
-        logger.error(e)
+        logger.exception('Error')
         abort(500)
 
     return jsonify(data)
