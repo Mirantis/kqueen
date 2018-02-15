@@ -23,7 +23,15 @@ class MetricUpdater:
         self.get_data()
 
     def update_metrics(self):
-        loop = asyncio.get_event_loop()
+        # get or establish event loop
+        try:
+            loop = asyncio.get_event_loop()
+            if loop.is_closed():
+                raise RuntimeError('Loop already closed')
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+
         futures = []
 
         for metric_name, metric in metrics.items():
@@ -51,6 +59,7 @@ class MetricUpdater:
 
         # run all updates
         asyncio.wait(futures)
+        loop.close()
 
     def get_data(self):
         # users

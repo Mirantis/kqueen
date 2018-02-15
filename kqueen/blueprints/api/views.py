@@ -71,22 +71,27 @@ def index():
 class ListClusters(ListView):
     object_class = Cluster
 
-    async def _update_clusters(self, clusters):
-        loop = asyncio.get_event_loop()
-        futures = [loop.run_in_executor(None, c.get_state) for c in clusters]
-
-        for _ in await asyncio.gather(*futures):
-            pass
+    async def _update_cluster(self, cluster):
+        cluster.get_state()
+        return True
 
     def get_content(self, *args, **kwargs):
         clusters = self.obj
-
         if config.get('CLUSTER_STATE_ON_LIST'):
             try:
-                loop = asyncio.get_event_loop()
-                loop.run_until_complete(self._update_clusters(clusters))
-            except RuntimeError:
-                logger.warning('Asyncio loop is NOT available, fallback to simple looping')
+                # get or establish event loop
+                try:
+                    loop = asyncio.get_event_loop()
+                    if loop.is_closed():
+                        raise RuntimeError('Loop already closed')
+                except RuntimeError:
+                    loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(loop)
+                # run coroutines and close loop
+                loop.run_until_complete(asyncio.gather(*[self._update_cluster(c) for c in clusters]))
+                loop.close()
+            except Exception as e:
+                logger.warning('Asyncio loop is NOT available, fallback to simple looping: {}'.format(e))
 
                 for c in clusters:
                     c.get_state()
@@ -104,6 +109,7 @@ class CreateCluster(CreateView):
 
         if not prov_status:
             logger.error('Provisioning failed: {}'.format(prov_msg))
+            self.obj.state = config.get('CLUSTER_ERROR_STATE')
             abort(500, description=prov_msg)
 
 
