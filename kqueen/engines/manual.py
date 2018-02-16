@@ -4,7 +4,7 @@ from kqueen.kubeapi import KubernetesAPI
 
 import logging
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('kqueen_api')
 config = current_config()
 
 
@@ -49,8 +49,8 @@ class ManualEngine(BaseEngine):
                 client = KubernetesAPI(cluster=self.cluster)
                 client.get_version()
             except Exception as e:
-                msg = 'Fetching data from backend for cluster {} failed with following reason: {}'.format(self.cluster.id, repr(e))
-                logger.error(msg)
+                msg = 'Fetching data from backend for cluster {} failed with following reason:'.format(self.cluster.id)
+                logger.exception(msg)
                 return {'state': config.get('CLUSTER_ERROR_STATE')}
         return {'state': config.get('CLUSTER_OK_STATE')}
 

@@ -7,6 +7,7 @@ import os
 class BaseConfig:
     DEBUG = False
     LOG_LEVEL = 'WARNING'
+    LOG_CONFIG = 'kqueen/utils/logger_config.yml'
 
     KQUEEN_HOST = '127.0.0.1'
     KQUEEN_PORT = 5000

@@ -10,11 +10,16 @@ from .storages.etcd import EtcdBackend
 from flask import Flask
 from flask_jwt import JWT
 from flask_swagger_ui import get_swaggerui_blueprint
+from kqueen.utils.loggers import setup_logging
 from werkzeug.contrib.cache import SimpleCache
 
 import logging
 
-logger = logging.getLogger(__name__)
+# Logging configuration
+config = current_config(config_file=None)
+setup_logging(config.get('LOG_CONFIG'), config.get('LOG_LEVEL'))
+logger = logging.getLogger('kqueen_api')
+
 cache = SimpleCache()
 swagger_url = '/api/docs'
 api_url = '/api/v1/swagger'
@@ -45,8 +50,7 @@ def create_app(config_file=None):
         raise ImproperlyConfigured('The SECRET_KEY must be set and longer than 16 chars.')
 
     app.config.from_mapping(config.to_dict())
-    app.logger.setLevel(getattr(logging, app.config.get('LOG_LEVEL')))
-    app.logger.info('Loading configuration from {}'.format(config.source_file))
+    logger.info('Loading configuration from {}'.format(config.source_file))
 
     # setup database
     app.db = EtcdBackend()

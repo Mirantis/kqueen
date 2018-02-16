@@ -4,6 +4,7 @@ from .base import BaseConfig
 class Config(BaseConfig):
     DEBUG = True
     LOG_LEVEL = 'DEBUG'
+    LOG_CONFIG = 'kqueen/utils/logger_config.yml'
 
     # App secret
     SECRET_KEY = 'SecretSecretSecret123'

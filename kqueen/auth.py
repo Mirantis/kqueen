@@ -7,7 +7,7 @@ from uuid import uuid4
 import bcrypt
 import logging
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('kqueen_api')
 
 
 def authenticate(username, password):
@@ -131,11 +131,12 @@ def is_authorized(_user, policy_value, resource=None):
     try:
         condition = conditions[policy_value]
     except KeyError:
-        logger.error('Policy evaluation failed. Invalid rule: {}'.format(str(policy_value)))
+        logger.exception('Policy evaluation failed. Invalid rule: {}'.format(str(policy_value)))
         return False
 
     if ROLE == 'superadmin':
         # no point in checking anything here
+        logger.debug('User {} id {} authorized as {}'.format(user['username'], user['id'], user['role']))
         return True
 
     try:
@@ -144,6 +145,7 @@ def is_authorized(_user, policy_value, resource=None):
             logger.error('Policy evaluation did not return boolean: {}'.format(str(authorized)))
             authorized = False
     except Exception as e:
-        logger.error('Policy evaluation failed: {}'.format(repr(e)))
+        logger.exception('Policy evaluation failed: ')
         authorized = False
+    logger.debug('User {} id {} authorized as {}'.format(user['username'], user['id'], user['role']))
     return authorized

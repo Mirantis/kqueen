@@ -1,1 +1,2 @@
 include kqueen/config/default_policy.json
+include kqueen/utils/logger_config.yml
