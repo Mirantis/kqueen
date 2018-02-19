@@ -1,12 +1,13 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ template "kqueen.fullname" . }}
+  name: {{ template "kqueen.fullname" . }}-api
   labels:
     app: {{ template "kqueen.name" . }}
     chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
+    component: api
 spec:
   type: {{ .Values.api.service.type }}
   ports:
@@ -17,3 +18,4 @@ spec:
   selector:
     app: {{ template "kqueen.name" . }}
     release: {{ .Release.Name }}
+    component: api

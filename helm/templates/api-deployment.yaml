@@ -1,11 +1,12 @@
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: {{ template "kqueen.fullname" . }}
+  name: {{ template "kqueen.fullname" . }}-api
   labels:
     app: {{ template "kqueen.name" . }}
     chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
     release: {{ .Release.Name }}
+    component: api
     heritage: {{ .Release.Service }}
 spec:
   replicas: {{ .Values.api.replicaCount }}
@@ -14,11 +15,56 @@ spec:
       labels:
         app: {{ template "kqueen.name" . }}
         release: {{ .Release.Name }}
+        component: api
     spec:
       containers:
         - name: {{ .Chart.Name }}-api
           image: "{{ .Values.api.image.repository }}:{{ .Values.api.image.tag }}"
           imagePullPolicy: {{ .Values.api.image.pullPolicy }}
+          env:
+            - name: KQUEEN_CONFIG_FILE
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ template "kqueen.fullname" . }}
+                  key: config_file
+            - name: KQUEEN_ETCD_HOST
+              value: {{ template "kqueen.fullname" . }}-etcd
+            - name: KQUEEN_SECRET_KEY
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ template "kqueen.fullname" . }}
+                  key: secret_key
+            - name: KQUEEN_DEBUG
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ template "kqueen.fullname" . }}
+                  key: debug
+            - name: BOOTSTRAP_ADMIN
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ template "kqueen.fullname" . }}
+                  key: bootstrap_admin
+            - name: BOOTSTRAP_ADMIN_USERNAME
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ template "kqueen.fullname" . }}
+                  key: user
+            - name: BOOTSTRAP_ADMIN_PASSWORD
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ template "kqueen.fullname" . }}
+                  key: password
+            - name: BOOTSTRAP_ADMIN_ORGANIZATION
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ template "kqueen.fullname" . }}
+                  key: organization
+            - name: BOOTSTRAP_ADMIN_NAMESPACE
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ template "kqueen.fullname" . }}
+                  key: namespace
+
           ports:
             - containerPort: {{ .Values.api.service.internalPort }}
           livenessProbe:

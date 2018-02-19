@@ -1,7 +1,14 @@
 config:
+  # username and password is used only during bootstrap
+  bootstrap_admin: "1"
   user: admin
-  password: password
-
+  password: default
+  organization: DemoOrg
+  namespace: demoorg
+  # TODO: change this for production deployment
+  secret_key: Aeg8aQuiej1Cair7bee5eluceitiev6oofeh
+  debug: "1"
+  config_file: config/demo.py
 api:
   replicaCount: 1
   image:
@@ -11,7 +18,7 @@ api:
   service:
     name: api
     type: ClusterIP
-    externalPort: 5000
+    externalPort: 80
     internalPort: 5000
 ui:
   replicaCount: 1
@@ -22,17 +29,27 @@ ui:
   service:
     name: api
     type: ClusterIP
-    externalPort: 5000
-    internalPort: 5000
+    externalPort: 5080
+    internalPort: 80
 
+etcd:
+  replicaCount: 1
 
-#etcd:
+etcd-operator:
+  rbac:
+    create: false
 #  replicaCount: 1
 #  image:
 #    repository: quay.io/coreos/etcd
 #    tag: latest
 #    pullPolicy: IfNotPresent
-#
+#  service:
+#    name: api
+#    type: ClusterIP
+#    externalPort: 5000
+#    internalPort: 5000
+
+
 #ingress:
 #  enabled: false
 #  hosts:
