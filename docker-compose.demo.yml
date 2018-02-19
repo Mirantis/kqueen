@@ -19,7 +19,7 @@ services:
     extra_hosts:
       - "ci.mcp.mirantis.net:172.16.48.254"
   ui:
-    image: kqueen/ui:v0.7
+    image: kqueen/ui:v0.8
     ports:
       - 127.0.0.1:5080:5080
     depends_on:
