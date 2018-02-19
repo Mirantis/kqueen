@@ -19,7 +19,7 @@ import os
 import subprocess
 import yaml
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('kqueen_api')
 config = current_config()
 
 #
@@ -41,7 +41,7 @@ class Cluster(Model, metaclass=ModelMeta):
         try:
             remote_cluster = self.engine.cluster_get()
         except Exception as e:
-            logger.error('Unable to get data from backend for cluster {}'.format(self.name))
+            logger.exception('Unable to get data from backend for cluster {}'.format(self.name))
             remote_cluster = {}
 
         if 'state' in remote_cluster:
@@ -333,7 +333,7 @@ class Provisioner(Model, metaclass=ModelMeta):
             module = import_module(module_path)
             _class = getattr(module, class_name)
         except Exception as e:
-            logger.error(repr(e))
+            logger.exception('Error')
             _class = None
 
         return _class

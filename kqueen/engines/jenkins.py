@@ -8,7 +8,7 @@ import requests
 import time
 import yaml
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('kqueen_api')
 config = current_config()
 
 
@@ -89,7 +89,7 @@ class JenkinsEngine(BaseEngine):
             if version:
                 status = config.get('PROVISIONER_OK_STATE')
         except Exception as e:
-            logger.error('Could not contact JenkinsEngine backend: {}'.format(repr(e)))
+            logger.exception('Could not contact JenkinsEngine backend: ')
             status = config.get('PROVISIONER_ERROR_STATE')
         return status
 
@@ -120,8 +120,8 @@ class JenkinsEngine(BaseEngine):
             self.client.build_job(self.provision_job_name, ctx)
             return True, None
         except Exception as e:
-            msg = 'Creating cluster {} failed with following reason: {}'.format(self.cluster.id, repr(e))
-            logger.error(msg)
+            msg = 'Creating cluster {} failed with following reason: '.format(self.cluster.id)
+            logger.exception(msg)
             return False, msg
         return None, None
 
@@ -138,8 +138,8 @@ class JenkinsEngine(BaseEngine):
             self.client.build_job(self.deprovision_job_name, ctx)
             return True, None
         except Exception as e:
-            msg = 'Creating cluster {} failed with following reason: {}'.format(self.cluster.id, repr(e))
-            logger.error(msg)
+            msg = 'Creating cluster {} failed with following reason:'.format(self.cluster.id)
+            logger.exception(msg)
             return False, msg
         return None, None
 
@@ -159,7 +159,7 @@ class JenkinsEngine(BaseEngine):
         try:
             kubeconfig = yaml.load(requests.get(kubeconfig_url).text)
         except Exception as e:
-            logger.error(repr(e))
+            logger.exception('Error')
         return kubeconfig
 
     def _get_build_number(self):
@@ -249,7 +249,7 @@ class JenkinsEngine(BaseEngine):
                 try:
                     state = STATE_MAP[build['result']]
                 except KeyError:
-                    logger.warning('{} is not valid cluster state'.format(build['result']))
+                    logger.exception('{} is not valid cluster state'.format(build['result']))
                     state = config.get('CLUSTER_UNKNOWN_STATE')
             else:
                 state = config.get('CLUSTER_PROVISIONING_STATE')
