@@ -1,0 +1,117 @@
+[debug] Created tunnel using local port: '37725'
+
+[debug] SERVER: "127.0.0.1:37725"
+
+[debug] Original chart version: ""
+[debug] CHART PATH: /home/tom/src/kqueen/kqueen/helm
+
+NAME:   tr
+REVISION: 1
+RELEASED: Mon Feb 19 13:43:50 2018
+CHART: kqueen-0.1.0
+USER-SUPPLIED VALUES:
+{}
+
+COMPUTED VALUES:
+api:
+  image:
+    pullPolicy: IfNotPresent
+    repository: kqueen/api
+    tag: v0.16
+  replicaCount: 1
+  service:
+    externalPort: 5000
+    internalPort: 5000
+    name: api
+    type: ClusterIP
+config:
+  password: password
+  user: admin
+ui:
+  image:
+    pullPolicy: IfNotPresent
+    repository: kqueen/ui
+    tag: v0.5.1
+  replicaCount: 1
+  service:
+    externalPort: 5000
+    internalPort: 5000
+    name: api
+    type: ClusterIP
+
+HOOKS:
+MANIFEST:
+
+---
+# Source: kqueen/templates/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tr-kqueen
+  labels:
+    app: kqueen
+    chart: kqueen-0.1.0
+    release: tr
+    heritage: Tiller
+  creationTimestamp: 2016-02-18T19:14:38Z
+data:
+  special.how: very
+  special.type: charm
+  password: password
+  user: admin
+---
+# Source: kqueen/templates/api-service.yml
+apiVersion: v1
+kind: Service
+metadata:
+  name: tr-kqueen
+  labels:
+    app: kqueen
+    chart: kqueen-0.1.0
+    release: tr
+    heritage: Tiller
+spec:
+  type: ClusterIP
+  ports:
+    - port: 5000
+      targetPort: 5000
+      protocol: TCP
+      name: api
+  selector:
+    app: kqueen
+    release: tr
+---
+# Source: kqueen/templates/api-deployment.yaml
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: tr-kqueen
+  labels:
+    app: kqueen
+    chart: kqueen-0.1.0
+    release: tr
+    heritage: Tiller
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: kqueen
+        release: tr
+    spec:
+      containers:
+        - name: kqueen-api
+          image: "kqueen/api:v0.16"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5000
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 5000
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 5000
+          resources:
+            null

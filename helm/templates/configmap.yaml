@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "kqueen.fullname" . }}
+  labels:
+    app: {{ template "kqueen.name" . }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+  creationTimestamp: 2016-02-18T19:14:38Z
+data:
+{{ toYaml .Values.config | indent 2 }}
