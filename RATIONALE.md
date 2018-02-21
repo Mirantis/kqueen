@@ -48,7 +48,7 @@ KQueen supplies the backend API for provider-agnostic cluster management. It ena
 3. The provisioner returns the Kubernetes kubeconfig and API endpoint. This config is stored in the KQueen backend (etcd).
 4. KQueen manages, operates, monitors, and audits the Kubernetes clusters. It reads all information from the API and displays it as a simple overview visualization. KQueen can also be extended by adding other audit components.
 
-![kqueen workflow](https://github.com/Mirantis/kqueen/raw/readme/workflow.png "KQueen Workflow")
+![kqueen workflow](workflow.png)
 
 ### Required actions - MVP
 
