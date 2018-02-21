@@ -8,6 +8,7 @@ with open('README.rst') as f:
     long_description = ''.join(f.readlines())
 
 test_require = [
+    'codacy-coverage',
     'coveralls',
     'faker',
     'flake8',
