@@ -5,7 +5,7 @@ services:
     volumes:
       - /mnt/storage/kqueen/etcd/:/0.etcd/
   api:
-    image: kqueen/api:v0.15
+    image: kqueen/api:v0.18
     restart: always
     environment:
       KQUEEN_CONFIG_FILE: config/prod.py
@@ -36,7 +36,7 @@ services:
     depends_on:
       - ui
   ui:
-    image: kqueen/ui:v0.3
+    image: kqueen/ui:v0.8
     environment:
       KQUEENUI_PREFERRED_URL_SCHEME: https
       KQUEEN_UI_CONFIG_FILE: config/prod.py
