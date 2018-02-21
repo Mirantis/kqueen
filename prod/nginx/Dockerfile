@@ -1,4 +1,5 @@
 FROM nginx
+LABEL maintainer="tkukral@mirantis.com"
 
 # environment
 ENV DIR_CONF /etc/nginx/conf.d/

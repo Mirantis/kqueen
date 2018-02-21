@@ -28,7 +28,9 @@ jobs:
     script:
     - export prometheus_multiproc_dir=$(mktemp -d)
     - python3 -m pytest --cov=. --cov-report=term-missing:skip-covered
+    - coverage xml
     - coveralls
+    - python-codacy-coverage -r coverage.xml
     - pip3 install --editable .
     - python3 -m kqueen &
     - sleep 2
