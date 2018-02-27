@@ -26,7 +26,10 @@ Requirements
 -  Pip v3 and higher.
 -  Docker stable release (v17.03 and higher is preferable).
 -  Docker-compose stable release (v1.16.0 and higher is preferable).
--  And some linux packages: libsasl2-dev python-dev libldap2-dev libssl-dev
+
+  For Ubuntu 16.04 required packages are: libsasl2-dev python-dev libldap2-dev libssl-dev
+  For Fedora: openldap-devel
+
 
 Development
 -----------
@@ -65,8 +68,8 @@ Development
 
 - Prepare kubernetes config file
 
- Kubernetis configuration file that describes existing multiple clusters can be used to Kqueen.
- Rename it with *kubernetis_remote* and placed to the root of the project.
+ Kubernetes configuration file that describes existing multiple clusters can be used to Kqueen.
+ Rename it with *kubernetes_remote* and placed to the root of the project.
  For test purposes this file can be empty, but should be added manually.
 
 
