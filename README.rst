@@ -26,7 +26,7 @@ Requirements
 -  Pip v3 and higher.
 -  Docker stable release (v17.03 and higher is preferable).
 -  Docker-compose stable release (v1.16.0 and higher is preferable).
-
+-  And some linux packages: libsasl2-dev python-dev libldap2-dev libssl-dev
 
 Development
 -----------
