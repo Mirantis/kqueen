@@ -108,6 +108,10 @@ How-to's
     export prometheus_multiproc_dir=$(mktemp -d)
     flask shell
 
+- Update Docker image with code changes
+
+There are two ways to test development changes. First is automatic: create a separate branch and push PR, then TravisCI
+build image and push it on Docker Hub automatically. Second one is just rebuild kqueen api-image locally:
 - Update Doker image with code changes
 
 There are two ways to test development changes. First is automatic: create a separate branch and push PR, then TravisCI
@@ -115,7 +119,7 @@ build image and push it on Docker Hub automatically. Second one is just rebuild 
 
   ::
 
-   docker build -t kqueen/api:your_tag kqueen/
+   docker build -t kqueen/api:your_tag .
 
 Demo environment
 ----------------
@@ -123,7 +127,7 @@ Demo environment
 - Make sure you can reach Jenkins server defined in `JENKINS_API_URL` variable in file `kqueen/config/prod.py`.
 - Run these commands to run Kqueen API and UI in containers.
 
-::
+  ::
 
     docker-compose -f docker-compose.yml -f docker-compose.demo.yml up
 
