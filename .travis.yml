@@ -19,7 +19,7 @@ jobs:
     - pip install -e ".[test]"
     - pip check
     script:
-    - python3 -m flake8
+    - python3 -m flake8 --max-complexity 10
   - stage: test
     before_install:
     - docker-compose -f docker-compose.yml -f docker-compose.kubernetes.yml up -d
