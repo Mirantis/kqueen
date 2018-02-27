@@ -115,10 +115,6 @@ How-to's
 
 There are two ways to test development changes. First is automatic: create a separate branch and push PR, then TravisCI
 build image and push it on Docker Hub automatically. Second one is just rebuild kqueen api-image locally:
-- Update Doker image with code changes
-
-There are two ways to test development changes. First is automatic: create a separate branch and push PR, then TravisCI
-build image and push it on Docker Hub automatically. Second one is just rebuild kqueen api-image locally:
 
   ::
 
