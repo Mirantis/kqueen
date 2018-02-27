@@ -68,7 +68,7 @@ Development
 
 - Prepare kubernetes config file
 
- Kubernetes configuration file that describes existing multiple clusters can be used to Kqueen.
+ Kubernetes configuration file that describes existing cluster can be used in Kqueen.
  Rename it with *kubernetes_remote* and placed to the root of the project.
  For test purposes this file can be empty, but should be added manually.
 
