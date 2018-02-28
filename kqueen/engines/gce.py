@@ -284,7 +284,38 @@ class GceEngine(BaseEngine):
         return cluster
 
     def cluster_list(self):
-        """GCE engine don't support list of clusters"""
+        """
+        Implementation of :func:`~kqueen.engines.base.BaseEngine.cluster_list`
+
+        Get list of all clusters, owned by project, both kqueen managed and others.
+        """
+
+        request = self.client.projects().zones().clusters().list(projectId=self.project, zone=self.zone)
+        try:
+            response = request.execute()
+        except Exception as e:
+            msg = 'Fetching data from backend for GCE project {} failed with following reason:'.format(self.project_id)
+            logger.exception(msg)
+            return []
+
+        clusters = response.get('clusters', [])
+        if len(clusters) != 0:
+            cl = []
+            for cluster in clusters:
+                state = STATE_MAP.get(cluster['status'], config.get('CLUSTER_UNKNOWN_STATE'))
+                key = 'cluster-{}-{}'.format(cluster['name'], self.cluster_id or None)
+                item = {
+                    'key': key,
+                    'name': self.cluster_id or cluster['name'],
+                    'id': self.cluster.id or None,
+                    'state': state,
+                    'metadata': {
+                        'Node config': cluster['nodeConfig'],
+                        'Current Master Version': cluster['currentMasterVersion']
+                    }
+                }
+                cl.append(item)
+                return cl
 
         return []
 
