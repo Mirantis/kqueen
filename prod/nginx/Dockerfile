@@ -1,4 +1,5 @@
 FROM nginx
+LABEL maintainer="tkukral@mirantis.com"
 
 # environment
 ENV DIR_CONF /etc/nginx/conf.d/
@@ -12,4 +13,4 @@ RUN rm -v /etc/nginx/conf.d/*
 COPY vhost.conf $DIR_CONF
 
 # edit vhost.conf
-RUN sed -i "s/vhostname/$VHOSTNAME/g" $DIR_CONF/vhost.conf
+RUN sed -i "s/vhostname/$VHOSTNAME/g" "$DIR_CONF/vhost.conf"

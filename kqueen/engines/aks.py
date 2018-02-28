@@ -10,7 +10,7 @@ import logging
 import base64
 import yaml
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('kqueen_api')
 config = current_config()
 
 STATE_MAP = {
@@ -188,8 +188,8 @@ class AksEngine(BaseEngine):
             self.client.managed_clusters.create_or_update(self.resource_group_name, self.cluster.id, managed_cluster)
             # TODO: check if provisioning response is healthy
         except Exception as e:
-            msg = 'Creating cluster {} failed with following reason: {}'.format(self.cluster.id, repr(e))
-            logger.error(msg)
+            msg = 'Creating cluster {} failed with following reason:'.format(self.cluster.id)
+            logger.exception(msg)
             return False, msg
 
         return True, None
@@ -207,8 +207,8 @@ class AksEngine(BaseEngine):
             self.client.managed_clusters.delete(self.resource_group_name, self.cluster.id)
             # TODO: check if deprovisioning response is healthy
         except Exception as e:
-            msg = 'Deleting cluster {} failed with following reason: {}'.format(self.cluster.id, repr(e))
-            logger.error(msg)
+            msg = 'Deleting cluster {} failed with following reason:'.format(self.cluster.id)
+            logger.exception(msg)
             return False, msg
 
         return True, None
@@ -229,8 +229,8 @@ class AksEngine(BaseEngine):
             self.client.managed_clusters.create_or_update(self.resource_group_name, self.cluster.id, managed_cluster)
             # TODO: check if resizing response is healthy
         except Exception as e:
-            msg = 'Resizing cluster {} failed with following reason: {}'.format(self.cluster.id, repr(e))
-            logger.error(msg)
+            msg = 'Resizing cluster {} failed with following reason:'.format(self.cluster.id)
+            logger.exception(msg)
             return False, msg
 
         self.cluster.metadata['node_count'] = node_count
@@ -265,8 +265,8 @@ class AksEngine(BaseEngine):
         try:
             response = self.client.managed_clusters.get(self.resource_group_name, self.cluster.id)
         except Exception as e:
-            msg = 'Fetching data from backend for cluster {} failed with following reason: {}'.format(self.cluster.id, repr(e))
-            logger.error(msg)
+            msg = 'Fetching data from backend for cluster {} failed with following reason:'.format(self.cluster.id)
+            logger.exception(msg)
             return {}
         state = STATE_MAP.get(response.provisioning_state, config.get('CLUSTER_UNKNOWN_STATE'))
 

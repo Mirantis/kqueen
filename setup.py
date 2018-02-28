@@ -2,12 +2,13 @@
 
 from setuptools import setup, find_packages
 
-version = '0.17'
+version = '0.18'
 
 with open('README.rst') as f:
     long_description = ''.join(f.readlines())
 
 test_require = [
+    'codacy-coverage',
     'coveralls',
     'faker',
     'flake8',
@@ -42,6 +43,7 @@ setup(
         'prometheus_client',
         'python-etcd',
         'python-jenkins',
+        'python-ldap==3.0.0b4',
         'pyyaml',
         'requests',
         'google-api-python-client==1.6.4',

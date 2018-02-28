@@ -7,6 +7,7 @@ import os
 class BaseConfig:
     DEBUG = False
     LOG_LEVEL = 'WARNING'
+    LOG_CONFIG = 'kqueen/utils/logger_config.yml'
 
     KQUEEN_HOST = '127.0.0.1'
     KQUEEN_PORT = 5000
@@ -43,6 +44,9 @@ class BaseConfig:
     # Timeout for cluster operations (in seconds)
     PROVISIONER_TIMEOUT = 3600
     PROMETHEUS_WHITELIST = '127.0.0.0/8'
+
+    # Auth settings
+    AUTH = {}
 
     @classmethod
     def get(cls, name, default=None):
