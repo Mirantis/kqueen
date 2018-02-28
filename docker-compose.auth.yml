@@ -1,0 +1,11 @@
+version: '2'
+services:
+  ldap:
+    image: osixia/openldap
+    command:
+      - --loglevel
+      - debug
+    ports:
+      - 127.0.0.1:389:389
+    environment:
+      - LDAP_ADMIN_PASSWORD=heslo123

@@ -8,6 +8,7 @@ service:
 stages:
 - name: test
 - name: build
+  if: fork = false
 - name: publish
   if: tag =~ ^v.*
 - name: verify
@@ -22,7 +23,7 @@ jobs:
     - python3 -m flake8
   - stage: test
     before_install:
-    - docker-compose -f docker-compose.yml -f docker-compose.kubernetes.yml up -d
+    - docker-compose -f docker-compose.yml -f docker-compose.kubernetes.yml -f docker-compose.auth.yml up -d
     install:
     - pip install -e ".[dev]"
     script:
@@ -30,7 +31,8 @@ jobs:
     - python3 -m pytest --cov=. --cov-report=term-missing:skip-covered
     - coverage xml
     - coveralls
-    - python-codacy-coverage -r coverage.xml
+    - |
+        [ ! -z "${CODACY_PROJECT_TOKEN}" ] && python-codacy-coverage -r coverage.xml || echo "Codacy coverage NOT exported"
     - pip3 install --editable .
     - python3 -m kqueen &
     - sleep 2
