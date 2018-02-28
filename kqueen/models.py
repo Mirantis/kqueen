@@ -341,8 +341,9 @@ class Provisioner(Model, metaclass=ModelMeta):
     def engine_status(self, save=True):
         state = config.get('PROVISIONER_UNKNOWN_STATE')
         engine_class = self.get_engine_cls()
+
         if engine_class:
-            state = engine_class.engine_status()
+            state = engine_class.engine_status(**self.parameters)
         if save:
             self.state = state
             self.save()
