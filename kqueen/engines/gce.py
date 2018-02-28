@@ -117,7 +117,7 @@ class GceEngine(BaseEngine):
         # Client initialization
         self.service_account_info = kwargs.get('service_account_info', {})
         self.project = kwargs.get('project', '')
-        self.zone = kwargs.get('zone', '')
+        self.zone = kwargs.get('zone', '-')
         self.cluster_id = 'a' + self.cluster.id.replace('-', '')
         self.cluster_config = {
             'cluster': {
@@ -287,7 +287,7 @@ class GceEngine(BaseEngine):
         """
         Implementation of :func:`~kqueen.engines.base.BaseEngine.cluster_list`
 
-        Get list of all clusters, owned by project, both kqueen managed and others.
+        Get list of all clusters, owned by project, both kqueen managed and others in either the specified zone or all zones
         """
 
         request = self.client.projects().zones().clusters().list(projectId=self.project, zone=self.zone)
@@ -299,7 +299,7 @@ class GceEngine(BaseEngine):
             return []
 
         clusters = response.get('clusters', [])
-        if len(clusters) != 0:
+        if clusters:
             cl = []
             for cluster in clusters:
                 state = STATE_MAP.get(cluster['status'], config.get('CLUSTER_UNKNOWN_STATE'))
@@ -310,8 +310,9 @@ class GceEngine(BaseEngine):
                     'id': self.cluster.id or None,
                     'state': state,
                     'metadata': {
-                        'Node config': cluster['nodeConfig'],
-                        'Current Master Version': cluster['currentMasterVersion']
+                        'node_config': cluster['nodeConfig'],
+                        'current_master_version': cluster['currentMasterVersion'],
+                        'zone': cluster['zone']
                     }
                 }
                 cl.append(item)
@@ -320,10 +321,26 @@ class GceEngine(BaseEngine):
         return []
 
     @classmethod
-    def engine_status(cls):
+    def engine_status(cls, **kwargs):
+        service_account_info = kwargs.get('service_account_info', {})
+        project = kwargs.get('project', '')
+        project_zone = kwargs.get('zone', '-')
+        credentials = service_account.Credentials.from_service_account_info(service_account_info)
+        client = googleapiclient.discovery.build('container', 'v1', credentials=credentials)
+
         test_url = 'https://container.googleapis.com/v1/projects/project/zones/zone/clusters?alt=json'
         headers = {'Accept': 'application/json'}
         response = requests.get(test_url, headers=headers)
+
         if response.status_code == 401:
-            return config.get('PROVISIONER_OK_STATE')
-        return config.get('PROVISIONER_ERROR_STATE')
+            try:
+                client.projects().zones().clusters().list(projectId=project, zone=project_zone).execute()
+            except Exception as e:
+                msg = 'Failed to discover GCE project. Check that credentials is valid. Error:'
+                logger.exception(msg)
+                return config.get('PROVISIONER_UNKNOWN_STATE')
+            status = config.get('PROVISIONER_OK_STATE')
+        else:
+            status = config.get('PROVISIONER_ERROR_STATE')
+
+        return status

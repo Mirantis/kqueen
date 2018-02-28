@@ -73,13 +73,13 @@ class JenkinsEngine(BaseEngine):
         return self.client.get_job_info(self.provision_job_name, depth=1)
 
     @classmethod
-    def engine_status(cls):
+    def engine_status(cls, **kwargs):
         """
         Implementation of :func:`~kqueen.engines.base.BaseEngine.engine_status`
         """
         conn_kw = {
-            'username': config.get('JENKINS_USERNAME'),
-            'password': config.get('JENKINS_PASSWORD'),
+            'username': kwargs.get('username', config.get('JENKINS_USERNAME')),
+            'password': kwargs.get('password', config.get('JENKINS_PASSWORD')),
             'timeout': 10
         }
         status = config.get('PROVISIONER_UNKNOWN_STATE')

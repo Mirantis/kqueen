@@ -207,8 +207,8 @@ class BaseEngine:
         """
         raise NotImplementedError
 
-    @staticmethod
-    def engine_status():
+    @classmethod
+    def engine_status(cls, **kwargs):
         """Check if backend this Provisioner implements is reachable and/or working.
 
         Returns:
