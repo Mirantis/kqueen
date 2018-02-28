@@ -20,7 +20,8 @@ def get_auth_instance(name):
     module = importlib.import_module('kqueen.auth')
     auth_class = getattr(module, name)
 
-    return auth_class(**auth_config)
+    if callable(auth_class):
+        return auth_class(**auth_config)
 
 
 def authenticate(username, password):
