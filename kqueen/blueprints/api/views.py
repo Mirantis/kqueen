@@ -216,7 +216,7 @@ class ListProvisioners(ListView):
 
     def get_content(self, *args, **kwargs):
         provisioners = self.obj
-        if config.get('PROVISIONER_STATE_ON_LIST', True):
+        if config.get('PROVISIONER_STATE_ON_LIST'):
             try:
                 # get or establish event loop
                 try:
