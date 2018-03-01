@@ -91,7 +91,8 @@ with app.app_context():
             provisioner=provisioner,
             kubeconfig=kubeconfig,
             created_at=datetime.utcnow(),
-            owner=user
+            owner=user,
+            metadata={}
         )
         cluster.save()
     except:
@@ -106,7 +107,8 @@ with app.app_context():
             state='OK',
             engine='kqueen.engines.GceEngine',
             created_at=datetime.utcnow(),
-            owner=user
+            owner=user,
+            parameters={}
         )
         provisioner.save(check_status=False)
     except:
@@ -120,7 +122,8 @@ with app.app_context():
             name='GKE cluster, paused',
             provisioner=provisioner,
             created_at=datetime.utcnow(),
-            owner=user
+            owner=user,
+            metadata={}
         )
         cluster.save()
     except:
@@ -135,7 +138,8 @@ with app.app_context():
             state='OK',
             engine='kqueen.engines.AksEngine',
             created_at=datetime.utcnow(),
-            owner=user
+            owner=user,
+            parameters={}
         )
         provisioner.save(check_status=False)
     except:
@@ -149,7 +153,8 @@ with app.app_context():
             name='AKS cluster, paused',
             provisioner=provisioner,
             created_at=datetime.utcnow(),
-            owner=user
+            owner=user,
+            metadata={}
         )
         cluster.save()
     except:
@@ -181,7 +186,8 @@ with app.app_context():
             provisioner=provisioner,
             kubeconfig=yaml.load(open('kubeconfig_localhost', 'r').read()),
             created_at=datetime.utcnow(),
-            owner=user
+            owner=user,
+            metadata={}
         )
         cluster.save()
     except:
@@ -195,9 +201,9 @@ with app.app_context():
             name='Kubespray',
             state='OK',
             engine='kqueen.engines.ManualEngine',
-            parameters={},
             created_at=datetime.utcnow(),
-            owner=user
+            owner=user,
+            parameters={}
         )
         provisioner.save(check_status=False)
     except:
