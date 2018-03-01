@@ -85,8 +85,8 @@ class JenkinsEngine(BaseEngine):
         status = config.get('PROVISIONER_UNKNOWN_STATE')
         try:
             client = jenkins.Jenkins(config.get('JENKINS_API_URL'), **conn_kw)
-            version = client.get_version()
-            if version:
+            auth_verify = client.get_whoami()
+            if auth_verify:
                 status = config.get('PROVISIONER_OK_STATE')
         except Exception as e:
             logger.exception('Could not contact JenkinsEngine backend: ')
