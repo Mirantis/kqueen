@@ -286,13 +286,44 @@ class GceEngine(BaseEngine):
     def cluster_list(self):
         """GCE engine don't support list of clusters"""
 
+        request = self.client.projects().zones().clusters().list(projectId=self.project, zone=self.zone)
+        try:
+            response = request.execute()
+        except Exception as e:
+            msg = 'Fetching data from backend for cluster {} failed with following reason:'.format(self.cluster_id)
+            logger.exception(msg)
+            return []
+
+        clusters = response.get('clusters', [])
+        if len(clusters) != 0:
+            cl = []
+            for cluster in clusters:
+                cl.append(('Cluster: {}, Status: {}, Current Master Version: {}'.format(
+                    cluster['name'], cluster['status'],
+                    cluster['currentMasterVersion'])))
+                return cl
+
         return []
 
-    @classmethod
-    def engine_status(cls):
+
+#    @classmethod
+#    def engine_status(cls):
+# need to figure out proper way to define above method in engine_status
+    def engine_status(self):
         test_url = 'https://container.googleapis.com/v1/projects/project/zones/zone/clusters?alt=json'
         headers = {'Accept': 'application/json'}
         response = requests.get(test_url, headers=headers)
         if response.status_code == 401:
+            try:
+                self.cluster_list()
+            except Exception as e:
+                msg = 'Failed to discover GCE project. Check that credentials is valid. Error:'
+                logger.exception(msg)
+                return config.get('PROVISIONER_UNKNOWN_STATE')
+            clusters = self.cluster_list()
+            if len(clusters) != 0:
+                logger.critical('Additional clusters discovered. \
+                             Its possible to attach k8s configurations through Kqueen Manual Engine: {}'.format(cl))
             return config.get('PROVISIONER_OK_STATE')
+            # Need to generate specific response and flash message
         return config.get('PROVISIONER_ERROR_STATE')
