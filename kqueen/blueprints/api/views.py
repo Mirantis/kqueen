@@ -210,6 +210,34 @@ def cluster_resize(pk):
 class ListProvisioners(ListView):
     object_class = Provisioner
 
+    async def _update_provisioner(self, provisioner):
+        provisioner.engine_status()
+        return True
+
+    def get_content(self, *args, **kwargs):
+        provisioners = self.obj
+        if config.get('PROVISIONER_STATE_ON_LIST', True):
+            try:
+                # get or establish event loop
+                try:
+                    loop = asyncio.get_event_loop()
+                    if loop.is_closed():
+                        raise RuntimeError('Loop already closed')
+                except RuntimeError:
+                    loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(loop)
+                # run coroutines and close loop
+                loop.run_until_complete(asyncio.gather(*[self._update_provisioner(p) for p in provisioners]))
+                loop.close()
+            except Exception as e:
+                logger.exception('Asyncio loop is NOT available, fallback to simple looping: ')
+
+                for p in provisioners:
+                    p.engine_status()
+                self.obj = provisioners
+
+        return super().get_content(self, *args, **kwargs)
+
 
 class CreateProvisioner(CreateView):
     object_class = Provisioner
