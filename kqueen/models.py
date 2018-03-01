@@ -348,10 +348,6 @@ class Provisioner(Model, metaclass=ModelMeta):
             self.save()
         return state
 
-    def alive(self):
-        """Test availability of provisioner and return bool"""
-        return True
-
     def save(self, check_status=True):
         if check_status:
             self.state = self.engine_status(save=False)
