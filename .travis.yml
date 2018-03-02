@@ -8,6 +8,7 @@ service:
 stages:
 - name: test
 - name: build
+  if: fork = false
 - name: publish
   if: tag =~ ^v.*
 - name: verify
@@ -30,7 +31,8 @@ jobs:
     - python3 -m pytest --cov=. --cov-report=term-missing:skip-covered
     - coverage xml
     - coveralls
-    - python-codacy-coverage -r coverage.xml
+    - |
+        [ ! -z "${CODACY_PROJECT_TOKEN}" ] && python-codacy-coverage -r coverage.xml || echo "Codacy coverage NOT exported"
     - pip3 install --editable .
     - python3 -m kqueen &
     - sleep 2
