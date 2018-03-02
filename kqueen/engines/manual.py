@@ -102,8 +102,8 @@ class ManualEngine(BaseEngine):
             'result': config.get('CLUSTER_OK_STATE'),
         }
 
-    @staticmethod
-    def engine_status():
+    @classmethod
+    def engine_status(cls, **kwargs):
         """Manual engine is always available.
 
         Implementation of :func:`~kqueen.engines.base.BaseEngine.engine_status`
