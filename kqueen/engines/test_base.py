@@ -32,9 +32,9 @@ class TestBaseEngine:
         with pytest.raises(NotImplementedError):
             attr()
 
-    def test_engine_status(self, cluster, app):
+    def test_engine_status(self, cluster, app, **kwargs):
         engine = BaseEngine(cluster)
-        assert engine.engine_status() == app.config.get('PROVISIONER_OK_STATE')
+        assert engine.engine_status(**kwargs) == app.config.get('PROVISIONER_OK_STATE')
 
     def test_get_parameter_schema(self, cluster):
         engine = BaseEngine(cluster)
