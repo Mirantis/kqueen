@@ -5,7 +5,6 @@ from .local import LocalAuth
 import pytest
 
 
-
 @pytest.mark.parametrize('name, result',
                          [('ldap', LDAPAuth),
                           ('local', LocalAuth)
