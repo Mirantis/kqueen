@@ -5,6 +5,7 @@ from .local import LocalAuth
 import pytest
 import os
 
+
 @pytest.mark.parametrize('name, result',
                          [('ldap', LDAPAuth),
                           ('local', LocalAuth)
@@ -20,4 +21,4 @@ def test_raises_unknown_engine_class():
     with pytest.raises(Exception, match=r'Authentication engine class name is not provided.'):
         common.get_auth_instance('non-existent')
 
-#TODO: add more tests
+# TODO: add more tests
