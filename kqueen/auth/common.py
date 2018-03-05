@@ -19,7 +19,7 @@ def get_auth_instance(name):
     auth_config = config.get("AUTH", {}).get(name, {})
 
     # If user auth is not specified clearly, use local
-    if name == 'local' or None:
+    if name == 'local' or name is None:
         auth_config = {'engine': 'LocalAuth', 'param': {}}
 
     module = importlib.import_module('kqueen.auth')
