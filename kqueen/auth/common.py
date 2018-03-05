@@ -13,12 +13,10 @@ logger = logging.getLogger('kqueen_api')
 
 
 def get_auth_instance(name):
-    config = current_config()
-    auth_config = config.get("AUTH", {}).get(name, {})
+    default = {'local': {'engine': 'LocalAuth', 'param': {}}}
 
-    # Default engine, AUTH in config is empty
-    if name == 'local':
-        auth_config = {'engine': 'LocalAuth', 'param': {}}
+    config = current_config()
+    auth_config = config.get("AUTH", default).get(name, {})
 
     module = importlib.import_module('kqueen.auth')
     auth_engine = auth_config.get('engine')
