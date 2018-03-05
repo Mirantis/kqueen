@@ -75,7 +75,8 @@ class BaseEngine:
                 {
                     'key': key,     # this record should be cached under this key if you choose to cache
                     'name': name,   # name of the cluster in its respective backend
-                    'id': id,       # id of `kqueen.models.Cluster` object in KQueen database
+                    'id': id,       # id of `kqueen.models.Cluster` object in KQueen database if cluster managed by Kqueen,
+                                      otherwise None
                     'state': state, # cluster.state
                     'metadata': {
                         'foo': bar  # any keys specific for the Provisioner implementation
@@ -206,8 +207,8 @@ class BaseEngine:
         """
         raise NotImplementedError
 
-    @staticmethod
-    def engine_status():
+    @classmethod
+    def engine_status(cls, **kwargs):
         """Check if backend this Provisioner implements is reachable and/or working.
 
         Returns:
