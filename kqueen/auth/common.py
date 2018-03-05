@@ -13,15 +13,20 @@ logger = logging.getLogger('kqueen_api')
 
 
 def get_auth_instance(name):
-    default = {'local': {'engine': 'LocalAuth', 'param': {}}}
+    # Default type is local auth
 
     config = current_config()
-    auth_config = config.get("AUTH", default).get(name, {})
+    auth_config = config.get("AUTH", {}).get(name, {})
+
+    # If user auth is not specified clearly, use local
+    if name == 'local' or None:
+        auth_config = {'engine': 'LocalAuth', 'param': {}}
 
     module = importlib.import_module('kqueen.auth')
     auth_engine = auth_config.get('engine')
     if not auth_engine:
-        raise Exception('Authentication engine class name is not provided. Please, set it with the "engine" key')
+        raise Exception('Authentication type is set to {}, but engine class name is not found. '
+                        'Please, set it with the "engine" key'.format(name))
     auth_class = getattr(module, auth_engine)
 
     if callable(auth_class):
@@ -48,10 +53,6 @@ def authenticate(username, password):
 
     if user:
         given_password = password.encode('utf-8')
-
-        # fallback to local auth, this options is default if nothing is specified
-        if not user.auth:
-            user.auth = "LocalAuth"
 
         logger.debug("User {} will be authenticated using {}".format(username, user.auth))
 
