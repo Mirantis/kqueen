@@ -350,10 +350,13 @@ class Provisioner(Model, metaclass=ModelMeta):
         return state
 
     def save(self, check_status=True):
-        if check_status:
-            self.state = self.engine_status(save=False)
-        self.verbose_name = getattr(self.get_engine_cls(), 'verbose_name', self.engine)
-        return super(Provisioner, self).save()
+        from kqueen.server import create_app
+        app = create_app()
+        with app.app_context(): 
+            if check_status:
+                self.state = self.engine_status(save=False)
+            self.verbose_name = getattr(self.get_engine_cls(), 'verbose_name', self.engine)
+            return super(Provisioner, self).save()
 
 
 #
