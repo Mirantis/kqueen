@@ -350,9 +350,16 @@ class Provisioner(Model, metaclass=ModelMeta):
         return state
 
     def save(self, check_status=True):
+        # while used in async method, app context is not available by default and needs to be imported
+        from flask import current_app as app
         from kqueen.server import create_app
-        app = create_app()
-        with app.app_context(): 
+        try:
+            if not app.testing:
+                app = create_app()
+        except RuntimeError:
+            app = create_app()
+
+        with app.app_context():
             if check_status:
                 self.state = self.engine_status(save=False)
             self.verbose_name = getattr(self.get_engine_cls(), 'verbose_name', self.engine)
