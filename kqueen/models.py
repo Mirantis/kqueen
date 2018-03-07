@@ -82,7 +82,7 @@ class Cluster(Model, metaclass=ModelMeta):
         deprov_status, deprov_msg = self.engine.deprovision()
 
         if deprov_status:
-            super(Cluster, self).delete()
+            super().delete()
         else:
             raise Exception('Unable to deprovision cluster: {}'.format(deprov_msg))
 
@@ -93,6 +93,19 @@ class Cluster(Model, metaclass=ModelMeta):
         self.kubeconfig = kubeconfig
         self.save()
         return kubeconfig
+
+    def save(self, **kwargs):
+        # while used in async method, app context is not available by default and needs to be imported
+        from flask import current_app as app
+        from kqueen.server import create_app
+        try:
+            if not app.testing:
+                app = create_app()
+        except RuntimeError:
+            app = create_app()
+
+        with app.app_context():
+            return super().save(**kwargs)
 
     def status(self):
         """Return information about Kubernetes cluster"""
@@ -346,10 +359,10 @@ class Provisioner(Model, metaclass=ModelMeta):
             state = engine_class.engine_status(**self.parameters)
         if save:
             self.state = state
-            self.save()
+            self.save(check_status=False)
         return state
 
-    def save(self, check_status=True):
+    def save(self, check_status=True, **kwargs):
         # while used in async method, app context is not available by default and needs to be imported
         from flask import current_app as app
         from kqueen.server import create_app
@@ -363,7 +376,7 @@ class Provisioner(Model, metaclass=ModelMeta):
             if check_status:
                 self.state = self.engine_status(save=False)
             self.verbose_name = getattr(self.get_engine_cls(), 'verbose_name', self.engine)
-            return super(Provisioner, self).save()
+            return super().save(**kwargs)
 
 
 #
