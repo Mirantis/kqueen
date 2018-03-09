@@ -25,13 +25,24 @@ services:
     depends_on:
       - etcd
   proxy:
-    build: ./prod/nginx/
+    env_file:
+      - .env
+    build:
+      context: ./prod/nginx/
+      # TODO: check that NGINX_VHOSTNAME from .env file  is equal with generated ssl-cert
+      args:
+        - DEBUG=${NGINX_DEBUG}
+        - VHOSTNAME=${NGINX_VHOSTNAME}
+        - SSL_CERTIFICATE_DIR=${NGINX_SSL_CERTIFICATE_DIR}/${NGINX_VHOSTNAME}
+        - SSL_CERTIFICATE_PATH=${NGINX_SSL_CERTIFICATE_DIR}/${NGINX_VHOSTNAME}/fullchain.cer
+        - SSL_CERTIFICATE_KEY_PATH=${NGINX_SSL_CERTIFICATE_DIR}/${NGINX_VHOSTNAME}/${NGINX_VHOSTNAME}.key
+        - SSL_TRUSTED_CERTIFICATE_PATH=${NGINX_SSL_CERTIFICATE_DIR}/${NGINX_VHOSTNAME}/ca.cer
     restart: always
     ports:
       - 443:443
       - 80:80
     volumes:
-      - /mnt/storage/kqueen/certs/:/mnt/letsencrypt/demo.kqueen.net/:ro
+      - /mnt/storage/kqueen/certs/:${NGINX_SSL_CERTIFICATE_DIR}/${NGINX_VHOSTNAME}/:ro
     volumes_from:
       - ui:ro
     depends_on:
