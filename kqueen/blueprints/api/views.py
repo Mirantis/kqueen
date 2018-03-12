@@ -71,9 +71,16 @@ def index():
 class ListClusters(ListView):
     object_class = Cluster
 
-    async def _update_cluster(self, cluster):
-        cluster.get_state()
-        return True
+    async def _update_clusters(self, clusters, loop):
+        futures = [
+            loop.run_in_executor(
+                None,
+                cluster.get_state
+            )
+            for cluster in clusters
+        ]
+        for result in await asyncio.gather(*futures):
+            pass
 
     def get_content(self, *args, **kwargs):
         clusters = self.obj
@@ -88,7 +95,7 @@ class ListClusters(ListView):
                     loop = asyncio.new_event_loop()
                     asyncio.set_event_loop(loop)
                 # run coroutines and close loop
-                loop.run_until_complete(asyncio.gather(*[self._update_cluster(c) for c in clusters]))
+                loop.run_until_complete(self._update_clusters(clusters, loop))
                 loop.close()
             except Exception as e:
                 logger.exception('Asyncio loop is NOT available, fallback to simple looping: ')
@@ -210,9 +217,16 @@ def cluster_resize(pk):
 class ListProvisioners(ListView):
     object_class = Provisioner
 
-    async def _update_provisioner(self, provisioner):
-        provisioner.engine_status()
-        return True
+    async def _update_provisioners(self, provisioners, loop):
+        futures = [
+            loop.run_in_executor(
+                None,
+                provisioner.engine_status
+            )
+            for provisioner in provisioners
+        ]
+        for result in await asyncio.gather(*futures):
+            pass
 
     def get_content(self, *args, **kwargs):
         provisioners = self.obj
@@ -227,7 +241,7 @@ class ListProvisioners(ListView):
                     loop = asyncio.new_event_loop()
                     asyncio.set_event_loop(loop)
                 # run coroutines and close loop
-                loop.run_until_complete(asyncio.gather(*[self._update_provisioner(p) for p in provisioners]))
+                loop.run_until_complete(self._update_provisioners(provisioners, loop))
                 loop.close()
             except Exception as e:
                 logger.exception('Asyncio loop is NOT available, fallback to simple looping: ')

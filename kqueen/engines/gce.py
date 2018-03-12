@@ -46,13 +46,6 @@ class GceEngine(BaseEngine):
                         'token_uri'
                     ]
                 }
-            },
-            'project': {
-                'type': 'text',
-                'label': 'Project ID',
-                'validators': {
-                    'required': True,
-                }
             }
         },
         'cluster': {
@@ -116,7 +109,7 @@ class GceEngine(BaseEngine):
         super(GceEngine, self).__init__(cluster, **kwargs)
         # Client initialization
         self.service_account_info = kwargs.get('service_account_info', {})
-        self.project = kwargs.get('project', '')
+        self.project = self.service_account_info.get('project_id', '')
         self.zone = kwargs.get('zone', '-')
         self.cluster_id = 'a' + self.cluster.id.replace('-', '')
         self.cluster_config = {
@@ -323,7 +316,7 @@ class GceEngine(BaseEngine):
     @classmethod
     def engine_status(cls, **kwargs):
         service_account_info = kwargs.get('service_account_info', {})
-        project = kwargs.get('project', '')
+        project = service_account_info.get('project_id', '')
         project_zone = kwargs.get('zone', '-')
         credentials = service_account.Credentials.from_service_account_info(service_account_info)
         client = googleapiclient.discovery.build('container', 'v1', credentials=credentials)
