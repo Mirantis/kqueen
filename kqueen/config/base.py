@@ -40,6 +40,7 @@ class BaseConfig:
     PROVISIONER_UNKNOWN_STATE = 'Not Reachable'
 
     PROVISIONER_ENGINE_WHITELIST = None
+    PROVISIONER_STATE_ON_LIST = True
 
     # Timeout for cluster operations (in seconds)
     PROVISIONER_TIMEOUT = 3600

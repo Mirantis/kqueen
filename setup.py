@@ -40,6 +40,7 @@ setup(
         'flask-swagger-ui',
         'gunicorn',
         'kubernetes',
+        'oauth2client==3.0.0',
         'pycrypto',
         'prometheus_client',
         'python-etcd',

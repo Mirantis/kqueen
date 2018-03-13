@@ -20,64 +20,105 @@ Overview
 More information about KQueen Architecture and use cases is described in `RATIONALE <RATIONALE.md>`_ file.
 
 Requirements
------------
+------------
 
 -  Python v3.6 and higher.
 -  Pip v3 and higher.
 -  Docker stable release (v17.03 and higher is preferable).
 -  Docker-compose stable release (v1.16.0 and higher is preferable).
 
-::
+  For Ubuntu 16.04 required packages are: libsasl2-dev python-dev libldap2-dev libssl-dev
+  For Fedora: openldap-devel
 
-    mkvirtualenv -p /usr/bin/python3 kqueen
 
 Development
 -----------
 
--  Bootstrap kqueen environment
+- Prepare virtual environment
 
-::
+  ::
 
     virtualenv -p /usr/bin/python3 kqueen
     source ./kqueen/bin/activate
+
+  or if you have *virtualenvwrapper* installed
+
+  ::
+
+    mkvirtualenv -p /usr/bin/python3 kqueen
+
+- Install project requirements into virtual environment
+
+  ::
+
     pip3 install -e ".[dev]"
     pip3 install --editable .
-    # start etcd in container
-    docker-compose up -d # start
+
+- Start docker container with etcd storage
+
+  ::
+
+    docker-compose up -d
+
+- You can start KQueen API service directly
+
+  ::
+
     kqueen
 
--  Clean etcd storage and prepare examples
+- Prepare kubernetes config file
 
-`devenv.py` will create few objects to provides basic developer environment. It will also try to download `kubeconfig` file for real cluster but it requires access to Mirantis VPN. However, it can be workarounded by creating file `kubeconfig_remote` in repository root and this file will be used instead of downloading it.
+ Kubernetes configuration file that describes existing cluster can be used in Kqueen.
+ Rename it with *kubernetes_remote* and place to the root of the project.
+ For test purposes this file can be empty, but should be added manually.
 
-::
 
-    # exec in kqueen-api container
+How-to's
+^^^^^^^^
+
+
+- Clean etcd storage after previous runs
+
+  ::
+
     etcdctl rm --recursive /kqueen
+
+- Add admin user, organization, mock clusters and provisioners to etcd storage at once, execute the following
+
+  ::
+
     ./devenv.py
 
-- Run flask shell
+- To add a single *admin* user with *default* password within associated *DemoOrg* organization in provided *demoorg* namespace, execute the following
 
-::
+  ::
 
-    # exec in kqueen-api container
+    ./bootstrap_admin.py DemoOrg demoorg admin default
+
+- Test access token. *curl*,  *jq* should be installed in your system
+
+  ::
+
+    TOKEN=$(curl -s -H "Content-Type: application/json" --data '{"username":"admin","password":"default"}' -X POST localhost:5000/api/v1/auth | jq -r '.access_token')
+    echo $TOKEN
+    curl -H "Authorization: Bearer $TOKEN" localhost:5000/api/v1/clusters
+
+- Set up flask shell for manual testing and debugging
+
+  ::
+
     export FLASK_APP=kqueen.server
     export prometheus_multiproc_dir=$(mktemp -d)
     flask shell
 
-- Test access token with `curl`
+- Update Docker image with code changes
 
-::
+There are two ways to test development changes. First is automatic: create a separate branch and push PR, then TravisCI
+build image and push it on Docker Hub automatically. Second one is just rebuild kqueen api-image locally:
 
-    TOKEN=$(curl -s -H "Content-Type: application/json" --data '{"username":"admin","password":"default"}' -X POST localhost:5000/api/v1/auth | jq -r '.access_token'); echo $TOKEN; curl -H "Authorization: Bearer $TOKEN" localhost:5000/api/v1/clusters
+  ::
 
-- Image updating
-
-There are two ways to test development changes. Its possible to create a separate branch and push PR, then TravisCI build image and push it on Docker Hub automatically. Or just rebuild kqueen api-image locally:
-
-::
-
-   docker build -t kqueen/api:your_tag kqueen/
+   docker build -t kqueen/api:your_tag .
 
 Demo environment
 ----------------
@@ -85,7 +126,7 @@ Demo environment
 - Make sure you can reach Jenkins server defined in `JENKINS_API_URL` variable in file `kqueen/config/prod.py`.
 - Run these commands to run Kqueen API and UI in containers.
 
-::
+  ::
 
     docker-compose -f docker-compose.yml -f docker-compose.demo.yml up
 
@@ -103,7 +144,7 @@ to configuration.
 Documentation
 -------------
 
-For full documenation please refer to
+Full documentation including API reference can be found at
 `kqueen.readthedocs.io <http://kqueen.readthedocs.io>`__.
 
 .. |Build Status| image:: https://travis-ci.org/Mirantis/kqueen.svg?branch=master

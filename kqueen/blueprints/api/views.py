@@ -71,9 +71,16 @@ def index():
 class ListClusters(ListView):
     object_class = Cluster
 
-    async def _update_cluster(self, cluster):
-        cluster.get_state()
-        return True
+    async def _update_clusters(self, clusters, loop):
+        futures = [
+            loop.run_in_executor(
+                None,
+                cluster.get_state
+            )
+            for cluster in clusters
+        ]
+        for result in await asyncio.gather(*futures):
+            pass
 
     def get_content(self, *args, **kwargs):
         clusters = self.obj
@@ -88,7 +95,7 @@ class ListClusters(ListView):
                     loop = asyncio.new_event_loop()
                     asyncio.set_event_loop(loop)
                 # run coroutines and close loop
-                loop.run_until_complete(asyncio.gather(*[self._update_cluster(c) for c in clusters]))
+                loop.run_until_complete(self._update_clusters(clusters, loop))
                 loop.close()
             except Exception as e:
                 logger.exception('Asyncio loop is NOT available, fallback to simple looping: ')
@@ -209,6 +216,41 @@ def cluster_resize(pk):
 # Provisioners
 class ListProvisioners(ListView):
     object_class = Provisioner
+
+    async def _update_provisioners(self, provisioners, loop):
+        futures = [
+            loop.run_in_executor(
+                None,
+                provisioner.engine_status
+            )
+            for provisioner in provisioners
+        ]
+        for result in await asyncio.gather(*futures):
+            pass
+
+    def get_content(self, *args, **kwargs):
+        provisioners = self.obj
+        if config.get('PROVISIONER_STATE_ON_LIST'):
+            try:
+                # get or establish event loop
+                try:
+                    loop = asyncio.get_event_loop()
+                    if loop.is_closed():
+                        raise RuntimeError('Loop already closed')
+                except RuntimeError:
+                    loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(loop)
+                # run coroutines and close loop
+                loop.run_until_complete(self._update_provisioners(provisioners, loop))
+                loop.close()
+            except Exception as e:
+                logger.exception('Asyncio loop is NOT available, fallback to simple looping: ')
+
+                for p in provisioners:
+                    p.engine_status()
+                self.obj = provisioners
+
+        return super().get_content(self, *args, **kwargs)
 
 
 class CreateProvisioner(CreateView):
