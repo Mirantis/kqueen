@@ -40,6 +40,6 @@ root:
 
 loggers:
     kqueen_api:
-        level: INFO
+        level: DEBUG
         handlers: [error_file_handler, general_file_handler]
         propogate: yes
