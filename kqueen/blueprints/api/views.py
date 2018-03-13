@@ -110,6 +110,13 @@ class ListClusters(ListView):
 class CreateCluster(CreateView):
     object_class = Cluster
 
+    def save_object(self):
+        if self.obj.provisioner.state != config.get('PROVISIONER_OK_STATE'):
+            msg = 'Cannot create cluster with malfunctioning Provisioner'
+            logger.error('Provisioning failed: {}'.format(msg))
+            abort(500, description=msg)
+        return super().save_object()
+
     def after_save(self):
         # start provisioning
         prov_status, prov_msg = self.obj.engine.provision()
