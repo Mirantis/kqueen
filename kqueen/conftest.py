@@ -49,6 +49,7 @@ def cluster():
         engine='kqueen.engines.ManualEngine',
         owner=_user
     )
+    prov.state = config.get('PROVISIONER_OK_STATE')
     prov.save(check_status=False)
 
     create_kwargs = {

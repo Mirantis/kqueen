@@ -226,6 +226,30 @@ class TestClusterCRUD(BaseTestCRUD):
 
         assert response.status_code == 500
 
+    @pytest.mark.parametrize('provisioner_state', [
+        config.get('PROVISIONER_UNKNOWN_STATE'),
+        config.get('PROVISIONER_ERROR_STATE')
+    ])
+    def test_provision_failed_with_unhealthy_provisioner(self, provisioner, user, provisioner_state):
+        provisioner.state = provisioner_state
+        provisioner.save(check_status=False)
+        user.save()
+
+        post_data = {
+            'name': 'Testing cluster',
+            'provisioner': 'Provisioner:{}'.format(provisioner.id),
+            'owner': 'User:{}'.format(user.id)
+        }
+
+        response = self.client.post(
+            url_for('api.cluster_create'),
+            data=json.dumps(post_data),
+            headers=self.auth_header,
+            content_type='application/json',
+        )
+
+        assert response.status_code == 500
+
     def test_return_400_missing_json(self):
         response = self.client.post(
             url_for('api.cluster_create'),
