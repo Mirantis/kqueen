@@ -1,6 +1,7 @@
 from .manual import ManualEngine
 from flask import url_for
 from kqueen.conftest import auth_header
+from kqueen.conftest import config
 from kqueen.conftest import user
 from kqueen.models import Cluster
 from kqueen.models import Provisioner
@@ -33,6 +34,7 @@ class ManualEngineBase:
         }
 
         prov = Provisioner(_user.namespace, **create_kwargs_provisioner)
+        prov.state = config.get('PROVISIONER_OK_STATE')
         prov.save(check_status=False)
 
         self.create_kwargs_cluster = {
