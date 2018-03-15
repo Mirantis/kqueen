@@ -1,7 +1,7 @@
 from .manual import ManualEngine
 from flask import url_for
+from kqueen.config import current_config
 from kqueen.conftest import auth_header
-from kqueen.conftest import config
 from kqueen.conftest import user
 from kqueen.models import Cluster
 from kqueen.models import Provisioner
@@ -10,6 +10,7 @@ import json
 import pytest
 import yaml
 
+config = current_config()
 KUBECONFIG = yaml.load(open('kubeconfig_localhost', 'r').read())
 CLUSTER_METADATA = {
     'minion_count': 10,
