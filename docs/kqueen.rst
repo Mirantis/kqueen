@@ -52,9 +52,9 @@ Serializers
 Configuration
 --------------
 
-Example configuration files are located in the `config/` directory. Default configuration file is `config/dev.py`.
-To set up a different configuration file set `KQUEEN_CONFIG_FILE` environment variable. Also any environment variable
-matching name `KQUEEN_<config_parameter>` will be loaded and replaced form value in the configuration file.
+Sample configuration files are located in the `config/` directory. The default configuration file is `config/dev.py`.
+To define a different configuration file set `KQUEEN_CONFIG_FILE` environment variable.  To override the values defined
+in the configuration file, set the environment variable matching the KQUEEN_<config_parameter_name> pattern.
 
 .. list-table:: Configuration options
     :header-rows: 1
@@ -68,16 +68,16 @@ matching name `KQUEEN_<config_parameter>` will be loaded and replaced form value
       - config/dev.py
       - Configuration file to load during startup
 
-    * - LOG_LEVEL
-      - INFO
-      - Logging level for `kqueen_api` (string)
+    * - DEBUG
+      - False
+      - Setting up debug mode for flask and all loggers
 
     * - SECRET_KEY
       - None
-      - This key is used for server-side encryption (cookies, secret database fields). Length must be at least 16 characters
+      - This key is used for server-side encryption (cookies, secret database fields) and must be at least 16 characters in length.
     * - ETCD_HOST
       - localhost
-      - Address of hostname for etcd server
+      - Hostname address of the etcd server
     * - ETCD_PORT
       - 4001
       - Port for etcd server
@@ -104,32 +104,32 @@ matching name `KQUEEN_<config_parameter>` will be loaded and replaced form value
       - REST API for Jenkins
     * - JENKINS_PASSWORD
       - None
-      - Optional. Default password for Jenkins login. Is not used in UI
+      - Optional. The default Jenkins password. Gets overridden if another value is specified in the request.
     * - JENKINS_PROVISION_JOB_CTX
       - {}
-      -
+      - Dictionary for predefined Jenkins job context
     * - JENKINS_PROVISION_JOB_NAME
       - deploy-aws-k8s_ha_calico_sm
-      - Name of Jenkins job used to deploy cluster.
+      - Name of the Jenkins job used to deploy a cluster.
     * - JENKINS_USERNAME
       - None
-      - Optional. Default username for Jenkins login. Is not used in UI
+      - Optional. The default Jenkins username. Gets overridden if another value is specified in the request.
 
     * - CLUSTER_ERROR_STATE
       - Error
-      - Caption for cluster error state.
+      - Caption for a cluster in error state.
     * - CLUSTER_OK_STATE
       - OK
-      - Caption for cluster OK state.
+      - Caption for a cluster in OK state.
     * - CLUSTER_PROVISIONING_STATE
       - Deploying
-      - Caption for cluster in provisioning state.
+      - Caption for a cluster in provisioning state.
     * - CLUSTER_DEPROVISIONING_STATE
       - Destroying
-      - Caption for cluster in deprovisioning (deleting) state.
+      - Caption for a cluster in deprovisioning (deleting) state.
     * - CLUSTER_UNKNOWN_STATE
       - Unknown
-      - Caption for cluster with unknown state.
+      - Caption for a cluster with unknown state.
 
     * - CLUSTER_STATE_ON_LIST
       - True
