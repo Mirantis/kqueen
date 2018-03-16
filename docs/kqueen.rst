@@ -52,7 +52,9 @@ Serializers
 Configuration
 --------------
 
-Example configuration files are located in `config/` directory. Default configuration file is `config/dev.py` and this can be configured by `KQUEEN_CONFIG_FILE` environment variable. Any environment variable matching name `KQUEEN_*` will be loaded and merged with configuration file.
+Example configuration files are located in the `config/` directory. Default configuration file is `config/dev.py`.
+To set up a different configuration file set `KQUEEN_CONFIG_FILE` environment variable. Also any environment variable
+matching name `KQUEEN_<config_parameter>` will be loaded and replaced form value in the configuration file.
 
 .. list-table:: Configuration options
     :header-rows: 1
@@ -67,12 +69,12 @@ Example configuration files are located in `config/` directory. Default configur
       - Configuration file to load during startup
 
     * - LOG_LEVEL
-      - WARNING
-      - Logging level for `app.logger` (string)
+      - INFO
+      - Logging level for `kqueen_api` (string)
 
     * - SECRET_KEY
       - None
-      - This key is used for server-side encryption (cookies, secret database fields).
+      - This key is used for server-side encryption (cookies, secret database fields). Length must be at least 16 characters
     * - ETCD_HOST
       - localhost
       - Address of hostname for etcd server
@@ -102,7 +104,7 @@ Example configuration files are located in `config/` directory. Default configur
       - REST API for Jenkins
     * - JENKINS_PASSWORD
       - None
-      - Password for Jenkins login.
+      - Optional. Default password for Jenkins login. Is not used in UI
     * - JENKINS_PROVISION_JOB_CTX
       - {}
       -
@@ -111,7 +113,7 @@ Example configuration files are located in `config/` directory. Default configur
       - Name of Jenkins job used to deploy cluster.
     * - JENKINS_USERNAME
       - None
-      - Username for Jenkins login.
+      - Optional. Default username for Jenkins login. Is not used in UI
 
     * - CLUSTER_ERROR_STATE
       - Error
