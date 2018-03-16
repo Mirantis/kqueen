@@ -53,7 +53,7 @@ Configuration
 --------------
 
 Sample configuration files are located in the `config/` directory. The default configuration file is `config/dev.py`.
-To define a different configuration file set `KQUEEN_CONFIG_FILE` environment variable.  To override the values defined
+To define a different configuration file, set the `KQUEEN_CONFIG_FILE` environment variable.  To override the values defined
 in the configuration file, set the environment variable matching the KQUEEN_<config_parameter_name> pattern.
 
 .. list-table:: Configuration options
@@ -70,7 +70,7 @@ in the configuration file, set the environment variable matching the KQUEEN_<con
 
     * - DEBUG
       - False
-      - Setting up debug mode for flask and all loggers
+      - Debug mode for flask and all loggers
 
     * - SECRET_KEY
       - None
@@ -88,7 +88,7 @@ in the configuration file, set the environment variable matching the KQUEEN_<con
 
     * - JWT_DEFAULT_REALM
       - Login Required
-      -
+      - The default realm
     * - JWT_AUTH_URL_RULE
       - /api/v1/auth
       - Authentication endpoint returning token.
@@ -104,7 +104,7 @@ in the configuration file, set the environment variable matching the KQUEEN_<con
       - REST API for Jenkins
     * - JENKINS_PASSWORD
       - None
-      - Optional. The default Jenkins password. Gets overridden if another value is specified in the request.
+      - Optional. The default Jenkins password. It can be overridden by another value specified in the request.
     * - JENKINS_PROVISION_JOB_CTX
       - {}
       - Dictionary for predefined Jenkins job context
@@ -113,7 +113,7 @@ in the configuration file, set the environment variable matching the KQUEEN_<con
       - Name of the Jenkins job used to deploy a cluster.
     * - JENKINS_USERNAME
       - None
-      - Optional. The default Jenkins username. Gets overridden if another value is specified in the request.
+      - Optional. The default Jenkins username. It can be overridden by another value specified in the request.
 
     * - CLUSTER_ERROR_STATE
       - Error
@@ -133,7 +133,7 @@ in the configuration file, set the environment variable matching the KQUEEN_<con
 
     * - CLUSTER_STATE_ON_LIST
       - True
-      - Update state of clusters on cluster list. This can be may be disabled for organizations with large number of clusters in deploy state.
+      - Update the state of clusters on cluster list. This can be disabled for organizations with a large number of clusters in the deploy state.
 
     * - PROVISIONER_ERROR_STATE
       - Error
