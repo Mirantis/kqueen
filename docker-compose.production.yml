@@ -9,11 +9,12 @@ services:
     restart: always
     environment:
       KQUEEN_CONFIG_FILE: config/prod.py
+      KQUEEN_DEBUG: False
       KQUEEN_ETCD_HOST: etcd
       KQUEEN_PROMETHEUS_WHITELIST: '172.16.238.0/24'
       # TODO: set SECRET_KEY
       KQUEEN_SECRET_KEY: ''
-      BOOTSTRAP_ADMIN: 1
+      BOOTSTRAP_ADMIN: True
       BOOTSTRAP_ADMIN_USERNAME: admin
       # TODO: set admin password
       BOOTSTRAP_ADMIN_PASSWORD:
@@ -40,6 +41,8 @@ services:
     environment:
       KQUEENUI_PREFERRED_URL_SCHEME: https
       KQUEEN_UI_CONFIG_FILE: config/prod.py
+      KQUEENUI_DEBUG: False
+      KQUEENUI_SECRET_KEY: 'SecretSecretSecret123'
       KQUEENUI_KQUEEN_API_URL: http://api:5000/api/v1/
       KQUEENUI_KQUEEN_AUTH_URL: http://api:5000/api/v1/auth
       KQUEENUI_KQUEEN_SERVICE_USER_USERNAME: admin
@@ -47,7 +50,7 @@ services:
       KQUEENUI_KQUEEN_SERVICE_USER_PASSWORD:
       KQUEENUI_MAIL_SERVER: mail
       KQUEENUI_MAIL_PORT: 10025
-      KQUEENUI_ENABLE_PUBLIC_REGISTRATION: 1
+      KQUEENUI_ENABLE_PUBLIC_REGISTRATION: True
       STATIC_DIR: /mnt/static/
     volumes:
       - /mnt/static/
@@ -57,9 +60,6 @@ services:
   mail:
     image: modularitycontainers/postfix
     restart: always
-    volumes:
-      - /var/spool/postfix/
-      - /var/spool/mail/
     environment:
       MYHOSTNAME: 'mail'
   prometheus:
