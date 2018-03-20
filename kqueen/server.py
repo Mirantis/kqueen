@@ -17,7 +17,7 @@ import logging
 
 # Logging configuration
 config = current_config(config_file=None)
-setup_logging(config.get('LOG_CONFIG'), config.get('LOG_LEVEL'))
+setup_logging(config.get('LOG_CONFIG'), config.get('DEBUG'))
 logger = logging.getLogger('kqueen_api')
 
 cache = SimpleCache()
@@ -50,7 +50,6 @@ def create_app(config_file=None):
         raise ImproperlyConfigured('The SECRET_KEY must be set and longer than 16 chars.')
 
     app.config.from_mapping(config.to_dict())
-    logger.info('Loading configuration from {}'.format(config.source_file))
 
     # setup database
     app.db = EtcdBackend()
