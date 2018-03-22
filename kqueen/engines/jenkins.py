@@ -150,11 +150,7 @@ class JenkinsEngine(BaseEngine):
         cluster_build_number = self._get_build_number()
         if not cluster_build_number:
             return {}
-        kubeconfig_url = '{jenkins_url}/job/{job_name}/{build_id}/artifact/kubeconfig'.format(
-            jenkins_url=self.jenkins_url,
-            job_name=self.provision_job_name,
-            build_id=str(cluster_build_number),
-        )
+        kubeconfig_url = '{job_url}/artifact/kubeconfig'.format(job_url=self._get_jenkins_job_url(cluster_build_number))
         kubeconfig = {}
         try:
             kubeconfig = yaml.load(requests.get(kubeconfig_url).text)
@@ -179,15 +175,19 @@ class JenkinsEngine(BaseEngine):
         try:
             cluster = self._get_by_id()
             build_number = cluster['metadata']['build_number']
-            # Get fresh data just in case to avoid conflict
-            metadata = self.cluster.metadata or {}
-            metadata['build_number'] = build_number
-            self.cluster.metadata = metadata
-            self.cluster.save()
+            self._save_cluster_metadata(build_number)
             return build_number
         except Exception:
             pass
         return build_number
+
+    def _save_cluster_metadata(self, build_number):
+        # Get fresh data just in case to avoid conflict
+        metadata = self.cluster.metadata or {}
+        metadata['build_number'] = build_number
+        metadata['job_url'] = self._get_jenkins_job_url(build_number)
+        self.cluster.metadata = metadata
+        self.cluster.save()
 
     def _get_by_id(self):
         cluster_id = self.cluster.id
@@ -209,6 +209,11 @@ class JenkinsEngine(BaseEngine):
         build = self.client.get_build_info(self.provision_job_name, int(cluster_build_number))
         cluster = self._get_cluster_from_build(build)
         return cluster or {}
+
+    def _get_jenkins_job_url(self, build_number):
+        return '{jenkins_url}/job/{job_name}/{build_number}'.format(jenkins_url=self.jenkins_url,
+                                                                    job_name=self.provision_job_name,
+                                                                    build_number=build_number)
 
     def cluster_get(self):
         """
