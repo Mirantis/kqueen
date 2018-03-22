@@ -65,4 +65,3 @@ KQueen supplies the backend API for provider-agnostic cluster management. It ena
 * **Update** - install newer version of Kubernetes
 * **Autoscale** - watch Kubernetes scheduler or pods and start new minions when all existing minions are fully utilized
 * **Manage addons** - enable or disable cluster addons
-
