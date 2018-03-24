@@ -15,7 +15,9 @@
     "provisioner:list": "ALL",
     "provisioner:update": "ALL",
     "user:create": "IS_ADMIN",
-    "user:delete": "IS_ADMIN",
+    "user:delete_member": "IS_ADMIN",
+    "user:delete_admin": "IS_ADMIN",
+    "user:delete_superadmin": "IS_SUPERADMIN",
     "user:get": "ALL",
     "user:list": "ALL",
     "user:update": "ADMIN_OR_OWNER"
