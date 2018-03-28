@@ -28,6 +28,8 @@ jobs:
     - pip install -e ".[dev]"
     script:
     - export prometheus_multiproc_dir=$(mktemp -d)
+    - sudo mkdir /var/log/kqueen-api
+    - sudo chmod -R 777 /var/log/kqueen-api
     - python3 -m pytest --cov=. --cov-report=term-missing:skip-covered
     - coverage xml
     - coveralls
