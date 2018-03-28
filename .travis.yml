@@ -24,6 +24,7 @@ jobs:
   - stage: test
     before_install:
     - docker-compose -f docker-compose.yml -f docker-compose.kubernetes.yml -f docker-compose.auth.yml up -d
+    - sudo mkdir /var/log/kqueen-api
     install:
     - pip install -e ".[dev]"
     script:
