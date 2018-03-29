@@ -7,5 +7,16 @@ services:
       - debug
     ports:
       - 127.0.0.1:389:389
+      - 127.0.0.1:636:636
     environment:
-      - LDAP_ADMIN_PASSWORD=heslo123
+      LDAP_ADMIN_PASSWORD: 'heslo123'
+  phpldapadmin:
+    image: osixia/phpldapadmin:latest
+    container_name: phpldapadmin
+    environment:
+      PHPLDAPADMIN_LDAP_HOSTS: 'ldap'
+      PHPLDAPADMIN_HTTPS: 'false'
+    ports:
+      - 127.0.0.1:8081:80
+    depends_on:
+      - ldap

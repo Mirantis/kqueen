@@ -1,6 +1,7 @@
 """Authentication methods for API."""
 
 from kqueen.config import current_config
+from kqueen.config.auth import AuthModules
 from kqueen.models import Organization
 from kqueen.models import User
 from uuid import uuid4
@@ -12,11 +13,27 @@ import logging
 logger = logging.getLogger('kqueen_api')
 
 
+def generate_auth_config(auth_list):
+    auth_options = {}
+
+    methods = auth_list.split(',')
+    modules = AuthModules()
+    for m in methods:
+        if hasattr(modules, m):
+            auth_options[m] = getattr(modules, m)
+
+    if not auth_options:
+        auth_options['local'] = {'engine': 'LocalAuth', 'param': {}}
+
+    logger.debug('Auth config generated {}'.format(auth_options))
+    return auth_options
+
+
 def get_auth_instance(name):
     # Default type is local auth
 
     config = current_config()
-    auth_config = config.get("AUTH", {}).get(name, {})
+    auth_config = generate_auth_config(config.get("AUTH_MODULES")).get(name, {})
 
     # If user auth is not specified clearly, use local
     if name == 'local' or name is None:
@@ -24,6 +41,8 @@ def get_auth_instance(name):
 
     module = importlib.import_module('kqueen.auth')
     auth_engine = auth_config.get('engine')
+    logger.debug("Using {} Authentication Engine".format(auth_engine))
+
     if not auth_engine:
         raise Exception('Authentication type is set to {}, but engine class name is not found. '
                         'Please, set it with the "engine" key'.format(name))
@@ -65,6 +84,7 @@ def authenticate(username, password):
             verified_user, verification_error = None, str(e)
 
         if isinstance(verified_user, User) and verified_user.active:
+            logger.info("User {user} passed {method} auth successfully".format(user=user, method=user.auth))
             return verified_user
         else:
             logger.info("User {user} failed auth using {method} auth method with error {error}".format(
