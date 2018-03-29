@@ -412,6 +412,10 @@ class UpdateUser(UpdateView):
 class DeleteUser(DeleteView):
     object_class = User
 
+    def get_policy_key(self):
+        policy_key = super().get_policy_key()
+        return '{}_{}'.format(policy_key, self.obj.role)
+
 
 api.add_url_rule('/users', view_func=ListUsers.as_view('user_list'))
 api.add_url_rule('/users', view_func=CreateUser.as_view('user_create'))

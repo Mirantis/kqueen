@@ -8,6 +8,10 @@ from kqueen.auth import is_authorized
 from kqueen.models import Organization
 from .helpers import get_object
 
+import logging
+
+logger = logging.getLogger('kqueen_api')
+
 
 class GenericView(View):
     obj = None
@@ -32,35 +36,16 @@ class GenericView(View):
         _jwt_required(current_app.config['JWT_DEFAULT_REALM'])
 
     def check_authorization(self):
-        # get view class
-        try:
-            _class = self.get_class()
-        except NotImplementedError:
-            return False
-
         # get user data
         if current_identity:
             user = current_identity.get_dict()
-            organization = current_identity.organization
         else:
             return False
 
-        # form policy key
-        policy = '{}:{}'.format(_class.__name__.lower(), self.action)
-        # get policies and update them with organization level overrides
-        policies = current_app.config.get('DEFAULT_POLICIES', {})
-        if hasattr(organization, 'policy') and organization.policy:
-            policies.update(organization.policy)
-
-        try:
-            policy_value = policies[policy]
-        except KeyError:
-            current_app.logger.error('Unknown policy {}'.format(policy))
+        policy_value = self.get_policy_value()
+        if not policy_value:
             return False
 
-        # evaluate user permissions
-        # if there are multiple objects, filter out those which current user
-        # doesn't have access to
         if isinstance(self.obj, list):
             allowed = []
             for obj in self.obj:
@@ -73,6 +58,35 @@ class GenericView(View):
                 raise JWTError('Insufficient permissions',
                                'Your user account is lacking the necessary '
                                'permissions to perform this operation')
+
+    def get_policy_key(self):
+        # get view class
+        try:
+            _class = self.get_class()
+        except NotImplementedError:
+            return ''
+
+        return '{}:{}'.format(_class.__name__.lower(), self.action)
+
+    def get_policy_value(self):
+        # get policy_key
+        policy_key = self.get_policy_key()
+        if not policy_key:
+            return ''
+
+        policies = current_app.config.get('DEFAULT_POLICIES', {})
+
+        # update them with organization level overrides
+        organization = current_identity.organization
+        if hasattr(organization, 'policy') and organization.policy:
+            policies.update(organization.policy)
+
+        try:
+            policy_value = policies[policy_key]
+        except KeyError:
+            current_app.logger.error('Unknown policy {}'.format(policy_key))
+            policy_value = ''
+        return policy_value
 
     def set_object(self, *args, **kwargs):
         self.obj = get_object(self.get_class(), kwargs['pk'], current_identity)
