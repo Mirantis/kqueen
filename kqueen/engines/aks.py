@@ -2,8 +2,10 @@ from kqueen.config import current_config
 from kqueen.engines.base import BaseEngine
 
 from azure.common.credentials import ServicePrincipalCredentials
+from azure.common.exceptions import AuthenticationError
 from azure.mgmt.containerservice import ContainerServiceClient
 from azure.mgmt.containerservice.models import ManagedCluster
+from msrestazure.azure_exceptions import CloudError
 
 import copy
 import logging
@@ -281,7 +283,28 @@ class AksEngine(BaseEngine):
         return cluster
 
     def cluster_list(self):
-        """AKS engine don't support list of clusters"""
-        # TODO: it does, add list of clusters
-
+        """Is not needed in AKS"""
         return []
+
+    @classmethod
+    def engine_status(cls, **kwargs):
+        try:
+            credentials = ServicePrincipalCredentials(client_id=kwargs.get('client_id'),
+                                                      secret=kwargs.get('secret'),
+                                                      tenant=kwargs.get('tenant'))
+        except AuthenticationError:
+            logger.exception('Invalid credentials for {} Azure Provisioner'.format(cls.name))
+            return config.get('PROVISIONER_ERROR_STATE')
+        except Exception:
+            logger.exception('{} Azure Provisioner validation failed.'.format(cls.name))
+            return config.get('PROVISIONER_UNKNOWN_STATE')
+        client = ContainerServiceClient(credentials, kwargs.get('subscription_id'))
+        try:
+            list(client.managed_clusters.list_by_resource_group(kwargs.get('resource_group_name')))
+        except CloudError as e:
+            logger.exception('Invalid parameters for {} Azure Provisioner: {}'.format(cls.name, e.message))
+            return config.get('PROVISIONER_ERROR_STATE')
+        except Exception:
+            logger.exception('{} Azure Provisioner validation failed.'.format(cls.name))
+            return config.get('PROVISIONER_UNKNOWN_STATE')
+        return config.get('PROVISIONER_OK_STATE')
