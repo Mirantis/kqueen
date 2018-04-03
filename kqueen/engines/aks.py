@@ -36,7 +36,8 @@ class AksEngine(BaseEngine):
                 'type': 'text',
                 'label': 'Client ID',
                 'validators': {
-                    'required': True
+                    'required': True,
+                    'uuid': True
                 }
             },
             'secret': {
@@ -50,14 +51,16 @@ class AksEngine(BaseEngine):
                 'type': 'text',
                 'label': 'Tenant ID',
                 'validators': {
-                    'required': True
+                    'required': True,
+                    'uuid': True
                 }
             },
             'subscription_id': {
                 'type': 'text',
                 'label': 'Subscription ID',
                 'validators': {
-                    'required': True
+                    'required': True,
+                    'uuid': True
                 }
             },
             'resource_group_name': {
