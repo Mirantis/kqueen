@@ -49,6 +49,12 @@ class BaseConfig:
     # Auth settings
     AUTH = {}
 
+    # Enabled AUTH modules
+    AUTH_MODULES = 'local'
+
+    # Auth config
+    LDAP_URI = 'ldap://127.0.0.1'
+
     @classmethod
     def get(cls, name, default=None):
         """Emulate get method from dict"""
