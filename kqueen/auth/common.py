@@ -13,10 +13,10 @@ import logging
 logger = logging.getLogger('kqueen_api')
 
 
-def generate_auth_config(auth_list):
+def generate_auth_options(auth_list):
     auth_options = {}
 
-    methods = auth_list.split(',')
+    methods = auth_list.split(',').strip()
     modules = AuthModules()
     for m in methods:
         if hasattr(modules, m):
@@ -33,7 +33,7 @@ def get_auth_instance(name):
     # Default type is local auth
 
     config = current_config()
-    auth_config = generate_auth_config(config.get("AUTH_MODULES")).get(name, {})
+    auth_config = generate_auth_options(config.get("AUTH_MODULES")).get(name, {})
 
     # If user auth is not specified clearly, use local
     if name == 'local' or name is None:
