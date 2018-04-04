@@ -41,6 +41,8 @@ def get_auth_instance(name):
 
     module = importlib.import_module('kqueen.auth')
     auth_engine = auth_config.get('engine')
+    logger.debug("Using {} Authentication Engine".format(auth_engine))
+
     if not auth_engine:
         raise Exception('Authentication type is set to {}, but engine class name is not found. '
                         'Please, set it with the "engine" key'.format(name))
@@ -82,6 +84,7 @@ def authenticate(username, password):
             verified_user, verification_error = None, str(e)
 
         if isinstance(verified_user, User) and verified_user.active:
+            logger.info("User {user} passed {method} auth successfully".format(user=user, method=user.auth))
             return verified_user
         else:
             logger.info("User {user} failed auth using {method} auth method with error {error}".format(
