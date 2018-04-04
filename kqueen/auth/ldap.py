@@ -19,11 +19,6 @@ class LDAPAuth(BaseAuth):
         if not hasattr(self, 'uri'):
             raise Exception('Parameter uri is required')
 
-        try:
-            ldap.initialize(self.uri)
-        except Exception:
-            logger.exception('Failed to initialize LDAP connection')
-
         self.connection = ldap.initialize(self.uri)
 
     @staticmethod
@@ -78,6 +73,11 @@ class LDAPAuth(BaseAuth):
             logger.exception("Invalid LDAP credentials for {}".format(dn))
 
             return None, "Invalid LDAP credentials"
+
+        except ldap.INVALID_DN_SYNTAX:
+            logger.exception("Invalid DN syntax in configuration: {}".format(dn))
+
+            return None, "Invalid DN syntax"
 
         except ldap.LDAPError:
             logger.exception("Failed to bind LDAP server")
