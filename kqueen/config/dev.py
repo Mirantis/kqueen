@@ -5,8 +5,8 @@ class Config(BaseConfig):
     DEBUG = True
     LOG_CONFIG = 'kqueen/utils/logger_config.yml'
 
-    # App secret
-    SECRET_KEY = 'SecretSecretSecret123'
+    # App secret - set this to random string >= 16 chars
+    SECRET_KEY = 'secret123secret123secret123'
 
     # Jenkins engine settings
     JENKINS_API_URL = 'https://ci.mcp.mirantis.net'
