@@ -24,3 +24,9 @@ class Config(BaseConfig):
     }
     JENKINS_USERNAME = None
     JENKINS_PASSWORD = None
+
+    # Enabled AUTH modules
+    AUTH_MODULES = 'local,ldap'
+
+    # Ldap config
+    LDAP_URI = 'ldap://127.0.0.1'

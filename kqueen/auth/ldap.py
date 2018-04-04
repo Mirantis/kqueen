@@ -1,9 +1,11 @@
 from .base import BaseAuth
 
+from kqueen.config import current_config
 import ldap
 import logging
 
 logger = logging.getLogger('kqueen_api')
+config = current_config()
 
 
 class LDAPAuth(BaseAuth):
@@ -17,6 +19,11 @@ class LDAPAuth(BaseAuth):
         if not hasattr(self, 'uri'):
             raise Exception('Parameter uri is required')
 
+        try:
+            ldap.initialize(self.uri)
+        except Exception:
+            logger.exception('Failed to initialize LDAP connection')
+
         self.connection = ldap.initialize(self.uri)
 
     @staticmethod
@@ -27,11 +34,10 @@ class LDAPAuth(BaseAuth):
             email (str): e-mail address
 
         Returns:
-            dn (str): LDAP dn, like 'cn=admin,dc=example,dc=org
+            dn (str): LDAP dn, like 'cn=admin,dc=example,dc=org'
         """
 
         segments = []
-
         if '@' in email:
             cn, dcs = email.split('@')
         else:
@@ -50,7 +56,15 @@ class LDAPAuth(BaseAuth):
     def verify(self, user, password):
         """Implementation of :func:`~kqueen.auth.base.__init__`
 
-        This function tries to bind LDAP and returns result
+        This function tries to bind LDAP and returns result.
+
+        Args:
+            username (str): Username to login, will be overriden if ldap_config exist.
+            password (str): Password, will be overriden if ldap_config exist.
+
+        Returns:
+            None: Invalid credentials, Authentication failure.
+            User: authenticated user.
         """
 
         dn = self._email_to_dn(user.username)
@@ -65,8 +79,8 @@ class LDAPAuth(BaseAuth):
 
             return None, "Invalid LDAP credentials"
 
-        except ldap.LDAPError as e:
-            logger.exception(e)
+        except ldap.LDAPError:
+            logger.exception("Failed to bind LDAP server")
 
             return None, "LDAP auth failed, check log for error"
 
