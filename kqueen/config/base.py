@@ -46,8 +46,11 @@ class BaseConfig:
     PROVISIONER_TIMEOUT = 3600
     PROMETHEUS_WHITELIST = '127.0.0.0/8'
 
-    # Auth settings
-    AUTH = {}
+    # Enabled AUTH modules
+    AUTH_MODULES = 'local'
+
+    # Auth config
+    LDAP_URI = 'ldap://127.0.0.1'
 
     @classmethod
     def get(cls, name, default=None):
