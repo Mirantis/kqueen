@@ -1,7 +1,6 @@
 """Authentication methods for API."""
 
 from kqueen.config import current_config
-from kqueen.config.auth import AuthModules
 from kqueen.models import Organization
 from kqueen.models import User
 from uuid import uuid4
@@ -10,17 +9,44 @@ import bcrypt
 import importlib
 import logging
 
+config = current_config()
 logger = logging.getLogger('kqueen_api')
+
+"""
+Authentication Modules
+
+To define new module, need to specify it as dictionary, where:
+
+"auth_option_lower_case": {"engine": "EqualsToAuthClassName",
+                           "param": {
+                               "key": "value"
+                           }
+                           }
+"""
+
+AUTH_MODULES = {
+    "ldap": {
+        "engine": "LDAPAuth",
+        "param": {
+            "uri": config.get('LDAP_URI')
+        }
+    },
+    "local": {
+        "engine": "LocalAuth",
+        "param": {
+
+        }
+    }
+}
 
 
 def generate_auth_options(auth_list):
     auth_options = {}
 
-    methods = auth_list.split(',').strip()
-    modules = AuthModules()
+    methods = auth_list.strip().split(',')
     for m in methods:
-        if hasattr(modules, m):
-            auth_options[m] = getattr(modules, m)
+        if AUTH_MODULES[m]:
+            auth_options[m] = AUTH_MODULES[m]
 
     if not auth_options:
         auth_options['local'] = {'engine': 'LocalAuth', 'param': {}}
