@@ -1,8 +1,6 @@
-from kqueen.config import current_config
-
+from kqueen.config.utils import kqueen_config
 import logging
 
-config = current_config()
 logger = logging.getLogger('kqueen_api')
 
 
@@ -214,4 +212,4 @@ class BaseEngine:
         Returns:
             str: Return status of engine, should use statuses from ``app.config``
         """
-        return config.get('PROVISIONER_OK_STATE')
+        return kqueen_config.get('PROVISIONER_OK_STATE')

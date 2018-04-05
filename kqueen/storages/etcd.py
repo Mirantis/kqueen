@@ -1,3 +1,4 @@
+from kqueen.config.utils import kqueen_config
 from .exceptions import BackendError
 from .exceptions import FieldError
 from Crypto import Random
@@ -5,7 +6,6 @@ from Crypto.Cipher import AES
 from datetime import datetime
 from dateutil.parser import parse as du_parse
 from flask import current_app
-from kqueen.config import current_config
 
 import base64
 import etcd
@@ -20,13 +20,12 @@ logger = logging.getLogger('kqueen_api')
 
 class EtcdBackend:
     def __init__(self, **kwargs):
-        config = current_config()
 
         self.client = etcd.Client(
-            host=config.get('ETCD_HOST', 'localhost'),
-            port=int(config.get('ETCD_PORT', 4001)),
+            host=kqueen_config.get('ETCD_HOST', 'localhost'),
+            port=int(kqueen_config.get('ETCD_PORT', 4001)),
         )
-        self.prefix = '{}/obj/'.format(config.get('ETCD_PREFIX', '/kqueen'))
+        self.prefix = '{}/obj/'.format(kqueen_config.get('ETCD_PREFIX', '/kqueen'))
 
 
 class Field:
@@ -126,8 +125,7 @@ class Field:
         """
 
         # check for key
-        config = current_config()
-        key = config.get('SECRET_KEY')
+        key = kqueen_config.get('SECRET_KEY')
 
         if key is None:
             raise Exception('Missing SECRET_KEY')

@@ -1,11 +1,9 @@
+from kqueen.config.utils import kqueen_config
 from .test_crud import BaseTestCRUD
 from flask import url_for
-from kqueen.config import current_config
 from kqueen.conftest import organization
 
 import pytest
-
-config = current_config()
 
 
 class TestOrganizationCRUD(BaseTestCRUD):
@@ -39,7 +37,7 @@ class TestOrganizationCRUD(BaseTestCRUD):
     def test_policy(self):
         url = url_for('api.organization_policy', pk=self.obj.id)
 
-        policies = config.get('DEFAULT_POLICIES', {})
+        policies = kqueen_config.get('DEFAULT_POLICIES', {})
         if hasattr(self.obj, 'policy') and self.obj.policy:
             policies.update(self.obj.policy)
 

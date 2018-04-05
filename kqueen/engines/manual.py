@@ -1,11 +1,10 @@
+from kqueen.config.utils import kqueen_config
 from .base import BaseEngine
-from kqueen.config import current_config
 from kqueen.kubeapi import KubernetesAPI
 
 import logging
 
 logger = logging.getLogger('kqueen_api')
-config = current_config()
 
 
 class ManualEngine(BaseEngine):
@@ -50,8 +49,8 @@ class ManualEngine(BaseEngine):
         except Exception as e:
             msg = 'Fetching data from backend for cluster {} failed with following reason:'.format(self.cluster.id)
             logger.exception(msg)
-            return {'state': config.get('CLUSTER_ERROR_STATE')}
-        return {'state': config.get('CLUSTER_OK_STATE')}
+            return {'state': kqueen_config.get('CLUSTER_ERROR_STATE')}
+        return {'state': kqueen_config.get('CLUSTER_OK_STATE')}
 
     def provision(self):
         """
@@ -62,7 +61,7 @@ class ManualEngine(BaseEngine):
         Implementation of :func:`~kqueen.engines.base.BaseEngine.provision`
         """
 
-        self.cluster.state = config.get('CLUSTER_OK_STATE')
+        self.cluster.state = kqueen_config.get('CLUSTER_OK_STATE')
         self.cluster.save()
 
         return True, None
@@ -98,7 +97,7 @@ class ManualEngine(BaseEngine):
         return {
             'response': 0,
             'progress': 100,
-            'result': config.get('CLUSTER_OK_STATE'),
+            'result': kqueen_config.get('CLUSTER_OK_STATE'),
         }
 
     @classmethod
@@ -107,4 +106,4 @@ class ManualEngine(BaseEngine):
 
         Implementation of :func:`~kqueen.engines.base.BaseEngine.engine_status`
         """
-        return config.get('PROVISIONER_OK_STATE')
+        return kqueen_config.get('PROVISIONER_OK_STATE')

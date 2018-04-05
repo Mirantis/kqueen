@@ -1,6 +1,6 @@
 """Authentication methods for API."""
 
-from kqueen.config import current_config
+from kqueen.config.utils import kqueen_config
 from kqueen.models import Organization
 from kqueen.models import User
 from uuid import uuid4
@@ -15,8 +15,7 @@ logger = logging.getLogger('kqueen_api')
 def get_auth_instance(name):
     # Default type is local auth
 
-    config = current_config()
-    auth_config = config.get("AUTH", {}).get(name, {})
+    auth_config = kqueen_config.get("AUTH", {}).get(name, {})
 
     # If user auth is not specified clearly, use local
     if name == 'local' or name is None:
@@ -94,8 +93,7 @@ def identity(payload):
 
 
 def encrypt_password(_password):
-    config = current_config()
-    rounds = config.get('BCRYPT_ROUNDS', 12)
+    rounds = kqueen_config.get('BCRYPT_ROUNDS', 12)
     password = str(_password).encode('utf-8')
     encrypted = bcrypt.hashpw(password, bcrypt.gensalt(rounds)).decode('utf-8')
     return encrypted

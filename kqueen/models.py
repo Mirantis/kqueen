@@ -1,7 +1,7 @@
+from kqueen.config.utils import kqueen_config
 from datetime import datetime
 from datetime import timedelta
 from importlib import import_module
-from kqueen.config import current_config
 from kqueen.kubeapi import KubernetesAPI
 from kqueen.storages.etcd import BoolField
 from kqueen.storages.etcd import DatetimeField
@@ -20,7 +20,6 @@ import subprocess
 import yaml
 
 logger = logging.getLogger('kqueen_api')
-config = current_config()
 
 #
 # Model definition
@@ -51,13 +50,13 @@ class Cluster(Model, metaclass=ModelMeta):
             self.state = remote_cluster['state']
             self.save()
         else:
-            self.state = config.get('CLUSTER_UNKNOWN_STATE')
+            self.state = kqueen_config.get('CLUSTER_UNKNOWN_STATE')
             self.save()
 
         # check for stale clusters
-        max_age = timedelta(seconds=config.get('PROVISIONER_TIMEOUT'))
-        if self.state == config.get('CLUSTER_PROVISIONING_STATE') and datetime.utcnow() - self.created_at > max_age:
-            self.state = config.get('CLUSTER_ERROR_STATE')
+        max_age = timedelta(seconds=kqueen_config.get('PROVISIONER_TIMEOUT'))
+        if self.state == kqueen_config.get('CLUSTER_PROVISIONING_STATE') and datetime.utcnow() - self.created_at > max_age:
+            self.state = kqueen_config.get('CLUSTER_ERROR_STATE')
             self.save()
 
         return self.state
@@ -321,7 +320,7 @@ class Provisioner(Model, metaclass=ModelMeta):
     name = StringField(required=True)
     verbose_name = StringField(required=False)
     engine = StringField(required=True)
-    state = StringField(default=config.get('PROVISIONER_UNKNOWN_STATE'))
+    state = StringField(default=kqueen_config.get('PROVISIONER_UNKNOWN_STATE'))
     parameters = JSONField(encrypted=True, default={})
     created_at = DatetimeField(default=datetime.utcnow)
     owner = RelationField(required=True, remote_class_name='User')
@@ -330,7 +329,7 @@ class Provisioner(Model, metaclass=ModelMeta):
     def list_engines(self):
         """Read engines and filter them according to whitelist"""
 
-        engines = config.get('PROVISIONER_ENGINE_WHITELIST')
+        engines = kqueen_config.get('PROVISIONER_ENGINE_WHITELIST')
 
         if engines is None:
             from kqueen.engines import __all__ as engines_available
@@ -352,7 +351,7 @@ class Provisioner(Model, metaclass=ModelMeta):
         return _class
 
     def engine_status(self, save=True):
-        state = config.get('PROVISIONER_UNKNOWN_STATE')
+        state = kqueen_config.get('PROVISIONER_UNKNOWN_STATE')
         engine_class = self.get_engine_cls()
 
         if engine_class:

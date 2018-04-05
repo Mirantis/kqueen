@@ -1,6 +1,6 @@
+from kqueen.config.utils import kqueen_config
 from datetime import datetime
 from datetime import timedelta
-from kqueen.config import current_config
 from kqueen.engines import __all__ as all_engines
 from kqueen.engines import ManualEngine
 from kqueen.models import Cluster
@@ -11,8 +11,6 @@ from kqueen.storages.etcd import Model
 import pytest
 import subprocess
 import yaml
-
-config = current_config()
 
 
 class TestModelMethods:
@@ -211,7 +209,7 @@ class TestClusterState:
     @pytest.fixture(autouse=True)
     def prepare(self, cluster, monkeypatch):
         def fake_cluster_get(self):
-            return {'state': config.get('CLUSTER_PROVISIONING_STATE')}
+            return {'state': kqueen_config.get('CLUSTER_PROVISIONING_STATE')}
 
         monkeypatch.setattr(ManualEngine, 'cluster_get', fake_cluster_get)
 
@@ -225,4 +223,4 @@ class TestClusterState:
         cluster_state = self.cluster.get_state()
         print(self.cluster.get_state())
 
-        assert cluster_state == config.get('CLUSTER_ERROR_STATE')
+        assert cluster_state == kqueen_config.get('CLUSTER_ERROR_STATE')

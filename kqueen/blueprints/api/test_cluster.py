@@ -1,13 +1,11 @@
+from kqueen.config.utils import kqueen_config
 from .test_crud import BaseTestCRUD
 from flask import url_for
-from kqueen.config import current_config
 from kqueen.conftest import cluster
 from uuid import uuid4
 
 import json
 import pytest
-
-config = current_config()
 
 
 class TestClusterCRUD(BaseTestCRUD):
@@ -227,8 +225,8 @@ class TestClusterCRUD(BaseTestCRUD):
         assert response.status_code == 500
 
     @pytest.mark.parametrize('provisioner_state', [
-        config.get('PROVISIONER_UNKNOWN_STATE'),
-        config.get('PROVISIONER_ERROR_STATE')
+        kqueen_config.get('PROVISIONER_UNKNOWN_STATE'),
+        kqueen_config.get('PROVISIONER_ERROR_STATE')
     ])
     def test_provision_failed_with_unhealthy_provisioner(self, provisioner, user, provisioner_state):
         provisioner.state = provisioner_state
@@ -282,7 +280,7 @@ class TestClusterCRUD(BaseTestCRUD):
             self.metadata = {'executed': True}
             self.save()
 
-            return config.get('CLUSTER_UNKNOWN_STATE')
+            return kqueen_config.get('CLUSTER_UNKNOWN_STATE')
 
         monkeypatch.setattr(self.obj.__class__, 'get_state', fake_get_state)
 

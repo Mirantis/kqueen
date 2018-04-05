@@ -1,13 +1,11 @@
 from .test_crud import BaseTestCRUD
 from flask import url_for
 from kqueen.conftest import user
-from kqueen.config import current_config
+from kqueen.config.utils import kqueen_config
 
 import bcrypt
 import json
 import pytest
-
-config = current_config()
 
 
 class TestUserCRUD(BaseTestCRUD):
@@ -42,7 +40,7 @@ class TestUserCRUD(BaseTestCRUD):
             content_type='application/json')
 
         return {'Authorization': '{header_prefix} {token}'.format(
-            header_prefix=config.get('JWT_AUTH_HEADER_PREFIX'),
+            header_prefix=kqueen_config.get('JWT_AUTH_HEADER_PREFIX'),
             token=response.json['access_token'],
         )}
 

@@ -1,6 +1,6 @@
 """Configuration and fixtures for pytest."""
+from kqueen.config.utils import kqueen_config
 from faker import Faker
-from kqueen.config import current_config
 from kqueen.models import Cluster
 from kqueen.models import Organization
 from kqueen.models import Provisioner
@@ -14,7 +14,6 @@ import pytest
 import uuid
 import yaml
 
-config = current_config()
 fake = Faker()
 
 
@@ -49,14 +48,14 @@ def cluster():
         engine='kqueen.engines.ManualEngine',
         owner=_user
     )
-    prov.state = config.get('PROVISIONER_OK_STATE')
+    prov.state = kqueen_config.get('PROVISIONER_OK_STATE')
     prov.save(check_status=False)
 
     create_kwargs = {
         'id': _uuid,
         'name': 'Name for cluster {}'.format(_uuid),
         'provisioner': prov,
-        'state': config.get('CLUSTER_UNKNOWN_STATE'),
+        'state': kqueen_config.get('CLUSTER_UNKNOWN_STATE'),
         'kubeconfig': yaml.load(open('kubeconfig_localhost', 'r').read()),
         'created_at': datetime.datetime.utcnow().replace(microsecond=0),
         'owner': _user
@@ -126,7 +125,7 @@ def auth_header(client):
 
     return {
         'Authorization': '{token_prefix} {token}'.format(
-            token_prefix=config.get('JWT_AUTH_HEADER_PREFIX'),
+            token_prefix=kqueen_config.get('JWT_AUTH_HEADER_PREFIX'),
             token=token,
         ),
         'X-Test-Namespace': _user.namespace,

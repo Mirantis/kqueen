@@ -1,5 +1,4 @@
-from .utils import current_config
-from .utils import select_file
+from kqueen.config.utils import kqueen_config
 from kqueen.server import create_app
 from .base import BaseConfig
 
@@ -15,36 +14,6 @@ file_parametrization = [
 ]
 
 
-class TestSelectConfig:
-    @pytest.mark.parametrize('config_file,req', [
-        ('/tmp/test.py', '/tmp/test.py'),
-        (None, 'config/test.py'),
-        ('', 'config/test.py'),
-    ])
-    def test_select_config(self, config_file, req):
-        assert select_file(config_file) == req
-
-    @pytest.mark.parametrize('config_file,req', [
-        ('/tmp/test.py', '/tmp/test.py'),
-        (None, 'config/dev.py'),
-        ('', 'config/dev.py'),
-    ])
-    def test_select_config_from_envvar(self, monkeypatch, config_file, req):
-        monkeypatch.setenv(config_envvar, config_file)
-        assert select_file() == req
-
-
-class TestCurrentConfig:
-    @pytest.mark.parametrize('config_file', [
-        'config/dev.py',
-        'config/test.py',
-    ])
-    def test_current_config(self, config_file):
-        config = current_config(config_file)
-
-        assert config.source_file == select_file(config_file)
-
-
 class TestConfigFromEnv:
     @pytest.mark.parametrize('name,value', [
         ('KQUEEN_DUMMY', '123'),
@@ -52,11 +21,10 @@ class TestConfigFromEnv:
     ])
     def test_env_var(self, monkeypatch, name, value):
         monkeypatch.setenv(name, value)
-        config = current_config()
 
         config_key_name = name[7:]
 
-        assert config.get(config_key_name) == value
+        assert kqueen_config.get(config_key_name) == value
 
     def test_env_var_in_app(self, monkeypatch):
         monkeypatch.setenv('KQUEEN_DUMMY', '123')

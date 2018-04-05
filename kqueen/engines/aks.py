@@ -1,4 +1,4 @@
-from kqueen.config import current_config
+from kqueen.config.utils import kqueen_config
 from kqueen.engines.base import BaseEngine
 
 from azure.common.credentials import ServicePrincipalCredentials
@@ -13,14 +13,13 @@ import base64
 import yaml
 
 logger = logging.getLogger('kqueen_api')
-config = current_config()
 
 STATE_MAP = {
-    'Creating': config.get('CLUSTER_PROVISIONING_STATE'),
-    'Succeeded': config.get('CLUSTER_OK_STATE'),
-    'Deleting': config.get('CLUSTER_DEPROVISIONING_STATE'),
-    'Failed': config.get('CLUSTER_ERROR_STATE'),
-    'Updating': config.get('CLUSTER_RESIZING_STATE')
+    'Creating': kqueen_config.get('CLUSTER_PROVISIONING_STATE'),
+    'Succeeded': kqueen_config.get('CLUSTER_OK_STATE'),
+    'Deleting': kqueen_config.get('CLUSTER_DEPROVISIONING_STATE'),
+    'Failed': kqueen_config.get('CLUSTER_ERROR_STATE'),
+    'Updating': kqueen_config.get('CLUSTER_RESIZING_STATE')
 }
 
 
@@ -273,7 +272,7 @@ class AksEngine(BaseEngine):
             msg = 'Fetching data from backend for cluster {} failed with following reason:'.format(self.cluster.id)
             logger.exception(msg)
             return {}
-        state = STATE_MAP.get(response.provisioning_state, config.get('CLUSTER_UNKNOWN_STATE'))
+        state = STATE_MAP.get(response.provisioning_state, kqueen_config.get('CLUSTER_UNKNOWN_STATE'))
 
         key = 'cluster-{}-{}'.format(self.name, self.cluster.id)
         cluster = {
@@ -297,17 +296,17 @@ class AksEngine(BaseEngine):
                                                       tenant=kwargs.get('tenant'))
         except AuthenticationError:
             logger.exception('Invalid credentials for {} Azure Provisioner'.format(cls.name))
-            return config.get('PROVISIONER_ERROR_STATE')
+            return kqueen_config.get('PROVISIONER_ERROR_STATE')
         except Exception:
             logger.exception('{} Azure Provisioner validation failed.'.format(cls.name))
-            return config.get('PROVISIONER_UNKNOWN_STATE')
+            return kqueen_config.get('PROVISIONER_UNKNOWN_STATE')
         client = ContainerServiceClient(credentials, kwargs.get('subscription_id'))
         try:
             list(client.managed_clusters.list_by_resource_group(kwargs.get('resource_group_name')))
         except CloudError as e:
             logger.exception('Invalid parameters for {} Azure Provisioner: {}'.format(cls.name, e.message))
-            return config.get('PROVISIONER_ERROR_STATE')
+            return kqueen_config.get('PROVISIONER_ERROR_STATE')
         except Exception:
             logger.exception('{} Azure Provisioner validation failed.'.format(cls.name))
-            return config.get('PROVISIONER_UNKNOWN_STATE')
-        return config.get('PROVISIONER_OK_STATE')
+            return kqueen_config.get('PROVISIONER_UNKNOWN_STATE')
+        return kqueen_config.get('PROVISIONER_OK_STATE')

@@ -1,5 +1,6 @@
+from kqueen.config.utils import kqueen_config
+
 from google.oauth2 import service_account
-from kqueen.config import current_config
 from kqueen.engines.base import BaseEngine
 
 import googleapiclient.discovery
@@ -7,14 +8,13 @@ import logging
 import requests
 
 logger = logging.getLogger('kqueen_api')
-config = current_config()
 
 
 STATE_MAP = {
-    'PROVISIONING': config.get('CLUSTER_PROVISIONING_STATE'),
-    'RUNNING': config.get('CLUSTER_OK_STATE'),
-    'STOPPING': config.get('CLUSTER_DEPROVISIONING_STATE'),
-    'RECONCILING': config.get('CLUSTER_RESIZING_STATE')
+    'PROVISIONING': kqueen_config.get('CLUSTER_PROVISIONING_STATE'),
+    'RUNNING': kqueen_config.get('CLUSTER_OK_STATE'),
+    'STOPPING': kqueen_config.get('CLUSTER_DEPROVISIONING_STATE'),
+    'RECONCILING': kqueen_config.get('CLUSTER_RESIZING_STATE')
 }
 
 
@@ -264,7 +264,7 @@ class GceEngine(BaseEngine):
             logger.exception(msg)
             return {}
 
-        state = STATE_MAP.get(response['status'], config.get('CLUSTER_UNKNOWN_STATE'))
+        state = STATE_MAP.get(response['status'], kqueen_config.get('CLUSTER_UNKNOWN_STATE'))
 
         key = 'cluster-{}-{}'.format(self.name, self.cluster_id)
         cluster = {
@@ -295,7 +295,7 @@ class GceEngine(BaseEngine):
         if clusters:
             cl = []
             for cluster in clusters:
-                state = STATE_MAP.get(cluster['status'], config.get('CLUSTER_UNKNOWN_STATE'))
+                state = STATE_MAP.get(cluster['status'], kqueen_config.get('CLUSTER_UNKNOWN_STATE'))
                 key = 'cluster-{}-{}'.format(cluster['name'], self.cluster_id or None)
                 item = {
                     'key': key,
@@ -331,9 +331,9 @@ class GceEngine(BaseEngine):
             except Exception as e:
                 msg = 'Failed to discover GCE project. Check that credentials is valid. Error:'
                 logger.exception(msg)
-                return config.get('PROVISIONER_UNKNOWN_STATE')
-            status = config.get('PROVISIONER_OK_STATE')
+                return kqueen_config.get('PROVISIONER_UNKNOWN_STATE')
+            status = kqueen_config.get('PROVISIONER_OK_STATE')
         else:
-            status = config.get('PROVISIONER_ERROR_STATE')
+            status = kqueen_config.get('PROVISIONER_ERROR_STATE')
 
         return status

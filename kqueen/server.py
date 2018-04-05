@@ -2,7 +2,7 @@ from .auth import authenticate
 from .auth import identity
 from .blueprints.api.views import api
 from .blueprints.metrics.views import metrics
-from .config import current_config
+from .config.utils import kqueen_config
 from .exceptions import ImproperlyConfigured
 from .middleware import setup_metrics
 from .serializers import KqueenJSONEncoder
@@ -15,9 +15,9 @@ from werkzeug.contrib.cache import SimpleCache
 
 import logging
 
+
 # Logging configuration
-config = current_config(config_file=None)
-setup_logging(config.get('LOG_CONFIG'), config.get('DEBUG'))
+setup_logging(kqueen_config.get('LOG_CONFIG'), kqueen_config.get('DEBUG'))
 logger = logging.getLogger('kqueen_api')
 
 cache = SimpleCache()
@@ -42,14 +42,14 @@ def create_app(config_file=None):
     app.register_blueprint(swaggerui_blueprint, url_prefix=swagger_url)
 
     # load configuration
-    config = current_config(config_file)
+    config = config_file or kqueen_config
     config.setup_policies()
 
     secret_key = config.get('SECRET_KEY')
     if not secret_key or len(secret_key) < 16:
         raise ImproperlyConfigured('The SECRET_KEY must be set and longer than 16 chars.')
 
-    app.config.from_mapping(config.to_dict())
+    app.config.from_mapping(kqueen_config.to_dict())
 
     # setup database
     app.db = EtcdBackend()

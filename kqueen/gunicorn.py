@@ -1,10 +1,10 @@
-from kqueen.config import current_config
+from kqueen.config.utils import kqueen_config
 from prometheus_client import multiprocess
 
 import multiprocessing
 import os
 
-app_config = current_config()
+app_config = kqueen_config
 
 bind = "{host}:{port}".format(
     host=app_config.get('KQUEEN_HOST'),

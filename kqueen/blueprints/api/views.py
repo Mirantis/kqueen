@@ -1,3 +1,5 @@
+from kqueen.config.utils import kqueen_config
+
 from .generic_views import CreateView
 from .generic_views import DeleteView
 from .generic_views import GetView
@@ -17,14 +19,12 @@ from kqueen.models import Cluster
 from kqueen.models import Organization
 from kqueen.models import Provisioner
 from kqueen.models import User
-from kqueen.config import current_config
 
 import asyncio
 import logging
 import os
 import yaml
 
-config = current_config()
 logger = logging.getLogger('kqueen_api')
 
 api = Blueprint('api', __name__)
@@ -84,7 +84,7 @@ class ListClusters(ListView):
 
     def get_content(self, *args, **kwargs):
         clusters = self.obj
-        if config.get('CLUSTER_STATE_ON_LIST'):
+        if kqueen_config.get('CLUSTER_STATE_ON_LIST'):
             try:
                 # get or establish event loop
                 try:
@@ -111,7 +111,7 @@ class CreateCluster(CreateView):
     object_class = Cluster
 
     def save_object(self):
-        if self.obj.provisioner.state != config.get('PROVISIONER_OK_STATE'):
+        if self.obj.provisioner.state != kqueen_config.get('PROVISIONER_OK_STATE'):
             msg = 'Cannot create cluster with malfunctioning Provisioner'
             logger.error('Provisioning failed: {}'.format(msg))
             abort(500, description=msg)
@@ -123,7 +123,7 @@ class CreateCluster(CreateView):
 
         if not prov_status:
             logger.error('Provisioning failed: {}'.format(prov_msg))
-            self.obj.state = config.get('CLUSTER_ERROR_STATE')
+            self.obj.state = kqueen_config.get('CLUSTER_ERROR_STATE')
             abort(500, description=prov_msg)
 
 
@@ -195,7 +195,7 @@ def cluster_progress(pk):
         progress = {
             'response': 500,
             'progress': 0,
-            'result': config.get('CLUSTER_UNKNOWN_STATE')
+            'result': kqueen_config.get('CLUSTER_UNKNOWN_STATE')
         }
     return jsonify(progress)
 
@@ -237,7 +237,7 @@ class ListProvisioners(ListView):
 
     def get_content(self, *args, **kwargs):
         provisioners = self.obj
-        if config.get('PROVISIONER_STATE_ON_LIST'):
+        if kqueen_config.get('PROVISIONER_STATE_ON_LIST'):
             try:
                 # get or establish event loop
                 try:
@@ -347,7 +347,7 @@ api.add_url_rule('/organizations/<uuid:pk>', view_func=DeleteOrganization.as_vie
 @jwt_required()
 def organization_policy(pk):
     obj = get_object(Organization, pk, current_identity)
-    policies = config.get('DEFAULT_POLICIES', {})
+    policies = kqueen_config.get('DEFAULT_POLICIES', {})
     if hasattr(obj, 'policy') and obj.policy:
         policies.update(obj.policy)
 

@@ -1,11 +1,9 @@
+from kqueen.config.utils import kqueen_config
 from flask import url_for
 from kqueen.conftest import auth_header, user_with_namespace, get_auth_token
-from kqueen.config import current_config
 
 import json
 import pytest
-
-config = current_config()
 
 
 @pytest.mark.usefixtures('client_class')
@@ -234,7 +232,7 @@ class BaseTestCRUD:
             auth_header = get_auth_token(self.client, u)
             headers = {
                 'Authorization': '{} {}'.format(
-                    config.get('JWT_AUTH_HEADER_PREFIX'),
+                    kqueen_config.get('JWT_AUTH_HEADER_PREFIX'),
                     auth_header
                 )
             }
@@ -299,7 +297,7 @@ class BaseTestCRUD:
             auth_header = get_auth_token(self.client, u)
             headers = {
                 'Authorization': '{} {}'.format(
-                    config.get('JWT_AUTH_HEADER_PREFIX'),
+                    kqueen_config.get('JWT_AUTH_HEADER_PREFIX'),
                     auth_header
                 )
             }
