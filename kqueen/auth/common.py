@@ -13,29 +13,27 @@ config = current_config()
 logger = logging.getLogger('kqueen_api')
 
 """
-Authentication Modules
+    Authentication Modules
 
-To define new module, need to specify it as dictionary, where:
-
-"auth_option_lower_case": {"engine": "EqualsToAuthClassName",
-                           "param": {
-                               "key": "value"
-                           }
-                           }
+    To define new module, need to specify it as dictionary, where:
+    "auth_option_lower_case": {
+        "engine": "EqualsToAuthClassName",
+        "parameters": {
+            "key": "value"
+        }
+    }
 """
 
 AUTH_MODULES = {
     "ldap": {
         "engine": "LDAPAuth",
-        "param": {
+        "parameters": {
             "uri": config.get('LDAP_URI')
         }
     },
     "local": {
         "engine": "LocalAuth",
-        "param": {
-
-        }
+        "parameters": {}
     }
 }
 
@@ -45,11 +43,11 @@ def generate_auth_options(auth_list):
 
     methods = auth_list.strip().split(',')
     for m in methods:
-        if AUTH_MODULES[m]:
+        if m in AUTH_MODULES:
             auth_options[m] = AUTH_MODULES[m]
 
     if not auth_options:
-        auth_options['local'] = {'engine': 'LocalAuth', 'param': {}}
+        auth_options['local'] = {'engine': 'LocalAuth', 'parameters': {}}
 
     logger.debug('Auth config generated {}'.format(auth_options))
     return auth_options
@@ -59,11 +57,12 @@ def get_auth_instance(name):
     # Default type is local auth
 
     config = current_config()
-    auth_config = generate_auth_options(config.get("AUTH_MODULES")).get(name, {})
+    auth_options = generate_auth_options(config.get("AUTH_MODULES"))
+    auth_config = auth_options.get(name, {})
 
     # If user auth is not specified clearly, use local
     if name == 'local' or name is None:
-        auth_config = {'engine': 'LocalAuth', 'param': {}}
+        auth_config = {'engine': 'LocalAuth', 'parameters': {}}
 
     module = importlib.import_module('kqueen.auth')
     auth_engine = auth_config.get('engine')
@@ -75,7 +74,7 @@ def get_auth_instance(name):
     auth_class = getattr(module, auth_engine)
 
     if callable(auth_class):
-        return auth_class(**auth_config.get('param', {}))
+        return auth_class(**auth_config.get('parameters', {}))
 
 
 def authenticate(username, password):
