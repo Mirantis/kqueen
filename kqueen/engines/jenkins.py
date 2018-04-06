@@ -35,6 +35,7 @@ class JenkinsEngine(BaseEngine):
             'username': {
                 'type': 'text',
                 'label': 'Username',
+                'order': 0,
                 'validators': {
                     'required': True
                 }
@@ -42,6 +43,7 @@ class JenkinsEngine(BaseEngine):
             'password': {
                 'type': 'password',
                 'label': 'Password',
+                'order': 1,
                 'validators': {
                     'required': True
                 }

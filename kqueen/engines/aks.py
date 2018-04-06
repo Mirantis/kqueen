@@ -35,6 +35,7 @@ class AksEngine(BaseEngine):
             'client_id': {
                 'type': 'text',
                 'label': 'Client ID',
+                'order': 0,
                 'validators': {
                     'required': True,
                     'uuid': True
@@ -43,6 +44,7 @@ class AksEngine(BaseEngine):
             'secret': {
                 'type': 'password',
                 'label': 'Secret',
+                'order': 1,
                 'validators': {
                     'required': True
                 }
@@ -50,6 +52,7 @@ class AksEngine(BaseEngine):
             'tenant': {
                 'type': 'text',
                 'label': 'Tenant ID',
+                'order': 2,
                 'validators': {
                     'required': True,
                     'uuid': True
@@ -58,6 +61,7 @@ class AksEngine(BaseEngine):
             'subscription_id': {
                 'type': 'text',
                 'label': 'Subscription ID',
+                'order': 3,
                 'validators': {
                     'required': True,
                     'uuid': True
@@ -66,6 +70,7 @@ class AksEngine(BaseEngine):
             'resource_group_name': {
                 'type': 'text',
                 'label': 'Resource Group Name',
+                'order': 4,
                 'validators': {
                     'required': True
                 }
