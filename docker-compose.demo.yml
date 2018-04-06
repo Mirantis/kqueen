@@ -9,6 +9,8 @@ services:
     environment:
       KQUEEN_CONFIG_FILE: config/demo.py
       KQUEEN_DEBUG: 'False'
+      KQUEEN_LDAP_URI: 'ldap://ldap'
+      KQUEEN_AUTH_MODULES: 'local,ldap'
       KQUEEN_ETCD_HOST: etcd
       KQUEEN_SECRET_KEY: 'SecretSecretSecret123'
       BOOTSTRAP_ADMIN: 'True'
@@ -34,6 +36,8 @@ services:
       KQUEENUI_KQUEEN_SERVICE_USER_PASSWORD: default
       KQUEENUI_MAIL_SERVER: mail
       KQUEENUI_MAIL_PORT: 10025
+      KQUEENUI_LDAP_AUTH_NOTIFY: 'False'
+      KQUEENUI_LOCAL_AUTH_NOTIFY: 'True'
 #  Uncomment this to enable sending validation emails
 #  mail:
 #    image: modularitycontainers/postfix
