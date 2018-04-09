@@ -1,6 +1,7 @@
 from .base import BaseAuth
 
 from kqueen.config import current_config
+from kqueen.exceptions import ImproperlyConfigured
 import ldap
 import logging
 
@@ -15,38 +16,46 @@ class LDAPAuth(BaseAuth):
         """
 
         super(LDAPAuth, self).__init__(*args, **kwargs)
+        if not all(hasattr(self, attr) for attr in ['uri', 'admin_dn', 'password']):
+            msg = 'Failed to configure LDAP, please provide valid LDAP credentials'
+            logger.error(msg)
+            raise ImproperlyConfigured(msg)
 
-        if not hasattr(self, 'uri'):
-            raise Exception('Parameter uri is required')
+        # Define Kqueen rdn for all dc's
+        d_names = ldap.dn.explode_dn(self.admin_dn)
+        dc_list = [dc for dc in d_names if dc.startswith('dc=')]
+        self.kqueen_dc = ','.join(dc_list)
 
-        self.connection = ldap.initialize(self.uri)
+        # Bind connection for Kqueen Read-only user
+        if self._bind(self.admin_dn, self.password):
+            self.connection = ldap.initialize(self.uri)
+            self.connection.simple_bind_s(self.admin_dn, self.password)
+            self.connection.protocol_version = ldap.VERSION3
+        else:
+            logger.error('Failed to bind connection for Kqueen Read-only user')
+            self.connection.unbind()
 
-    @staticmethod
-    def _email_to_dn(email):
-        """This function reads email and converts it to LDAP dn
+    def _get_matched_dn(self, cn):
+        """This function reads username as cn and returns all matched full-dn's
 
         Args:
-            email (str): e-mail address
+            cn (str): Username of invited user
 
         Returns:
-            dn (str): LDAP dn, like 'cn=admin,dc=example,dc=org'
+            matched_dn (list): List of all matched dn's in groups.
         """
 
-        segments = []
-        if '@' in email:
-            cn, dcs = email.split('@')
-        else:
-            cn = email
-            dcs = ''
+        base_dn = self.kqueen_dc
+        search_scope = ldap.SCOPE_SUBTREE
+        retrieveAttributes = ['dn']
+        search_filter = "(cn={})".format(cn)
+        search_result = self.connection.search_s(base_dn, search_scope, search_filter, retrieveAttributes)
 
-        if cn:
-            segments.append('cn={}'.format(cn))
+        matched_dn = [dn[0] for dn in search_result]
+        logger.info('Matched to RegExp DN key: {}'.format(matched_dn))
 
-        if '.' in dcs:
-            for s in dcs.split('.'):
-                segments.append('dc={}'.format(s))
-
-        return ','.join(segments)
+        self.connection.unbind()
+        return matched_dn
 
     def verify(self, user, password):
         """Implementation of :func:`~kqueen.auth.base.__init__`
@@ -62,29 +71,67 @@ class LDAPAuth(BaseAuth):
             User: authenticated user.
         """
 
-        dn = self._email_to_dn(user.username)
+        if user.metadata.get('ldap_dn', None):
+            logger.debug('Full dn already stored in user metadata: {}'.format(user.metadata))
+            if self._bind(user.metadata['ldap_dn'], password):
+                logger.info('LDAP Verification through metadata: {} passed successfully'.format(user.metadata))
+                return user, None
+        else:
+            logger.info('There is no dn in user metadata: {}, searching in LDAP...'.format(user.metadata))
+            matched_dn = self._get_matched_dn(user.username)
+            full_dn = None
+
+            for dn in matched_dn:
+                if self._bind(dn, password):
+                    full_dn = dn
+
+            if full_dn:
+                user.metadata['ldap_dn'] = full_dn
+                user.save()
+                logger.info('Valid full-DN found: {}. It will be stored in user metadata: {}'.format(full_dn, user.metadata))
+                logger.info('LDAP Verification passed successfully')
+                return user, None
+        msg = 'LDAP Verification failed'
+        logger.info(msg)
+        return None, msg
+
+    def _bind(self, dn, password):
 
         try:
+            self.connection = ldap.initialize(self.uri)
             bind = self.connection.simple_bind_s(dn, password)
 
             if bind:
-                return user, None
+                msg = 'User {} successfully bind connection LDAP'.format(dn)
+                logger.debug(msg)
+                return True, msg
         except ldap.INVALID_CREDENTIALS:
-            logger.exception("Invalid LDAP credentials for {}".format(dn))
 
-            return None, "Invalid LDAP credentials"
+            msg = "Invalid LDAP credentials for {}".format(dn)
+            logger.exception(msg)
+            return False, msg
 
         except ldap.INVALID_DN_SYNTAX:
-            logger.exception("Invalid DN syntax in configuration: {}".format(dn))
 
-            return None, "Invalid DN syntax"
+            msg = 'Invalid DN syntax in configuration: {}'.format(dn)
+            logger.exception(msg)
+            return False, msg
 
         except ldap.LDAPError:
-            logger.exception("Failed to bind LDAP server")
 
-            return None, "LDAP auth failed, check log for error"
+            msg = 'Failed to bind LDAP server'
+            logger.exception(msg)
+            return False, msg
+
+        except Exception:
+
+            msg = 'Unknown error occurred during LDAP server bind'
+            logger.exception(msg)
+            return False, msg
 
         finally:
             self.connection.unbind()
 
-        return None, "All LDAP authentication methods failed"
+        msg = 'All LDAP authentication methods failed'
+        logger.error(msg)
+        return False, msg

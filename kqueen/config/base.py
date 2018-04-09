@@ -51,6 +51,9 @@ class BaseConfig:
 
     # Auth config
     LDAP_URI = 'ldap://127.0.0.1'
+    # Creds for Kqueen Read-only user
+    LDAP_DN = 'cn=admin,dc=example,dc=org'
+    LDAP_PASSWORD = 'heslo123'
 
     @classmethod
     def get(cls, name, default=None):
