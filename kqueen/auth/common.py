@@ -15,7 +15,7 @@ logger = logging.getLogger('kqueen_api')
 """
     Authentication Modules
 
-    To define new module, need to specify it as dictionary, where:
+    To define a new module, specify it as a dictionary, where:
     "auth_option_lower_case": {
         "engine": "EqualsToAuthClassName",
         "parameters": {
@@ -40,16 +40,19 @@ AUTH_MODULES = {
 }
 
 
-def generate_auth_options(auth_list):
+def generate_auth_options(enabled_auth_methods):
     auth_options = {}
+    # local is default authentication method
+    if not enabled_auth_methods:
+        enabled_auth_methods = 'local'
 
-    methods = auth_list.strip().split(',')
+    methods = enabled_auth_methods.strip().split(',')
+
     for m in methods:
         if m in AUTH_MODULES:
             auth_options[m] = AUTH_MODULES[m]
-
-    if not auth_options:
-        auth_options['local'] = {'engine': 'LocalAuth', 'parameters': {}}
+        else:
+            logger.debug('Specified in config auth method {} is not found in the auth modules specification ')
 
     logger.debug('Auth config generated {}'.format(auth_options))
     return auth_options

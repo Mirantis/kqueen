@@ -301,6 +301,7 @@ def provisioner_engine_list():
                 'parameters': parameters
             })
         except NotImplementedError:
+            logger.exception('UI parameters is not set for engine: {}'.format(engine))
             engine_cls.append({
                 'name': engine,
                 'verbose_name': engine,
@@ -310,7 +311,7 @@ def provisioner_engine_list():
                 }
             })
         except Exception:
-            logger.exception('Unable to read parameters for engine: ')
+            logger.exception('Unable to read parameters for engine: {}'.format(engine))
 
     return jsonify(engine_cls)
 
