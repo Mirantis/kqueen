@@ -344,6 +344,24 @@ components:
           $ref: "https://raw.githubusercontent.com/kubernetes/kubernetes/master/api/openapi-spec/swagger.json#/definitions/io.k8s.api.core.v1.ServiceList"
         version:
           $ref: "https://raw.githubusercontent.com/kubernetes/kubernetes/master/api/openapi-spec/swagger.json#/definitions/io.k8s.apimachinery.pkg.version.Info"
+    getAuthConfig:
+      type: "object"
+      auth_method_name:
+        type: "object":
+        properties:
+          engine:
+            type: "string"
+            description: "Name of the authentication class"
+          name:
+            type: "string"
+            description: "Verbose name of the authentication method"
+          ui_parameters:
+            type: "object"
+            description: "Auth-method specific parameters"
+          parameters:
+            type: "object"
+            description: "Authentication class initialization parameters"
+
   responses:
     Unauthorized:
       description: "Authorization information is missing or invalid."
@@ -1041,3 +1059,19 @@ paths:
                   $ref: "#/components/schemas/Engine"
         "401":
           $ref: "#/components/responses/Unauthorized"
+  /configurations/auth:
+    get:
+      summary: "Get information about auth classes configuration"
+      tags:
+        - "Auth"
+      responses:
+        "200":
+          description: "Successful operation"
+          content:
+            application/json:
+              schema:
+               type: "array"
+                $ref: "#/components/schemas/getUser"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+

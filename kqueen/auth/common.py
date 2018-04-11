@@ -30,7 +30,7 @@ AUTH_MODULES = {
         "parameters": {
             "uri": config.get('LDAP_URI'),
             "admin_dn": config.get('LDAP_DN'),
-            "password": config.get('LDAP_PASSWORD')
+            "_password": config.get('LDAP_PASSWORD')
         }
     },
     "local": {
