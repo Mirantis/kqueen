@@ -32,8 +32,9 @@ class LDAPAuth(BaseAuth):
             self.connection.simple_bind_s(self.admin_dn, self.password)
             self.connection.protocol_version = ldap.VERSION3
         else:
-            logger.error('Failed to bind connection for Kqueen Read-only user')
-            self.connection.unbind()
+            msg = 'Failed to bind connection for Kqueen Read-only user'
+            logger.error(msg)
+            raise ImproperlyConfigured(msg)
 
     def _get_matched_dn(self, cn):
         """This function reads username as cn and returns all matched full-dn's
@@ -72,12 +73,11 @@ class LDAPAuth(BaseAuth):
         """
 
         if user.metadata.get('ldap_dn', None):
-            logger.debug('Full dn already stored in user metadata: {}'.format(user.metadata))
+            logger.debug('Full dn is already stored in user metadata: {}'.format(user.metadata))
             if self._bind(user.metadata['ldap_dn'], password):
                 logger.info('LDAP Verification through metadata: {} passed successfully'.format(user.metadata))
                 return user, None
         else:
-            logger.info('There is no dn in user metadata: {}, searching in LDAP...'.format(user.metadata))
             matched_dn = self._get_matched_dn(user.username)
             full_dn = None
 
@@ -91,6 +91,11 @@ class LDAPAuth(BaseAuth):
                 logger.info('Valid full-DN found: {}. It will be stored in user metadata: {}'.format(full_dn, user.metadata))
                 logger.info('LDAP Verification passed successfully')
                 return user, None
+            else:
+                msg = 'Failed to validate full-DN. Check CN name and defined password of invited user'
+                logger.error(msg)
+                return None, msg
+
         msg = 'LDAP Verification failed'
         logger.info(msg)
         return None, msg
@@ -104,34 +109,34 @@ class LDAPAuth(BaseAuth):
             if bind:
                 msg = 'User {} successfully bind connection LDAP'.format(dn)
                 logger.debug(msg)
-                return True, msg
+                return True
         except ldap.INVALID_CREDENTIALS:
 
             msg = "Invalid LDAP credentials for {}".format(dn)
             logger.exception(msg)
-            return False, msg
+            return False
 
         except ldap.INVALID_DN_SYNTAX:
 
             msg = 'Invalid DN syntax in configuration: {}'.format(dn)
             logger.exception(msg)
-            return False, msg
+            return False
 
         except ldap.LDAPError:
 
             msg = 'Failed to bind LDAP server'
             logger.exception(msg)
-            return False, msg
+            return False
 
         except Exception:
 
             msg = 'Unknown error occurred during LDAP server bind'
             logger.exception(msg)
-            return False, msg
+            return False
 
         finally:
             self.connection.unbind()
 
         msg = 'All LDAP authentication methods failed'
         logger.error(msg)
-        return False, msg
+        return False

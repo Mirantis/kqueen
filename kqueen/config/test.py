@@ -34,7 +34,7 @@ class Config(BaseConfig):
     AUTH_MODULES = 'local,ldap'
 
     # Ldap config
-    LDAP_URI = 'ldap://ldap'
+    LDAP_URI = 'ldap://127.0.0.1'
     # Creds for Kqueen Read-only user
     LDAP_DN = 'cn=admin,dc=example,dc=org'
     LDAP_PASSWORD = 'heslo123'

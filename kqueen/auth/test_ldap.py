@@ -1,5 +1,6 @@
 from .ldap import LDAPAuth
 from kqueen.models import User
+from kqueen.exceptions import ImproperlyConfigured
 
 import pytest
 
@@ -8,18 +9,20 @@ class TestAuthMethod:
     @pytest.fixture(autouse=True)
     def setup(self, user):
         self.user = user
-        self.user.username = 'admin@example.org'
+        self.user.username = 'admin'
+        self.user.metadata = {}
         self.user.password = ''
         self.user.save()
 
-        self.auth_class = LDAPAuth(uri='ldap://127.0.0.1:389')
+        self.auth_class = LDAPAuth(uri='ldap://127.0.0.1', admin_dn='cn=admin,dc=example,dc=org', password='heslo123')
 
-    def test_raise_on_missing_uri(self):
-        with pytest.raises(Exception, msg='Parameter uri is required'):
+    def test_raise_on_missing_creds(self):
+        with pytest.raises(Exception, msg='Failed to configure LDAP, please provide valid LDAP credentials'):
             LDAPAuth()
 
     def test_login_pass(self):
         password = 'heslo123'
+
         user, error = self.auth_class.verify(self.user, password)
 
         assert isinstance(user, User)
@@ -30,20 +33,8 @@ class TestAuthMethod:
         user, error = self.auth_class.verify(self.user, password)
 
         assert not user
-        assert error == "Invalid LDAP credentials"
+        assert error == 'Failed to validate full-DN. Check CN name and defined password of invited user'
 
     def test_bad_server(self):
-        password = 'heslo123'
-        auth_class = LDAPAuth(uri="ldap://127.0.0.1:55555")
-
-        user, error = auth_class.verify(self.user, password)
-        assert not user
-        assert error == "LDAP auth failed, check log for error"
-
-    @pytest.mark.parametrize('email, dn', [
-        ('admin@example.org', 'cn=admin,dc=example,dc=org'),
-        ('name.surname@mail.example.net', 'cn=name.surname,dc=mail,dc=example,dc=net'),
-        ('user', 'cn=user'),
-    ])
-    def test_email_to_dn(self, email, dn):
-        assert self.auth_class._email_to_dn(email) == dn
+        with pytest.raises(ImproperlyConfigured, msg='Failed to bind connection for Kqueen Read-only user'):
+            LDAPAuth(uri='ldap://127.0.0.1:55555', admin_dn='cn=admin,dc=example,dc=org', password='heslo123')
