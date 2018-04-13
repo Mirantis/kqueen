@@ -277,6 +277,8 @@ To set up the LDAP server
    .. code-block:: yaml
 
       KQUEEN_LDAP_URI: 'ldap://ldap'
+      KQUEEN_LDAP_DN: 'cn=admin,dc=example,dc=org'
+      KQUEEN_LDAP_PASSWORD: 'secret'
       KQUEEN_AUTH_MODULES: 'local,ldap'
       KQUEENUI_LDAP_AUTH_NOTIFY: 'False'
 
@@ -291,15 +293,17 @@ To set up the LDAP server
 
 .. note::
 
+   ``KQUEEN_LDAP_DN``/ ``KQUEEN_LDAP_PASSWORD`` User credentials with read-only access for Ldap-search
+
+.. note::
+
    In case of using external LDAP server, skip steps 1 and 2.
 
-Once done, you should be able to invite members through LDAP. Define username for new member according to following scheme:
+Once done, you should be able to invite members through LDAP. Define ``cn`` as username for new member:
 
-.. code-block:: text
+.. note::
 
-   <<cn>>@<<dc>>.<<dc>>
-
-   For example user ``kqueen@mirantis.com`` should be equal to LDAP entry: ``cn=kqueen, dc=mirantis, dc=com``
+   'dc' for invited users equal to predefined in ``KQUEEN_LDAP_DN``
 
 Users with superadmin rights can also manage member roles.
 

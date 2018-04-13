@@ -28,7 +28,9 @@ AUTH_MODULES = {
     "ldap": {
         "engine": "LDAPAuth",
         "parameters": {
-            "uri": config.get('LDAP_URI')
+            "uri": config.get('LDAP_URI'),
+            "admin_dn": config.get('LDAP_DN'),
+            "password": config.get('LDAP_PASSWORD')
         }
     },
     "local": {
@@ -96,10 +98,9 @@ def authenticate(username, password):
     user = username_table.get(username)
 
     if user:
+        user.metadata = user.metadata or {}
         given_password = password.encode('utf-8')
-
         logger.debug("User {} will be authenticated using {}".format(username, user.auth))
-
         auth_instance = get_auth_instance(user.auth)
 
         try:
