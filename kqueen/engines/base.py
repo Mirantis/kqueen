@@ -164,6 +164,21 @@ class BaseEngine:
         """
         raise NotImplementedError
 
+    def set_network_policy(self, network_provider, enabled):
+        """Set specific network policy to the cluster related to this engine instance.
+
+        Args:
+            network_provider(str):           Name of supported network provider/addon
+            enabled(bool):                   Enable/Disable policy
+
+        Returns:
+            tuple: First item is bool (success/failure), second item is error, can be None::
+
+                (True, None)                            # successful policy update
+                (False, 'error_message')                # failed policy update, error description
+        """
+        raise NotImplementedError
+
     def get_kubeconfig(self):
         """Get kubeconfig of the cluster related to this engine from backend.
 

@@ -1,14 +1,15 @@
 version: '2'
 services:
   api:
-    image: kqueen/api:v0.18
+#    image: kqueen/api:v0.18
+    image: vnaumov/kqueen-api:mk1
     ports:
       - 127.0.0.1:5000:5000
     depends_on:
       - etcd
     environment:
       KQUEEN_CONFIG_FILE: config/demo.py
-      KQUEEN_DEBUG: 'False'
+      KQUEEN_DEBUG: 'True'
       KQUEEN_LDAP_URI: 'ldap://ldap'
       KQUEEN_LDAP_DN: 'cn=admin,dc=example,dc=org'
       KQUEEN_LDAP_PASSWORD: 'heslo123'
@@ -23,14 +24,16 @@ services:
     extra_hosts:
       - "ci.mcp.mirantis.net:172.16.48.254"
   ui:
-    image: kqueen/ui:v0.8
+#    image: kqueen/ui:v0.9
+#    image: vnaumov/kqueen-ui:mk2
+    image: vnaumov/kqueen-ui:mk1
     ports:
       - 127.0.0.1:5080:5080
     depends_on:
       - api
     environment:
       KQUEEN_UI_CONFIG_FILE: config/demo.py
-      KQUEENUI_DEBUG: 'False'
+      KQUEENUI_DEBUG: 'True'
       KQUEENUI_SECRET_KEY: 'SecretSecretSecret123'
       KQUEENUI_KQUEEN_API_URL: http://api:5000/api/v1/
       KQUEENUI_KQUEEN_AUTH_URL: http://api:5000/api/v1/auth
