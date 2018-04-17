@@ -2,7 +2,7 @@
 
 from setuptools import setup, find_packages
 
-version = '0.18'
+version = '0.19'
 
 with open('README.rst') as f:
     long_description = ''.join(f.readlines())
