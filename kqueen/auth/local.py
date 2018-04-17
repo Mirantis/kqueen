@@ -8,6 +8,20 @@ logger = logging.getLogger('kqueen_api')
 
 
 class LocalAuth(BaseAuth):
+    verbose_name = 'Local'
+    parameter_schema = {
+        'username': {
+            'type': 'email',
+            'label': 'User Email',
+            'description': 'Provide valid email of the user you want to invite to the organization',
+            'validators': {
+                'required': True
+            },
+            'active': False,
+            'notify': True
+        }
+    }
+
     def verify(self, user, password):
         """Implementation of :func:`~kqueen.auth.base.__init__`
 

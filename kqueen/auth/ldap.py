@@ -10,13 +10,29 @@ config = current_config()
 
 
 class LDAPAuth(BaseAuth):
+    verbose_name = 'LDAP'
+    parameter_schema = {
+        'username': {
+            'type': 'text',
+            'label': 'User CN',
+            'description': 'Enter user common name, resisted in the configured LDAP',
+            'validators': {
+                'required': True
+            },
+            'generate_password': False,
+            # TODO: add checkbox for notify if email is provided
+            'notify': False,
+            # TODO: add optional email field for ldap user
+        },
+    }
+
     def __init__(self, *args, **kwargs):
         """
         Implementation of :func:`~kqueen.auth.base.__init__`
         """
 
         super(LDAPAuth, self).__init__(*args, **kwargs)
-        if not all(hasattr(self, attr) for attr in ['uri', 'admin_dn', 'password']):
+        if not all(hasattr(self, attr) for attr in ['uri', 'admin_dn', '_password']):
             msg = 'Failed to configure LDAP, please provide valid LDAP credentials'
             logger.error(msg)
             raise ImproperlyConfigured(msg)
@@ -27,9 +43,9 @@ class LDAPAuth(BaseAuth):
         self.kqueen_dc = ','.join(dc_list)
 
         # Bind connection for Kqueen Read-only user
-        if self._bind(self.admin_dn, self.password):
+        if self._bind(self.admin_dn, self._password):
             self.connection = ldap.initialize(self.uri)
-            self.connection.simple_bind_s(self.admin_dn, self.password)
+            self.connection.simple_bind_s(self.admin_dn, self._password)
             self.connection.protocol_version = ldap.VERSION3
         else:
             msg = 'Failed to bind connection for Kqueen Read-only user'

@@ -26,3 +26,18 @@ class BaseAuth:
         """
 
         raise NotImplementedError
+
+    @classmethod
+    def get_parameter_schema(cls):
+        """Return parameters specific for a auth method implementation.
+
+        These parameters are used to generate form for inviting user with fields,
+        specific for a particular authentication method.
+
+        Returns:
+            dict:  Returns ``self.parameter_schema`` by default, but can be overridden.
+        """
+        if not hasattr(cls, 'parameter_schema'):
+            raise NotImplementedError('"parameter_schema" attribute should be provided in the '
+                                      'auth method implementation')
+        return cls.parameter_schema

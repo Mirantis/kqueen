@@ -187,6 +187,9 @@ class BaseEngine:
         Returns:
             dict:  Returns ``self.parameter_schema`` in default, but can be overridden.
         """
+        if not hasattr(cls, 'parameter_schema'):
+            raise NotImplementedError('"parameter_schema" attribute should be provided in the '
+                                      'Provisioner class implementation')
         return cls.parameter_schema
 
     def get_progress(self):

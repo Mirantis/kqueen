@@ -30,7 +30,7 @@ AUTH_MODULES = {
         "parameters": {
             "uri": config.get('LDAP_URI'),
             "admin_dn": config.get('LDAP_DN'),
-            "password": config.get('LDAP_PASSWORD')
+            "_password": config.get('LDAP_PASSWORD')
         }
     },
     "local": {
@@ -51,7 +51,7 @@ def generate_auth_options(auth_list):
     if not auth_options:
         auth_options['local'] = {'engine': 'LocalAuth', 'parameters': {}}
 
-    logger.debug('Auth config generated {}'.format(auth_options))
+    logger.debug('Auth configuration options are generated ')
     return auth_options
 
 

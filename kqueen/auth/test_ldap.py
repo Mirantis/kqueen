@@ -14,7 +14,7 @@ class TestAuthMethod:
         self.user.password = ''
         self.user.save()
 
-        self.auth_class = LDAPAuth(uri='ldap://127.0.0.1', admin_dn='cn=admin,dc=example,dc=org', password='heslo123')
+        self.auth_class = LDAPAuth(uri='ldap://127.0.0.1', admin_dn='cn=admin,dc=example,dc=org', _password='heslo123')
 
     def test_raise_on_missing_creds(self):
         with pytest.raises(Exception, msg='Failed to configure LDAP, please provide valid LDAP credentials'):
@@ -29,8 +29,8 @@ class TestAuthMethod:
         assert error is None
 
     def test_login_bad_pass(self):
-        password = 'abc'
-        user, error = self.auth_class.verify(self.user, password)
+        _password = 'abc'
+        user, error = self.auth_class.verify(self.user, _password)
 
         assert not user
         assert error == 'Failed to validate full-DN. Check CN name and defined password of invited user'
