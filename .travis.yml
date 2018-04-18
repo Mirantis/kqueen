@@ -3,7 +3,8 @@ language: python
 cache: pip
 python:
 - '3.6'
-service:
+
+services:
 - docker
 stages:
 - name: test
@@ -90,3 +91,12 @@ jobs:
     - "./entrypoint.sh &"
     - sleep 2
     - wget -O - http://localhost:5000/api/v1/health
+
+notifications:
+  webhooks:
+    on_success: change  # options: [always|never|change] default: always
+    on_failure: never
+    on_start: never
+    on_cancel: never
+    on_error: never
+  email: true
