@@ -114,3 +114,5 @@ kubeconfig_remote
 
 .cache
 .pytest_cache
+
+workspace/
