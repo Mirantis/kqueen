@@ -27,32 +27,58 @@ Requirements
 -  Docker stable release (v17.03 and higher is preferable).
 -  Docker-compose stable release (v1.16.0 and higher is preferable).
 
-  For Ubuntu 16.04 required packages are: libsasl2-dev python-dev libldap2-dev libssl-dev
-  For Fedora: openldap-devel
+
+Demo environment
+----------------
+
+- Make sure you can reach Jenkins server defined in `JENKINS_API_URL` variable in file `kqueen/config/prod.py`.
+- Run these commands to run Kqueen API and UI in containers.
+
+  ::
+
+    docker-compose -f docker-compose.yml -f docker-compose.demo.yml up
+
+or with mounted etcd data directory:
+
+
+  ::
+
+    docker-compose -f docker-compose.etcd-volume.yml -f docker-compose.demo.yml up
+
+- You can login using user `admin` and password `default`.
+  Default username and password can be changed in `docker-compose.demo.yml` file before first start of API.
+
+
+- Navigate to UI
+
+  * http://127.0.0.1:5080/
+  * http://127.0.0.1:5000/api/docs/
 
 
 Development
 -----------
 
-- Prepare virtual environment
+- Install dependencies
+
+    ::
+
+    # Debian/Ubuntu
+    sudo apt-get install libsasl2-dev python-dev libldap2-dev libssl-dev
+
+    # RedHat/CentOS:
+    sudo yum install python-devel openldap-devel
+
+- Prepare python virtual environment
 
   ::
 
-    virtualenv -p /usr/bin/python3 kqueen
-    source ./kqueen/bin/activate
+    python -m ensurepip --default-pip
+    pip install --user pipenv
+    pipenv --three
+    pipenv install
 
-  or if you have *virtualenvwrapper* installed
+    pipenv shell
 
-  ::
-
-    mkvirtualenv -p /usr/bin/python3 kqueen
-
-- Install project requirements into virtual environment
-
-  ::
-
-    pip3 install -e ".[dev]"
-    pip3 install --editable .
 
 - Start docker container with etcd storage
 
@@ -64,7 +90,8 @@ Development
 
   ::
 
-    kqueen
+    kqueen &
+    chrome --new-tab http://127.0.0.1:5000/api/docs/
 
 - Prepare kubernetes config file
 
@@ -75,7 +102,6 @@ Development
 
 How-to's
 ^^^^^^^^
-
 
 - Clean etcd storage after previous runs
 
@@ -119,19 +145,6 @@ build image and push it on Docker Hub automatically. Second one is just rebuild 
   ::
 
    docker build -t kqueen/api:your_tag .
-
-Demo environment
-----------------
-
-- Make sure you can reach Jenkins server defined in `JENKINS_API_URL` variable in file `kqueen/config/prod.py`.
-- Run these commands to run Kqueen API and UI in containers.
-
-  ::
-
-    docker-compose -f docker-compose.yml -f docker-compose.demo.yml up
-
-- You can login using user `admin` and password `default`. Default username and password can be changed in `docker-compose.demo.yml` file before first start of API.
-
 
 Configuration
 -------------
