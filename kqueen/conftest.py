@@ -1,5 +1,4 @@
 """Configuration and fixtures for pytest."""
-from faker import Faker
 from kqueen.config import current_config
 from kqueen.models import Cluster
 from kqueen.models import Organization
@@ -9,30 +8,33 @@ from kqueen.server import create_app
 
 import datetime
 import etcd
+import faker
 import json
 import pytest
 import uuid
 import yaml
 
 config = current_config()
-fake = Faker()
+fake = faker.Faker()
+fake = faker.Faker()
+current_app = None
 
 
 @pytest.fixture(autouse=True, scope='session')
 def app():
     """Prepare app."""
-    app = create_app()
-    app.testing = True
+    global current_app
+    current_app = create_app()
+    current_app.testing = True
 
-    return app
+    return current_app
 
 
-@pytest.fixture(autouse=True, scope='session')
+@pytest.fixture(autouse=True, scope='class')
 def etcd_setup():
-    _app = create_app()
-
+    global current_app
     try:
-        _app.db.client.delete(_app.config['ETCD_PREFIX'], recursive=True)
+        current_app.db.client.delete(current_app.config['ETCD_PREFIX'], recursive=True)
     except etcd.EtcdKeyNotFound:
         pass
 
@@ -137,31 +139,33 @@ def auth_header(client):
 @pytest.fixture
 def organization():
     """Prepare organization object."""
-    organization = Organization(
-        None,
-        name='DemoOrg',
-        namespace='demoorg',
-    )
-    organization.save()
+    with current_app.app_context():
+        organization = Organization(
+            None,
+            name='DemoOrg',
+            namespace='demoorg',
+        )
+        organization.save()
 
-    return organization
+        return organization
 
 
 @pytest.fixture(scope='class')
 def user():
     """Prepare user object."""
-    profile = fake.simple_profile()
-    user = User.create(
-        None,
-        username=profile['username'],
-        password=profile['username'] + 'password',
-        organization=organization(),
-        role='superadmin',
-        active=True
-    )
-    user.save()
+    with current_app.app_context():
+        profile = fake.simple_profile()
+        user = User.create(
+            None,
+            username=profile['username'],
+            password=profile['username'] + 'password',
+            organization=organization(),
+            role='superadmin',
+            active=True
+        )
+        user.save()
 
-    return user
+        return user
 
 
 @pytest.fixture
