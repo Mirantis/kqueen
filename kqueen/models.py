@@ -440,8 +440,8 @@ class User(Model, metaclass=ModelMeta):
     global_namespace = True
 
     id = IdField(required=True)
-    username = StringField(required=True)
-    email = StringField(required=False)
+    username = StringField(required=True, unique=True)
+    email = StringField(required=False, unique=True)
     password = PasswordField(required=True)
     organization = RelationField(required=True, remote_class_name='Organization')
     created_at = DatetimeField(default=datetime.utcnow)
