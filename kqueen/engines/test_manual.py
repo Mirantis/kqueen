@@ -1,10 +1,8 @@
 from .manual import ManualEngine
 from flask import url_for
 from kqueen.config import current_config
-from kqueen.conftest import auth_header
-from kqueen.conftest import user
-from kqueen.models import Cluster
-from kqueen.models import Provisioner
+from kqueen.conftest import AuthHeader, UserFixture
+from kqueen.models import Cluster, Provisioner
 
 import json
 import pytest
@@ -26,7 +24,8 @@ PROVISIONER_PARAMETERS = {
 @pytest.mark.usefixtures('client_class')
 class ManualEngineBase:
     def setup(self):
-        _user = user()
+        self.test_user = UserFixture()
+        _user = self.test_user.obj
         create_kwargs_provisioner = {
             'name': 'Testing manual',
             'engine': 'kqueen.engines.ManualEngine',
@@ -48,11 +47,18 @@ class ManualEngineBase:
         }
 
         self.cluster = Cluster.create(_user.namespace, **self.create_kwargs_cluster)
+        self.cluster.save()
+
         self.engine = ManualEngine(cluster=self.cluster)
 
         # client setup
-        self.auth_header = auth_header(self.client)
+        self.auth_header = AuthHeader(self.test_user).get(self.client)
         self.namespace = self.auth_header['X-Test-Namespace']
+
+    def teardown(self):
+
+        self.engine.deprovision()
+        self.test_user.destroy()
 
 
 class TestClusterAction(ManualEngineBase):

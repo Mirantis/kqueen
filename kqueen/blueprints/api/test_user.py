@@ -1,18 +1,19 @@
 from .test_crud import BaseTestCRUD
 from flask import url_for
-from kqueen.conftest import user
+from kqueen.conftest import UserFixture
 from kqueen.config import current_config
 
 import bcrypt
 import json
 import pytest
 
+
 config = current_config()
 
 
 class TestUserCRUD(BaseTestCRUD):
     def get_object(self):
-        return user()
+        return UserFixture()
 
     def get_edit_data(self):
         return {
@@ -24,6 +25,7 @@ class TestUserCRUD(BaseTestCRUD):
         data = self.obj.get_dict()
         data['id'] = None
         data['organization'] = 'Organization:{}'.format(self.obj.organization.id)
+        data['username'] = 'newusername'
 
         return data
 
@@ -58,7 +60,7 @@ class TestUserCRUD(BaseTestCRUD):
         assert response.json == self.obj.get_dict(expand=True)
 
     def test_namespace(self):
-        user = self.get_object()
+        user = self.obj
 
         assert user.namespace == user.organization.namespace
 

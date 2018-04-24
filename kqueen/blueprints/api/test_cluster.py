@@ -1,19 +1,29 @@
 from .test_crud import BaseTestCRUD
 from flask import url_for
 from kqueen.config import current_config
-from kqueen.conftest import cluster
-from uuid import uuid4
+from kqueen.conftest import ClusterFixture, ProvisionerFixture
 
 import json
 import pytest
+from uuid import uuid4
 
 config = current_config()
 
 
 class TestClusterCRUD(BaseTestCRUD):
-    def get_object(self):
-        obj = cluster()
+    @pytest.fixture(autouse=True)
+    def setup(self, client):
+        super().setup(client)
+        self.user = self.test_user.obj
+        self.test_provisioner = ProvisionerFixture(self.test_user)
+        self.provisioner = self.test_provisioner.obj
 
+    def teardown(self):
+        super().teardown()
+        self.test_provisioner.destroy()
+
+    def get_object(self):
+        obj = ClusterFixture()
         return obj
 
     def get_edit_data(self):
@@ -74,7 +84,7 @@ class TestClusterCRUD(BaseTestCRUD):
         )
         assert obj.get_dict(expand=True) in data
 
-    @pytest.mark.parametrize('cluster_id,status_code', [
+    @pytest.mark.parametrize('cluster_id, status_code', [
         (uuid4(), 404),
         ('wrong-uuid', 404),
     ])
@@ -148,14 +158,13 @@ class TestClusterCRUD(BaseTestCRUD):
         assert 'progress' in response.json
         assert 'result' in response.json
 
-    def test_create(self, provisioner, user):
-        provisioner.save()
-        user.save()
+    def test_create(self):
 
+        self.provisioner.save()
         post_data = {
             'name': 'Testing cluster',
-            'provisioner': 'Provisioner:{}'.format(provisioner.id),
-            'owner': 'User:{}'.format(user.id)
+            'provisioner': 'Provisioner:{}'.format(self.provisioner.id),
+            'owner': 'User:{}'.format(self.user.id)
         }
 
         response = self.client.post(
@@ -169,11 +178,11 @@ class TestClusterCRUD(BaseTestCRUD):
 
         assert 'id' in response.json
         assert response.json['name'] == post_data['name']
-        assert response.json['provisioner'] == provisioner.get_dict(expand=True)
+        assert response.json['provisioner'] == self.provisioner.get_dict(expand=True)
 
-    def test_provision_after_create(self, provisioner, user, monkeypatch):
-        provisioner.save()
-        user.save()
+    def test_provision_after_create(self, monkeypatch):
+        self.provisioner.save()
+        self.user.save()
 
         def fake_provision(self, *args, **kwargs):
             self.cluster.name = 'Provisioned'
@@ -181,12 +190,12 @@ class TestClusterCRUD(BaseTestCRUD):
 
             return True, None
 
-        monkeypatch.setattr(provisioner.get_engine_cls(), 'provision', fake_provision)
+        monkeypatch.setattr(self.provisioner.get_engine_cls(), 'provision', fake_provision)
 
         post_data = {
             'name': 'Testing cluster',
-            'provisioner': 'Provisioner:{}'.format(provisioner.id),
-            'owner': 'User:{}'.format(user.id)
+            'provisioner': 'Provisioner:{}'.format(self.provisioner.id),
+            'owner': 'User:{}'.format(self.user.id)
         }
 
         response = self.client.post(
@@ -202,19 +211,19 @@ class TestClusterCRUD(BaseTestCRUD):
         assert response.status_code == 200
         assert obj.name == 'Provisioned'
 
-    def test_provision_failed(self, provisioner, user, monkeypatch):
-        provisioner.save()
-        user.save()
+    def test_provision_failed(self, monkeypatch):
+        self.provisioner.save()
+        self.user.save()
 
         def fake_provision(self, *args, **kwargs):
             return False, 'Testing msg'
 
-        monkeypatch.setattr(provisioner.get_engine_cls(), 'provision', fake_provision)
+        monkeypatch.setattr(self.provisioner.get_engine_cls(), 'provision', fake_provision)
 
         post_data = {
             'name': 'Testing cluster',
-            'provisioner': 'Provisioner:{}'.format(provisioner.id),
-            'owner': 'User:{}'.format(user.id)
+            'provisioner': 'Provisioner:{}'.format(self.provisioner.id),
+            'owner': 'User:{}'.format(self.user.id)
         }
 
         response = self.client.post(
@@ -230,15 +239,15 @@ class TestClusterCRUD(BaseTestCRUD):
         config.get('PROVISIONER_UNKNOWN_STATE'),
         config.get('PROVISIONER_ERROR_STATE')
     ])
-    def test_provision_failed_with_unhealthy_provisioner(self, provisioner, user, provisioner_state):
-        provisioner.state = provisioner_state
-        provisioner.save(check_status=False)
-        user.save()
+    def test_provision_failed_with_unhealthy_provisioner(self, provisioner_state):
+        self.provisioner.state = provisioner_state
+        self.provisioner.save(check_status=False)
+        self.user.save()
 
         post_data = {
             'name': 'Testing cluster',
-            'provisioner': 'Provisioner:{}'.format(provisioner.id),
-            'owner': 'User:{}'.format(user.id)
+            'provisioner': 'Provisioner:{}'.format(self.provisioner.id),
+            'owner': 'User:{}'.format(self.user.id)
         }
 
         response = self.client.post(
@@ -274,8 +283,11 @@ class TestClusterCRUD(BaseTestCRUD):
         assert response.status_code == code
 
     def test_cluster_list_run_get_state(self, monkeypatch):
+        clusters_to_remove = []
         for _ in range(10):
-            c = cluster()
+            test_cluster = ClusterFixture()
+            clusters_to_remove.append(test_cluster)
+            c = test_cluster.obj
             c.save()
 
         def fake_get_state(self):
@@ -298,3 +310,6 @@ class TestClusterCRUD(BaseTestCRUD):
 
         assert obj.metadata, 'get_state wasn\'t executed for cluster {}'.format(obj)
         assert obj.metadata['executed'], 'get_state wasn\'t executed'
+
+        for c in clusters_to_remove:
+            c.destroy()

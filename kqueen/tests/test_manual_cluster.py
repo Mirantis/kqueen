@@ -1,5 +1,5 @@
 from flask import url_for
-from kqueen.conftest import auth_header
+from kqueen.conftest import AuthHeader
 from kqueen.models import User
 from datetime import datetime
 
@@ -11,11 +11,15 @@ import yaml
 @pytest.mark.usefixtures('client_class')
 class TestInsertManualCluster:
     def setup(self):
-        self.auth_header = auth_header(self.client)
+        self.auth_header_test = AuthHeader()
+        self.auth_header = self.auth_header_test.get(self.client)
         self.namespace = self.auth_header['X-Test-Namespace']
         self.user = User.load(None, self.auth_header['X-User'])
 
         self.provisioner_id = None
+
+    def teardown(self):
+        self.auth_header_test.destroy()
 
     def test_run(self):
         self.create_provisioner()

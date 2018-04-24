@@ -1,5 +1,5 @@
 from flask import url_for
-from kqueen.conftest import app
+from kqueen.conftest import app, AuthHeader
 from uuid import uuid4
 
 import pytest
@@ -46,10 +46,12 @@ def get_urls():
     return urls
 
 
-def test_root(client, auth_header):
-    response = client.get(url_for('api.index'), headers=auth_header)
+def test_root(client):
+    test_auth_header = AuthHeader()
+    response = client.get(url_for('api.index'), headers=test_auth_header.get(client))
 
     assert response.json == {'response': 'Gutten tag!'}
+    test_auth_header.destroy()
 
 
 # TODO: fix bad request code
