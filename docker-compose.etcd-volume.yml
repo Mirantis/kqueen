@@ -21,16 +21,13 @@ services:
       ETCD_LISTEN_CLIENT_URLS: http://0.0.0.0:4001
       ETCD_LISTEN_PEER_URLS: http://0.0.0.0:2380
       ETCD_ADVERTISE_CLIENT_URLS: http://127.0.0.1:4001,http://etcd:4001
-      ETCD_DATA_DIR: ${ETCD_DATA_DIR:-/default.etcd}
       ETCD_FORCE_NEW_CLUSTER: ${ETCD_FORCE_NEW_CLUSTER:-0}
+      ETCD_DATA_DIR: ${ETCD_DATA_DIR:-/0.etcd}
 
     volumes:
       - type: bind
-        source: ./workspace/etcd-data
-        target: /default.etcd
-      #- type: volume
-        #source: etcd-data
-        #target: /default.etcd
+        source: ./workspace/etc-backup
+        target: /root/etcd-backup
 
 volumes:
   etcd-data:
