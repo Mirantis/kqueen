@@ -1,13 +1,13 @@
 from .test_crud import BaseTestCRUD
 from flask import url_for
-from kqueen.conftest import provisioner
+from kqueen.conftest import ProvisionerFixture
 from kqueen.engines.__init__ import __all__ as all_engines
 from pprint import pprint as print
 
 
 class TestProvisionerCRUD(BaseTestCRUD):
     def get_object(self):
-        return provisioner()
+        return ProvisionerFixture()
 
     def get_edit_data(self):
         return {

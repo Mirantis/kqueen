@@ -1,7 +1,7 @@
 from .test_crud import BaseTestCRUD
 from flask import url_for
 from kqueen.config import current_config
-from kqueen.conftest import organization
+from kqueen.conftest import OrganizationFixture
 
 import pytest
 
@@ -10,7 +10,7 @@ config = current_config()
 
 class TestOrganizationCRUD(BaseTestCRUD):
     def get_object(self):
-        return organization()
+        return OrganizationFixture()
 
     def get_edit_data(self):
         return {

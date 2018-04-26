@@ -16,6 +16,9 @@ class TestAuthMethod:
 
         self.auth_class = LDAPAuth(uri='ldap://127.0.0.1', admin_dn='cn=admin,dc=example,dc=org', _password='heslo123')
 
+    def teardown(self):
+        self.user.delete()
+
     def test_raise_on_missing_creds(self):
         with pytest.raises(Exception, msg='Failed to configure LDAP, please provide valid LDAP credentials'):
             LDAPAuth()

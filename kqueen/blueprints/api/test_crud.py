@@ -1,7 +1,11 @@
 from flask import url_for
-from kqueen.conftest import auth_header, user_with_namespace, get_auth_token
+from kqueen.conftest import AuthHeader
+from kqueen.conftest import UserWithNamespaceFixture
+from kqueen.conftest import UserFixture
+from kqueen.conftest import etcd_setup
 from kqueen.config import current_config
 
+import faker
 import json
 import pytest
 
@@ -51,13 +55,22 @@ class BaseTestCRUD:
             ),
         }
 
-    def setup(self):
-        self.obj = self.get_object()
+    @pytest.fixture(autouse=True)
+    def setup(self, client):
+        etcd_setup()
+        self.test_object = self.get_object()
+        self.obj = self.test_object.obj
         self.obj.save()
-
-        self.auth_header = auth_header(self.client)
+        self.test_user = UserFixture()
+        self.test_auth_header = AuthHeader(self.test_user)
+        self.auth_header = self.test_auth_header.get(client)
         self.namespace = self.auth_header['X-Test-Namespace']
+
         self.urls = self.get_urls()
+
+    def teardown(self):
+        self.test_auth_header.destroy()
+        self.test_object.destroy()
 
     def test_crud_create(self):
         data = self.get_create_data()
@@ -117,7 +130,7 @@ class BaseTestCRUD:
     def test_crud_list(self):
         response = self.client.get(
             self.urls['list'],
-            headers=self.auth_header,
+            headers=self.auth_header
         )
 
         data = response.json
@@ -186,7 +199,7 @@ class BaseTestCRUD:
     def test_crud_delete(self):
         response = self.client.delete(
             self.urls['delete'],
-            headers=self.auth_header,
+            headers=self.auth_header
         )
 
         assert response.status_code == 200
@@ -197,47 +210,37 @@ class BaseTestCRUD:
             )
 
     def test_crud_delete_failed(self, monkeypatch):
+        original_delete = getattr(self.obj.__class__, 'delete')
+
         def fake_delete(self, *args, **kwargs):
             raise Exception('Testing')
 
         monkeypatch.setattr(self.obj.__class__, 'delete', fake_delete)
 
-        response = self.client.delete(
-            self.urls['delete'],
-            headers=self.auth_header,
-        )
+        response = self.client.delete(self.urls['delete'], headers=self.auth_header)
 
         assert response.status_code == 500
+        monkeypatch.setattr(self.obj.__class__, 'delete', original_delete)
 
     #
     # namespacing tests
     #
-    @pytest.fixture
-    def setup_namespace(self):
-        self.user1 = user_with_namespace()
-        self.user2 = user_with_namespace()
 
-    @pytest.mark.usefixtures('setup_namespace')
-    def test_namespacing(self, client):
-        obj = self.get_object()
+    def test_namespacing(self):
+        user1 = UserWithNamespaceFixture()
+        user1.auth_header = AuthHeader(user1).get(self.client)
+        user2 = UserWithNamespaceFixture()
+        user2.auth_header = AuthHeader(user2).get(self.client)
 
         # skip if object class isn't namespaced
-        if not obj.__class__.is_namespaced():
-            pytest.skip('Class {} isn\'t namespaced'.format(obj.__class__.__name__))
+        if not self.obj.__class__.is_namespaced():
+            pytest.skip('Class {} isn\'t namespaced'.format(self.obj.__class__.__name__))
 
         objs = {}
 
         # create objects for both users
-        for u in [self.user1, self.user2]:
+        for u in [user1, user2]:
             data = self.get_create_data()
-
-            auth_header = get_auth_token(self.client, u)
-            headers = {
-                'Authorization': '{} {}'.format(
-                    config.get('JWT_AUTH_HEADER_PREFIX'),
-                    auth_header
-                )
-            }
 
             # TODO: fix this
             # Dirty hack to make testing data namespaced.
@@ -248,13 +251,14 @@ class BaseTestCRUD:
             response = self.client.post(
                 url_for('api.organization_create'),
                 data=json.dumps(organization_data),
-                headers=headers,
+                headers=u.auth_header,
                 content_type='application/json',
             )
             organization_ref = 'Organization:{}'.format(response.json['id'])
+            profile = faker.Faker().simple_profile()
             owner_data = {
-                'username': 'Test owner',
-                'email': 'owner@pytest.org',
+                'username': profile['username'],
+                'email': profile['mail'],
                 'password': 'pytest',
                 'organization': organization_ref,
                 'role': 'admin',
@@ -263,7 +267,7 @@ class BaseTestCRUD:
             response = self.client.post(
                 url_for('api.user_create'),
                 data=json.dumps(owner_data),
-                headers=headers,
+                headers=u.auth_header,
                 content_type='application/json',
             )
             if 'owner' in data:
@@ -277,7 +281,7 @@ class BaseTestCRUD:
                 response = self.client.post(
                     url_for('api.provisioner_create'),
                     data=json.dumps(provisioner_data),
-                    headers=headers,
+                    headers=u.auth_header,
                     content_type='application/json',
                 )
                 data['provisioner'] = 'Provisioner:{}'.format(response.json['id'])
@@ -285,36 +289,29 @@ class BaseTestCRUD:
             response = self.client.post(
                 self.urls['create'],
                 data=json.dumps(data),
-                headers=headers,
+                headers=u.auth_header,
                 content_type='application/json',
             )
 
             print(response.data.decode(response.charset))
-            objs[u.namespace] = response.json['id']
+            objs[u.obj.namespace] = response.json['id']
 
             print(response.json)
 
         # test use can't read other's object
-        for u in [self.user1, self.user2]:
-            auth_header = get_auth_token(self.client, u)
-            headers = {
-                'Authorization': '{} {}'.format(
-                    config.get('JWT_AUTH_HEADER_PREFIX'),
-                    auth_header
-                )
-            }
+        for u in [user1, user2]:
 
             for ns, pk in objs.items():
                 url = self.get_urls(pk)['get']
 
-                if ns == u.namespace:
+                if ns == u.obj.namespace:
                     req_code = 200
                 else:
                     req_code = 404
 
                 response = self.client.get(
                     url,
-                    headers=headers,
+                    headers=u.auth_header,
                     content_type='application/json',
                 )
 

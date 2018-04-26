@@ -49,14 +49,18 @@ class TestClusterModel:
         empty = Cluster(provisioner._object_namespace, name='test', provisioner=provisioner, owner=user)
         empty.save()
 
+        empty.delete()
+
     def test_added_key(self, cluster):
         """Test _key is added after saving"""
+        cluster_id = cluster.id
         cluster.id = None
 
         assert not hasattr(cluster, '_key')
 
         cluster.save()
         assert hasattr(cluster, '_key'), 'Saved object is missing _key'
+        cluster.id = cluster_id
 
     def test_exists(self, cluster):
         assert not Cluster.exists(cluster._object_namespace, cluster.id)
@@ -65,10 +69,12 @@ class TestClusterModel:
         assert Cluster.exists(cluster._object_namespace, cluster.id)
 
     def test_get_db_key_missing(self, cluster):
+        cluster_id = cluster.id
         cluster.id = None
 
         with pytest.raises(Exception, match=r'Missing object id'):
             cluster.get_db_key()
+        cluster.id = cluster_id
 
     def test_list_with_objects(self, cluster):
         cluster.save()
@@ -205,6 +211,7 @@ class TestProvisionerSerialization:
         loaded = Provisioner.load(user.namespace, provisioner.id)
 
         assert loaded.get_dict(True) == provisioner.get_dict(True)
+        provisioner.delete()
 
 
 class TestClusterState:
