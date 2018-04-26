@@ -48,8 +48,37 @@ class JenkinsEngine(BaseEngine):
                     'required': True
                 }
             }
+            'override_parameters': {
+                'type': 'text',
+                'label': 'Key=Value line by line',
+                'order': 2,
+            },
         },
-        'cluster': {}
+        'cluster': {
+            'network_policy': {
+                'type': 'select',
+                'choices': [
+                    ('calico', 'Calico Network Provider'),
+                ],
+                'label': 'Network Policy',
+                'order': 3,
+             },
+            'enable_policy': {
+                'type': 'checkbox',
+                'label': 'Network Policy',
+                'order': 4,
+                'checkbox_text': 'Enable Network Policy (2 or more nodes are required)',
+                'class_name': 'nwpolicy-checkbox'
+             }
+            'network_range': {
+                'type': 'string',
+                'label': 'Network Range',
+                'default': 5,
+                'validators': {
+                #TODO CIDR validation
+                }
+            }
+        }
     }
 
     def __init__(self, cluster, **kwargs):
@@ -64,8 +93,28 @@ class JenkinsEngine(BaseEngine):
         self.client = self._get_client()
         # Cache settings
         self.cache_timeout = 5 * 60
+        self.cluster_config = {
+            'cluster': {
+                'name': self.cluster_id,
+                'networkPolicy': {
+                    'provider': kwargs.get('network_policy', 'calico')
+                    'enabled': kwargs.get('enable_policy', False)
+                    'network_range': kwargs.get('network_range', {})
+                }
+            }
+        }
+        self.job_override_params = kwargs.get('override_parameters', [])
 
     def _get_provision_job_builds(self):
+        """
+        Get builds history of Jenkins job used to provision clusters
+
+        Returns:
+            dict: More information at :func:`~jenkins.Jenkins.get_job_info`
+        """
+        return self.client.get_job_info(self.provision_job_name, depth=1)
+
+    def _parse(self):
         """
         Get builds history of Jenkins job used to provision clusters
 
