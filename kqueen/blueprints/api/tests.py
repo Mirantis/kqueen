@@ -50,7 +50,7 @@ def test_root(client):
     test_auth_header = AuthHeader()
     response = client.get(url_for('api.index'), headers=test_auth_header.get(client))
 
-    assert response.json == {'response': 'Gutten tag!'}
+    assert response.json == {'response': 'Kqueen ready!'}
     test_auth_header.destroy()
 
 
