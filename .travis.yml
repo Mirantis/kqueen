@@ -53,13 +53,15 @@ jobs:
     install:
     - "/bin/true"
     script:
+    # https://github.com/coreos/etcd/blob/master/Documentation/v2/admin_guide.md#disaster-recovery
     - docker-compose -f docker-compose.etcd-volume.yml up -d
     - docker-compose -f docker-compose.etcd-volume.yml exec etcd etcdctl mkdir /travis/
     - docker-compose -f docker-compose.etcd-volume.yml exec etcd etcdctl set /travis/commit $TRAVIS_COMMIT
-    - docker-compose -f docker-compose.etcd-volume.yml exec etcd etcdctl backup --data-dir /0.etcd/ --backup-dir /root/backup/
+    - docker-compose -f docker-compose.etcd-volume.yml exec etcd etcdctl backup --data-dir /0.etcd/ --backup-dir /root/etcd-backup/
     - docker-compose -f docker-compose.etcd-volume.yml stop
     - docker-compose -f docker-compose.etcd-volume.yml rm -fv
-    - sed -i 's/#//g' docker-compose.etcd-volume.yml
+    # restore and verify
+    - export ETCD_FORCE_NEW_CLUSTER=1 ETCD_DATA_DIR=/root/etcd-backup/
     - docker-compose -f docker-compose.etcd-volume.yml up -d
     - docker-compose -f docker-compose.etcd-volume.yml exec etcd etcdctl ls --recursive /travis/
     - |

@@ -1,19 +1,18 @@
-version: '2'
+version: '3.2'
 networks:
   default:
     driver: bridge
     ipam:
       driver: default
       config:
-        - subnet: 172.16.238.0/24
-          gateway: 172.16.238.1
+        -
+          # your docker env subnet
+          subnet: 172.16.254.0/24
 services:
   etcd:
     image: quay.io/coreos/etcd:latest
     ports:
       - 127.0.0.1:4001:4001
-    volumes:
-      - /tmp/backup/:/root/backup/
     environment:
       ETCD_NAME: 0
       ETCD_INITIAL_ADVERTISE_PEER_URLS: http://etcd:2380
@@ -22,5 +21,13 @@ services:
       ETCD_LISTEN_CLIENT_URLS: http://0.0.0.0:4001
       ETCD_LISTEN_PEER_URLS: http://0.0.0.0:2380
       ETCD_ADVERTISE_CLIENT_URLS: http://127.0.0.1:4001,http://etcd:4001
-      #ETCD_DATA_DIR: /root/backup/
-      #ETCD_FORCE_NEW_CLUSTER: 1
+      ETCD_FORCE_NEW_CLUSTER: ${ETCD_FORCE_NEW_CLUSTER:-0}
+      ETCD_DATA_DIR: ${ETCD_DATA_DIR:-/0.etcd}
+
+    volumes:
+      - type: bind
+        source: ./workspace/etc-backup
+        target: /root/etcd-backup
+
+volumes:
+  etcd-data:
