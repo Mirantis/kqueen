@@ -347,7 +347,7 @@ components:
     getAuthConfig:
       type: "object"
       auth_method_name:
-        type: "object":
+        type: "object"
         properties:
           engine:
             type: "string"
@@ -1070,7 +1070,7 @@ paths:
           content:
             application/json:
               schema:
-               type: "array"
+                type: "array"
                 $ref: "#/components/schemas/getUser"
         "401":
           $ref: "#/components/responses/Unauthorized"
