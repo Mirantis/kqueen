@@ -17,6 +17,7 @@ class TestClusterCRUD(BaseTestCRUD):
         self.user = self.test_user.obj
         self.test_provisioner = ProvisionerFixture(self.test_user)
         self.provisioner = self.test_provisioner.obj
+        self.provisioner.save()
 
     def teardown(self):
         super().teardown()
@@ -160,7 +161,6 @@ class TestClusterCRUD(BaseTestCRUD):
 
     def test_create(self):
 
-        self.provisioner.save()
         post_data = {
             'name': 'Testing cluster',
             'provisioner': 'Provisioner:{}'.format(self.provisioner.id),
@@ -181,7 +181,6 @@ class TestClusterCRUD(BaseTestCRUD):
         assert response.json['provisioner'] == self.provisioner.get_dict(expand=True)
 
     def test_provision_after_create(self, monkeypatch):
-        self.provisioner.save()
         self.user.save()
 
         def fake_provision(self, *args, **kwargs):
@@ -212,7 +211,6 @@ class TestClusterCRUD(BaseTestCRUD):
         assert obj.name == 'Provisioned'
 
     def test_provision_failed(self, monkeypatch):
-        self.provisioner.save()
         self.user.save()
 
         def fake_provision(self, *args, **kwargs):

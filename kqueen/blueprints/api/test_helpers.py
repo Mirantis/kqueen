@@ -1,16 +1,25 @@
 from .helpers import get_object
 
 from kqueen.storages.exceptions import BackendError
+from kqueen.conftest import ClusterFixture
 
 import pytest
 
 
-@pytest.mark.usefixtures('cluster', 'user')
+@pytest.mark.usefixtures('user')
 class TestGetObject:
+    def setup(self):
+        self.test_cluster = ClusterFixture()
+        self.cluster = self.test_cluster.obj
+        self.cluster.save()
 
-    def test_get_objects(self, cluster, user):
-        cluster.save()
-        obj = get_object(cluster.__class__, cluster.id, user)
+    def teardown(self):
+        self.test_cluster.destroy()
+
+    def test_get_objects(self, user):
+
+        obj = get_object(self.cluster.__class__,
+                         self.cluster.id, user)
 
         assert obj.get_dict(True) == obj.get_dict(True)
 
@@ -20,6 +29,6 @@ class TestGetObject:
         None,
         {},
     ])
-    def test_get_object_malformed_user(self, cluster, bad_user):
+    def test_get_object_malformed_user(self, bad_user):
         with pytest.raises(BackendError, match='Missing namespace for class'):
-            get_object(cluster.__class__, cluster.id, bad_user)
+            get_object(self.cluster.__class__, self.cluster.id, bad_user)
