@@ -48,34 +48,25 @@ class JenkinsEngine(BaseEngine):
                     'required': True
                 }
             }
-            'override_parameters': {
-                'type': 'text',
-                'label': 'Key=Value line by line',
-                'order': 2,
-            },
+            # TODO below form should be increased dynamically in case of 'add one more parameter'
+            # Use-case: 'add parameter'->'key': 'value'-> 'add parameter'-> etc...
+            # Should return dict{}
         },
         'cluster': {
-            'network_policy': {
-                'type': 'select',
-                'choices': [
-                    ('calico', 'Calico Network Provider'),
-                ],
-                'label': 'Network Policy',
-                'order': 3,
-             },
-            'enable_policy': {
-                'type': 'checkbox',
-                'label': 'Network Policy',
-                'order': 4,
-                'checkbox_text': 'Enable Network Policy (2 or more nodes are required)',
-                'class_name': 'nwpolicy-checkbox'
-             }
-            'network_range': {
-                'type': 'string',
-                'label': 'Network Range',
-                'default': 5,
+            'name': {
+                'type': 'text',
+                'label': 'Name',
+                'order': 0,
                 'validators': {
-                #TODO CIDR validation
+                    'required': True
+                }
+            },
+            'override_parameters': {
+                'type': 'parameters',
+                'label': 'Override job parameters',
+                'order': 1,
+                'validators': {
+                    'required': False
                 }
             }
         }
@@ -93,56 +84,7 @@ class JenkinsEngine(BaseEngine):
         self.client = self._get_client()
         # Cache settings
         self.cache_timeout = 5 * 60
-        self.cluster_config = {
-            'cluster': {
-                'name': self.cluster_id,
-                'networkPolicy': {
-                    'provider': kwargs.get('network_policy', 'calico')
-                    'enabled': kwargs.get('enable_policy', False)
-                    'network_range': kwargs.get('network_range', {})
-                }
-            }
-        }
-        self.job_override_params = kwargs.get('override_parameters', [])
-
-    def _get_provision_job_builds(self):
-        """
-        Get builds history of Jenkins job used to provision clusters
-
-        Returns:
-            dict: More information at :func:`~jenkins.Jenkins.get_job_info`
-        """
-        return self.client.get_job_info(self.provision_job_name, depth=1)
-
-    def _parse(self):
-        """
-        Get builds history of Jenkins job used to provision clusters
-
-        Returns:
-            dict: More information at :func:`~jenkins.Jenkins.get_job_info`
-        """
-        return self.client.get_job_info(self.provision_job_name, depth=1)
-
-    @classmethod
-    def engine_status(cls, **kwargs):
-        """
-        Implementation of :func:`~kqueen.engines.base.BaseEngine.engine_status`
-        """
-        conn_kw = {
-            'username': kwargs.get('username', config.get('JENKINS_USERNAME')),
-            'password': kwargs.get('password', config.get('JENKINS_PASSWORD')),
-            'timeout': 10
-        }
-        status = config.get('PROVISIONER_UNKNOWN_STATE')
-        try:
-            client = jenkins.Jenkins(config.get('JENKINS_API_URL'), **conn_kw)
-            auth_verify = client.get_whoami()
-            if auth_verify:
-                status = config.get('PROVISIONER_OK_STATE')
-        except Exception as e:
-            logger.exception('Could not contact JenkinsEngine backend: ')
-            status = config.get('PROVISIONER_ERROR_STATE')
-        return status
+        self.job_override_params = kwargs.get('override_parameters', {})
 
     def _get_client(self):
         """
@@ -157,6 +99,52 @@ class JenkinsEngine(BaseEngine):
             'timeout': 10
         })
 
+    def _get_provision_job_builds(self):
+        """
+        Get builds history of Jenkins job used to provision clusters
+
+        Returns:
+            dict: More information at :func:`~jenkins.Jenkins.get_job_info`
+        """
+        return self.client.get_job_info(self.provision_job_name, depth=1)
+
+    def _parameter_exist(self, parameter):
+        """
+        Check, that key parameter, defined by
+        the user exists in the specified Job.
+
+        Args:
+            string: 'ParameterName'
+
+        Returns:
+            bool: True if all parameters exist
+        """
+
+        try:
+            job_body = self.client.get_job_info(self.provision_job_name, depth=1)
+            parameters = []
+
+            for i in job_body['property']:
+                if i.get('parameterDefinitions', None):
+                    for param in i['parameterDefinitions']:
+                        parameters.append(param.get('name', None))
+
+            if parameters:
+                if parameter in parameters:
+                    logger.debug('Defined parameter {} can be configured through Kqueen'
+                                 .format(parameter))
+                    return True
+                else:
+                    logger.error('Defined parameter {} can not be configured through Kqueen,'
+                                 'check Jenkins Job body'.format(parameter))
+                    return False
+            else:
+                logger.error('Failed to load Jenkins Job parameters')
+                return False
+        except jenkins.JenkinsException:
+            logger.exception('Failed to load Jenkins Job body')
+            return False
+
     def provision(self, **kwargs):
         """
         Implementation of :func:`~kqueen.engines.base.BaseEngine.provision`
@@ -167,6 +155,19 @@ class JenkinsEngine(BaseEngine):
         # PATCH THE CTX TO CONTAIN CLUSTER NAME AND UUID
         ctx[cluster_name] = 'kqueen-{}'.format(self.cluster.id)
         ctx[cluster_uuid] = self.cluster.id
+        if self.job_override_params:
+            logger.debug('The following job parameters will be overwritten: {}'
+                         .format(self.job_override_params))
+            for key, value in self.job_override_params.items():
+                ctx[key] = ctx[value]
+
+        for param in ctx.keys():
+            if not self._parameter_exist(param):
+                msg = 'Failed to manage job parameter: {}'.format(param)
+                logger.error(msg)
+                return False, msg
+
+        logger.debug('Current Job configuration: {}, provisioning started...'.format(ctx))
         try:
             self.client.build_job(self.provision_job_name, ctx)
             return True, None
@@ -370,3 +371,24 @@ class JenkinsEngine(BaseEngine):
         except Exception:
             response = 500
         return {'response': response, 'progress': progress, 'result': result}
+
+    @classmethod
+    def engine_status(cls, **kwargs):
+        """
+        Implementation of :func:`~kqueen.engines.base.BaseEngine.engine_status`
+        """
+        conn_kw = {
+            'username': kwargs.get('username', config.get('JENKINS_USERNAME')),
+            'password': kwargs.get('password', config.get('JENKINS_PASSWORD')),
+            'timeout': 10
+        }
+        status = config.get('PROVISIONER_UNKNOWN_STATE')
+        try:
+            client = jenkins.Jenkins(config.get('JENKINS_API_URL'), **conn_kw)
+            auth_verify = client.get_whoami()
+            if auth_verify:
+                status = config.get('PROVISIONER_OK_STATE')
+        except Exception as e:
+            logger.exception('Could not contact JenkinsEngine backend: ')
+            status = config.get('PROVISIONER_ERROR_STATE')
+        return status
