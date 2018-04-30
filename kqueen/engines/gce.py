@@ -103,28 +103,31 @@ class GceEngine(BaseEngine):
                     'required': True
                 }
             },
-            'network_range': {
-                # TODO set CIDR validators, decide class naming after UI changes
-                'type': 'text',
-                'label': 'Network range CIDR',
-                'order': 4,
-                'class_name': 'gke_network_range',
-                'validators': {
-                    'required': False,
-                }
-            },
             'network_policy': {
                 'type': 'select',
                 'label': 'Network Policy',
-                'order': 5,
+                'order': 4,
                 'choices': [
-                    (None, '(None)'),
+                    ('none', '(None)'),
                     ('CALICO', 'Calico')
                 ],
+                'default': 'none',
                 'validators': {
-                    'required': True
+                    'required': False
                 },
                 'class_name': 'network-policy'
+            },
+            'network_range': {
+                'type': 'text',
+                'label': 'Network range CIDR',
+                'order': 5,
+                'placeholder': '10.0.0.0/14',
+                'validators': {
+                    'required': False,
+                    'regexp': '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}'
+                              '([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])'
+                              '(/([0-9]|[1-9][0-9]|2[0-4]))?$'
+                }
             }
         }
     }
@@ -150,7 +153,7 @@ class GceEngine(BaseEngine):
                 'addonsConfig': {},
                 'clusterIpv4Cidr': kwargs.get('network_range', ''),
                 'networkPolicy': {
-                    'provider': kwargs['network_policy'].get('provider', 'PROVIDER_UNSPECIFIED'),
+                    'provider': kwargs.get('network_policy', 'PROVIDER_UNSPECIFIED'),
                     'enabled': bool(kwargs.get('network_policy', False))
                 }
             }
@@ -212,20 +215,19 @@ class GceEngine(BaseEngine):
             request.execute()
             # TODO: check if provisioning response is healthy
         except Exception as e:
-            msg = 'Creating cluster {} failed with the following reason: {}'.format(self.cluster_id,
-                                                                                    e)
+            msg = 'Creating cluster {} failed with the following reason: {}'.format(
+                self.cluster_id, e)
             logger.exception(msg)
             return False, msg
 
-        current_policy = self.cluster_config['cluster']['networkPolicy']
-        meta = self.cluster.metadata.get('network_policy', {})
-
-        if current_policy['provider'] is not None:
-            meta['provider'] = current_policy['provider']
-            meta['enabled'] = current_policy['enabled']
-            logger.critical('Provisioning cluster {} started,\
-                            updating metadata...{}'.format(self.cluster_id, meta))
+        cluster_config = self.cluster_config['cluster']
+        if cluster_config['networkPolicy']['provider'] is not None:
+            self.cluster.metadata['network_policy'] = cluster_config['networkPolicy']
+            logger.critical('Provisioning cluster {} started, updating metadata...{}'
+                            .format(self.cluster_id, cluster_config['networkPolicy']))
             self.cluster.save()
+
+        logger.critical(self.cluster.metadata)
 
         return True, None
 
@@ -321,10 +323,10 @@ class GceEngine(BaseEngine):
 
         logger.debug('Setting {} network policy to cluster {}...'.format(network_provider,
                                                                          self.cluster_id))
-        request = self.client.projects().zones().clusters().setNetworkPolicy(projectId=self.project,
-                                                                             zone=self.zone,
-                                                                             clusterId=self.cluster_id,
-                                                                             body=network_policy_body)
+        request = self.client.projects().zones().clusters().setNetworkPolicy(
+            projectId=self.project, zone=self.zone,
+            clusterId=self.cluster_id, body=network_policy_body)
+
         try:
             request.execute()
         except Exception as e:
@@ -340,8 +342,8 @@ class GceEngine(BaseEngine):
         logger.critical('current NETMETA..{}'.format(meta))
         meta['provider'] = network_provider
         meta['enabled'] = enabled
-        logger.critical(' Updating NETWORKPOLICY for cluster {} started,\
-                        saving metadata...{}'.format(self.cluster_id, self.cluster.metadata['network_policy']))
+        logger.critical('Updating NETWORK POLICY for cluster {} started, saving metadata...{}'
+                        .format(self.cluster_id, self.cluster.metadata['network_policy']))
         self.cluster.save()
 
         return True, None
