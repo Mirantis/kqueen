@@ -455,3 +455,5 @@ Example of etcd recovery workflow:
 
          # Start new etcd with these two extra parameters (among the other)
          # for example: etcd --force-new-cluster
+
+.. include:: kqueen.cli_api_examples.rst
