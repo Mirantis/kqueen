@@ -14,7 +14,7 @@ STATE_MAP = {
     'PROVISIONING': config.get('CLUSTER_PROVISIONING_STATE'),
     'RUNNING': config.get('CLUSTER_OK_STATE'),
     'STOPPING': config.get('CLUSTER_DEPROVISIONING_STATE'),
-    'RECONCILING': config.get('CLUSTER_RESIZING_STATE')
+    'RECONCILING': config.get('CLUSTER_UPDATING_STATE')
 }
 
 
@@ -103,20 +103,6 @@ class GceEngine(BaseEngine):
                     'required': True
                 }
             },
-            'network_policy': {
-                'type': 'select',
-                'label': 'Network Policy',
-                'order': 4,
-                'choices': [
-                    ('none', '(None)'),
-                    ('CALICO', 'Calico')
-                ],
-                'default': 'none',
-                'validators': {
-                    'required': False
-                },
-                'class_name': 'network-policy'
-            },
             'network_range': {
                 'type': 'text',
                 'label': 'Network range CIDR',
@@ -124,10 +110,24 @@ class GceEngine(BaseEngine):
                 'placeholder': '10.0.0.0/14',
                 'validators': {
                     'required': False,
-                    'regexp': '^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}'
+                    'regexp': '(^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}'
                               '([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])'
-                              '(/([0-9]|[1-9][0-9]|2[0-4]))?$'
+                              '(/([0-9]|[1-9][0-9]|2[0-4]))?$)?'
                 }
+            },
+            'network_policy': {
+                'type': 'select',
+                'label': 'Network Policy',
+                'order': 4,
+                'choices': [
+                    ('PROVIDER_UNSPECIFIED', '(None)'),
+                    ('CALICO', 'Calico')
+                ],
+                'default': 'PROVIDER_UNSPECIFIED',
+                'validators': {
+                    'required': False
+                },
+                'class_name': 'network-policy'
             }
         }
     }
@@ -143,6 +143,19 @@ class GceEngine(BaseEngine):
         self.project = self.service_account_info.get('project_id', '')
         self.zone = kwargs.get('zone', '-')
         self.cluster_id = 'a' + self.cluster.id.replace('-', '')
+
+        # Generate metadata for Network Policies if empty
+        if not isinstance(cluster.metadata.get('network_policy'), dict):
+            network_provider = kwargs.get('network_policy', 'PROVIDER_UNSPECIFIED')
+            self.cluster.metadata['network_policy'] = {
+                'provider': network_provider,
+                'enabled': network_provider != 'PROVIDER_UNSPECIFIED'
+            }
+            logger.debug('Generate metadata for network policies: {}'
+                         .format(self.cluster.metadata['network_policy']))
+            self.cluster.save()
+
+        meta = self.cluster.metadata
         self.cluster_config = {
             'cluster': {
                 'name': self.cluster_id,
@@ -150,19 +163,18 @@ class GceEngine(BaseEngine):
                 'nodeConfig': {
                     'machineType': kwargs.get('machine_type', 'n1-standard-1')
                 },
-                'addonsConfig': {},
+                'addonsConfig': {
+                    'networkPolicyConfig': {
+                        'disabled': meta['network_policy'].get('provider', 'PROVIDER_UNSPECIFIED') == 'PROVIDER_UNSPECIFIED'
+                    }
+                },
                 'clusterIpv4Cidr': kwargs.get('network_range', ''),
                 'networkPolicy': {
-                    'provider': kwargs.get('network_policy', 'PROVIDER_UNSPECIFIED'),
-                    'enabled': bool(kwargs.get('network_policy', False))
+                    'provider': meta['network_policy'].get('provider', 'PROVIDER_UNSPECIFIED'),
+                    'enabled': meta['network_policy'].get('enabled', False)
                 }
             }
         }
-        if self.cluster_config['cluster']['networkPolicy']['enabled'] is True:
-            logger.debug('Network addon for GKE enabled')
-            self.cluster_config = self._set_addon_config(cluster_config=self.cluster_config,
-                                                         addon='networkPolicyConfig',
-                                                         disabled=False)
 
         logger.debug('GKE cluster configuration: {}'.format(self.cluster_config))
         self.client = self._get_client()
@@ -180,29 +192,6 @@ class GceEngine(BaseEngine):
 
         return client
 
-    def _set_addon_config(self, cluster_config, addon, disabled):
-        """Set addon configutation to the cluster.
-
-        Args:
-            cluster_config(dict): Current cluster configuration
-            addon(str):           Name of supported addon
-            disabled(bool):       Enable/Disable addon
-
-        Returns:
-            dict:                 Updated cluster configuration
-
-        """
-        addons_body = {
-            addon: {
-                'disabled': disabled
-            }
-        }
-        addons_config = cluster_config['cluster'].get('addonsConfig', {})
-        addons_config[addon] = addons_body[addon]
-        logger.debug('Setting {} addon in cluster_config {}'.format(addon, cluster_config))
-
-        return cluster_config
-
     def provision(self, **kwargs):
         """
         Implementation of :func:`~kqueen.engines.base.BaseEngine.provision`
@@ -211,6 +200,16 @@ class GceEngine(BaseEngine):
         request = self.client.projects().zones().clusters().create(projectId=self.project,
                                                                    zone=self.zone,
                                                                    body=self.cluster_config)
+        cluster_config = self.cluster_config['cluster']
+        network_meta = self.cluster.metadata['network_policy']
+        if network_meta['provider'] == 'CALICO' and int(cluster_config['initialNodeCount']) < 2:
+            msg = 'Setting {} Network Policy for the cluster {} denied due to '\
+                  'unsupported configuration. The minimal size of the '\
+                  'cluster to run network policy enforcement is 2 '\
+                  'n1-standard-1 instances'.format(network_meta['provider'],
+                                                   self.cluster_id)
+            logger.error(msg)
+            return False, msg
         try:
             request.execute()
             # TODO: check if provisioning response is healthy
@@ -220,14 +219,12 @@ class GceEngine(BaseEngine):
             logger.exception(msg)
             return False, msg
 
-        cluster_config = self.cluster_config['cluster']
-        if cluster_config['networkPolicy']['provider'] is not None:
-            self.cluster.metadata['network_policy'] = cluster_config['networkPolicy']
-            logger.critical('Provisioning cluster {} started, updating metadata...{}'
-                            .format(self.cluster_id, cluster_config['networkPolicy']))
+        if cluster_config['networkPolicy']['provider'] != 'PROVIDER_UNSPECIFIED':
+            network_meta['provider'] = cluster_config['networkPolicy']['provider']
+            network_meta['enabled'] = cluster_config['networkPolicy']['enabled']
+            logger.debug('Provisioning cluster {} started, updating metadata...{}'
+                         .format(self.cluster_id, self.cluster.metadata))
             self.cluster.save()
-
-        logger.critical(self.cluster.metadata)
 
         return True, None
 
@@ -339,11 +336,10 @@ class GceEngine(BaseEngine):
                      saving metadata...'.format(network_provider, self.cluster_id))
 
         meta = self.cluster.metadata.get('network_policy', {})
-        logger.critical('current NETMETA..{}'.format(meta))
         meta['provider'] = network_provider
         meta['enabled'] = enabled
-        logger.critical('Updating NETWORK POLICY for cluster {} started, saving metadata...{}'
-                        .format(self.cluster_id, self.cluster.metadata['network_policy']))
+        logger.debug('Updating network policy for cluster {} started, saving metadata...{}'
+                     .format(self.cluster_id, self.cluster.metadata['network_policy']))
         self.cluster.save()
 
         return True, None

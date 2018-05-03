@@ -29,7 +29,7 @@ class BaseConfig:
     CLUSTER_OK_STATE = 'OK'
     CLUSTER_PROVISIONING_STATE = 'Deploying'
     CLUSTER_DEPROVISIONING_STATE = 'Destroying'
-    CLUSTER_RESIZING_STATE = 'Resizing'
+    CLUSTER_UPDATING_STATE = 'Updating'
     CLUSTER_UNKNOWN_STATE = 'Unknown'
 
     CLUSTER_STATE_ON_LIST = True

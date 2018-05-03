@@ -230,7 +230,7 @@ def cluster_set_network_policy(pk):
 
     data = request.json
     if not all(k in data for k in ('provider', 'enabled')):
-        msg = 'Failed to get network policy configuration'
+        msg = 'Incorrect network policy configuration {}'.format(data)
         logger.error(msg)
         abort(400, description=msg)
 

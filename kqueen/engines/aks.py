@@ -20,7 +20,7 @@ STATE_MAP = {
     'Succeeded': config.get('CLUSTER_OK_STATE'),
     'Deleting': config.get('CLUSTER_DEPROVISIONING_STATE'),
     'Failed': config.get('CLUSTER_ERROR_STATE'),
-    'Updating': config.get('CLUSTER_RESIZING_STATE')
+    'Updating': config.get('CLUSTER_UPDATING_STATE')
 }
 
 
