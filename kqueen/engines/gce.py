@@ -106,7 +106,7 @@ class GceEngine(BaseEngine):
             'network_range': {
                 'type': 'text',
                 'label': 'Network range CIDR',
-                'order': 5,
+                'order': 4,
                 'placeholder': '10.0.0.0/14',
                 'validators': {
                     'required': False,
@@ -125,7 +125,7 @@ class GceEngine(BaseEngine):
                 ],
                 'default': 'PROVIDER_UNSPECIFIED',
                 'validators': {
-                    'required': True
+                    'required': False
                 },
                 'class_name': 'network-policy'
             }
@@ -320,10 +320,10 @@ class GceEngine(BaseEngine):
 
         logger.debug('Setting {} network policy to cluster {}...'.format(network_provider,
                                                                          self.cluster_id))
-        request = self.client.projects().zones().clusters().setNetworkPolicy(projectId=self.project,
-                                                                             zone=self.zone,
-                                                                             clusterId=self.cluster_id,
-                                                                             body=network_policy_body)
+        request = self.client.projects().zones().clusters().setNetworkPolicy(
+            projectId=self.project, zone=self.zone,
+            clusterId=self.cluster_id, body=network_policy_body)
+
         try:
             request.execute()
         except Exception as e:
