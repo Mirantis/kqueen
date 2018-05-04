@@ -372,13 +372,12 @@ To provision a Kubernetes cluster using the Google Kubernetes Engine:
 6. Download the Json snippet.
 7. Log in to the KQueen web UI.
 8. From the ``Create Provisioner`` tab, select ``Google Kubernetes Engine``.
-9. Specify your project ID (``Project info`` tab on the main page of the GCE Dashboard https://console.cloud.google.com).
-10. Insert the downloaded Json snippet that contains the service account key and submit the provisioner creation.
-11. Click ``Deploy Cluster``.
-12. Select the defined GCE provisioner.
-13. Specify the cluster requirements.
-14. Click ``Submit``.
-15. To track the cluster status, navigate to the KQueen main dashboard.
+9. Insert the downloaded Json snippet that contains the service account key and submit the provisioner creation.
+10. Click ``Deploy Cluster``.
+11. Select the defined GCE provisioner.
+12. Specify the cluster requirements.
+13. Click ``Submit``.
+14. To track the cluster status, navigate to the KQueen main dashboard.
 
 To provision a Kubernetes cluster using the Azure Kubernetes Service:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
