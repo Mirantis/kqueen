@@ -65,7 +65,7 @@ def not_implemented(error):
 @api.route('/')
 @api.route('/health')
 def index():
-    return jsonify({'response': 'Gutten tag!'})
+    return jsonify({'response': 'Kqueen ready!'})
 
 
 # Clusters
