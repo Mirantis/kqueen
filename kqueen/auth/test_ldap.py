@@ -20,7 +20,7 @@ class TestAuthMethod:
         self.user.delete()
 
     def test_raise_on_missing_creds(self):
-        with pytest.raises(Exception, msg='Failed to configure LDAP, please provide valid LDAP credentials'):
+        with pytest.raises(Exception, message='Failed to configure LDAP, please provide valid LDAP credentials'):
             LDAPAuth()
 
     def test_login_pass(self):
@@ -39,5 +39,5 @@ class TestAuthMethod:
         assert error == 'Failed to validate full-DN. Check CN name and defined password of invited user'
 
     def test_bad_server(self):
-        with pytest.raises(ImproperlyConfigured, msg='Failed to bind connection for Kqueen Read-only user'):
+        with pytest.raises(ImproperlyConfigured, message='Failed to bind connection for Kqueen Read-only user'):
             LDAPAuth(uri='ldap://127.0.0.1:55555', admin_dn='cn=admin,dc=example,dc=org', password='heslo123')
