@@ -43,7 +43,7 @@ setup(
         'pycrypto',
         'prometheus_client',
         'python-etcd',
-        'python-jenkins',
+        'python-jenkins==0.4.16',
         'python-ldap==3.0.0b4',
         'pyyaml',
         'requests',
