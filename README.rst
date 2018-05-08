@@ -183,3 +183,11 @@ DEMOs
 
 .. image:: https://img.youtube.com/vi/xHydnJGcs2k/0.jpg
    :target: https://youtu.be/xHydnJGcs2k
+
+**Network policy management in KQueen**
+
+The following video provides an overview on how to manage the Calico network policy
+for a Kubernetes cluster provisioned with Google Kubernetes Engine using KQueen.
+
+.. image:: https://img.youtube.com/vi/MYXFI75Fm10/0.jpg
+   :target: https://youtu.be/MYXFI75Fm10

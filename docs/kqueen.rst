@@ -364,43 +364,47 @@ You can provision a Kubernetes cluster using various community of engines, such 
 To provision a Kubernetes cluster using the Google Kubernetes Engine:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-1. Login in to the Google Kubernetes Engine (https://console.cloud.google.com).
-2. Select your Project.
-3. Navigate to the ``API’s & Services``  -> ``Credentials`` tab and click ``Create credentials``.
-4. From ``Service Account key``, select your service account.
-5. Select Json as the key format.
-6. Download the Json snippet.
-7. Log in to the KQueen web UI.
-8. From the ``Create Provisioner`` tab, select ``Google Kubernetes Engine``.
-9. Insert the downloaded Json snippet that contains the service account key and submit the provisioner creation.
-10. Click ``Deploy Cluster``.
-11. Select the defined GCE provisioner.
-12. Specify the cluster requirements.
-13. Click ``Submit``.
-14. To track the cluster status, navigate to the KQueen main dashboard.
+#. Log in to `Google Kubernetes Engine <https://console.cloud.google.com>`_.
+#. Select your Project.
+#. Navigate to the ``API’s & Services``  -> ``Credentials`` tab and click ``Create credentials``.
+#. From ``Service Account key``, select your service account.
+#. Select Json as the key format.
+#. Download the Json snippet.
+#. Log in to the KQueen web UI.
+#. Click ``Create Provisioner``.
+#. Select ``Google Kubernetes Engine`` and insert the downloaded Json snippet that contains the service account key.
+#. Click ``Submit``.
+#. Click ``Deploy Cluster``.
+#. Select the defined GKE provisioner.
+#. Specify the cluster requirements.
+#. Click ``Submit``.
+#. To track the cluster status, navigate to the KQueen main dashboard.
 
 To provision a Kubernetes cluster using the Azure Kubernetes Service:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-1. Log in to https://portal.azure.com.
-2. Create an Azure Active Directory Application as described in the official Microsoft `Documentation <https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-create-service-principal-portal#create-an-azure-active-directory-application>`_.
-3. Copy the Application ID, Application Secret, Tenant ID (Directory ID), and Subscription ID to use in step 8.
-4. Set the ``Owner`` role to your Application in the Subscription settings to enable the creation of Kubernetes clusters.
-5. Navigate to the ``Resource groups`` tab and create a resource group. Copy the  ‘Resource group name’ to use in step 8.
-6. From the to ``Resource groups`` -> your_group -> Access Control (IAM) tab, verify that the Application has the ``Owner`` role in Resource group.
-7. Log in to the KQueen web UI.
-8. From the ``Create provisioner`` tab, select the AKS engine and set the following:
-	1. Set the ``Client ID`` as Application ID from step 3.
-	2. Set the ``Resource group name`` as Resource group name from step 4.
-	3. Set the ``Secret`` as Application Secret from step 3.
-	4. Set the ``Subscription ID`` as  Subscription ID from step 3.
-	5. Set the ``Tenant ID`` as Tenant(Directory) ID from step 3.
-9. In the KQueen web UI, click ``Deploy Cluster``.
-10. Select the AKS provisioner.
-11. Specify the cluster requirements.
-12. Specify the public SSH key to connect to AKS VM’s. For ssh access into created VM’s, assign the public IP address to the VM as described in `guide <https://gist.github.com/naumvd95/576d6e48200597ca89b26de15e8d3675>`_). Once done, use foollowing command: ``ssh azureuser@<<public_ip>> -i .ssh/your_defined_id_rsa``.
-13. Click ``Submit``.
-14. To track the cluster status, navigate to the KQueen main dashboard.
+#. Log in to `Azure Kubernetes Service <https://portal.azure.com>`_.
+#. Create an Azure Active Directory Application as described in the official Microsoft `Documentation <https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-create-service-principal-portal#create-an-azure-active-directory-application>`_.
+#. Copy the Application ID, Application Secret, Tenant ID (Directory ID), and Subscription ID to use them in step 8.
+#. Set the ``Owner`` role to your Application in the Subscription settings to enable the creation of Kubernetes clusters.
+#. Navigate to the ``Resource groups`` tab and create a resource group. Copy the  ‘Resource group name’ to use them in step 8.
+#. From the ``Resource groups`` -> your_group -> ``Access Control (IAM)`` tab, verify that the Application has the ``Owner`` role in Resource group.
+#. Log in to the KQueen web UI.
+#. From the ``Create provisioner`` page, select the ``Azure Managed Kubernetes Engine`` engine and set the following:
+
+   #. Set the ``Client ID`` as Application ID from step 3.
+   #. Set the ``Resource group name`` as Resource group name from step 5.
+   #. Set the ``Secret`` as Application Secret from step 3.
+   #. Set the ``Subscription ID`` as  Subscription ID from step 3.
+   #. Set the ``Tenant ID`` as Tenant (Directory) ID from step 3.
+
+#. Click ``Submit``.
+#. Click ``Deploy Cluster``.
+#. Select the AKS provisioner.
+#. Specify the cluster requirements.
+#. Specify the public SSH key to connect to AKS VM’s. For ssh access into created VM’s, assign the public IP address to the VM as described in `guide <https://gist.github.com/naumvd95/576d6e48200597ca89b26de15e8d3675>`_). Once done, use the foollowing command: ``ssh azureuser@<<public_ip>> -i .ssh/your_defined_id_rsa``.
+#. Click ``Submit``.
+#. To track the cluster status, navigate to the KQueen main dashboard.
 
 
 .. note::
@@ -422,10 +426,29 @@ For more information, see `Issues <https://github.com/Azure/AKS/issues/3>`_, and
 To manually add an existing Kubernetes cluster:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-1. Log in to the KQueen web UI.
-2. Create ``Manual Provisioner``.
-3. In the ``Create Cluster`` tab choose predefined manual provisioner and attach a valid Kubernetes configuration file.
+#. Log in to the KQueen web UI.
+#. Click ``Create Provisioner``.
+#. Enter the provisioner name, select ``Manual Engine`` from the Engine drop-down list, and then click ``Submit``. 
+#. Click ``Deploy Cluster``. 
+#. On the ``Deploy Cluster`` page, define the cluster name, select a predefined manual provisioner, and attach a valid Kubernetes configuration file.
+#. Click ``Submit``.
+
+
 As a result, the Kubernetes cluster will be attached in a read-only mode.
+
+
+Kubernetes cluster operations
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Once you successfully provision a Kubernetes cluster, you can manage it through the KQueen web UI.
+For example, you can view the cluster status and topology, scale the nodes, download the kubeconfig file, or delete a cluster.
+If you have provisioned the Kubernetes cluster using the Google Kubernetes Engine, you can also manage the network policy of the cluster.
+
+**To manage a Kubernetes cluster:**
+
+#. Log in to the KQueen web UI.
+#. Click the name of the required cluster.
+#. On the cluster details page, perform the required operations.
 
 
 Backup and recovery ETCD
