@@ -65,7 +65,7 @@ def not_implemented(error):
 @api.route('/')
 @api.route('/health')
 def index():
-    return jsonify({'response': 'Gutten tag!'})
+    return jsonify({'response': 'Kqueen ready!'})
 
 
 # Clusters
@@ -214,6 +214,30 @@ def cluster_resize(pk):
 
     if not res_status:
         logger.error('Resizing failed: {}'.format(res_msg))
+        abort(500, description=res_msg)
+
+    # get object with updated metadata
+    output = obj.engine.cluster
+    return jsonify(output)
+
+
+@api.route('/clusters/<uuid:pk>/set_network_policy', methods=['PATCH'])
+@jwt_required()
+def cluster_set_network_policy(pk):
+    obj = get_object(Cluster, pk, current_identity)
+
+    if not request.json:
+        abort(400, description='JSON data expected')
+
+    data = request.json
+    if not all(k in data for k in ('provider', 'enabled')):
+        msg = 'Incorrect network policy configuration {}'.format(data)
+        logger.error(msg)
+        abort(400, description=msg)
+
+    res_status, res_msg = obj.engine.set_network_policy(data['provider'], data['enabled'])
+    if not res_status:
+        logger.error('Setting network policy failed: {}'.format(res_msg))
         abort(500, description=res_msg)
 
     # get object with updated metadata

@@ -14,7 +14,7 @@ STATE_MAP = {
     'PROVISIONING': config.get('CLUSTER_PROVISIONING_STATE'),
     'RUNNING': config.get('CLUSTER_OK_STATE'),
     'STOPPING': config.get('CLUSTER_DEPROVISIONING_STATE'),
-    'RECONCILING': config.get('CLUSTER_RESIZING_STATE')
+    'RECONCILING': config.get('CLUSTER_UPDATING_STATE')
 }
 
 
@@ -35,6 +35,7 @@ class GceEngine(BaseEngine):
             'service_account_info': {
                 'type': 'json_file',
                 'label': 'Service Account File (JSON)',
+                'order': 0,
                 'validators': {
                     'required': True,
                     'jsonfile': [
@@ -52,7 +53,9 @@ class GceEngine(BaseEngine):
             'node_count': {
                 'type': 'integer',
                 'label': 'Node Count',
+                'order': 1,
                 'default': 1,
+                'class_name': 'gke_node_count',
                 'validators': {
                     'required': True,
                     'min': 1,
@@ -62,6 +65,7 @@ class GceEngine(BaseEngine):
             'zone': {
                 'type': 'select',
                 'label': 'Zone',
+                'order': 2,
                 'choices': [
                     ('us-central1-a', 'US - Central 1 - A'),
                     ('us-west1-a', 'US - West 1 - A'),
@@ -85,6 +89,7 @@ class GceEngine(BaseEngine):
             'machine_type': {
                 'type': 'select',
                 'label': 'Machine Type',
+                'order': 3,
                 'choices': [
                     ('n1-standard-1', 'Standart: 1 vCPU, 3.75 GB RAM'),
                     ('n1-standard-2', 'Standart: 2 vCPU, 7.5 GB RAM'),
@@ -97,6 +102,32 @@ class GceEngine(BaseEngine):
                 'validators': {
                     'required': True
                 }
+            },
+            'network_range': {
+                'type': 'text',
+                'label': 'Network range CIDR',
+                'order': 4,
+                'placeholder': '10.0.0.0/14',
+                'validators': {
+                    'required': False,
+                    'regexp': '(^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}'
+                              '([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])'
+                              '(/([0-9]|[1-9][0-9]|2[0-4]))?$)?'
+                }
+            },
+            'network_policy': {
+                'type': 'select',
+                'label': 'Network Policy',
+                'order': 5,
+                'choices': [
+                    ('PROVIDER_UNSPECIFIED', '(None)'),
+                    ('CALICO', 'Calico')
+                ],
+                'default': 'PROVIDER_UNSPECIFIED',
+                'validators': {
+                    'required': False
+                },
+                'class_name': 'network-policy'
             }
         }
     }
@@ -112,15 +143,40 @@ class GceEngine(BaseEngine):
         self.project = self.service_account_info.get('project_id', '')
         self.zone = kwargs.get('zone', '-')
         self.cluster_id = 'a' + self.cluster.id.replace('-', '')
+
+        # Generate metadata for Network Policies if empty
+        if not isinstance(cluster.metadata.get('network_policy'), dict):
+            network_provider = kwargs.get('network_policy', 'PROVIDER_UNSPECIFIED')
+            self.cluster.metadata['network_policy'] = {
+                'provider': network_provider,
+                'enabled': network_provider != 'PROVIDER_UNSPECIFIED'
+            }
+            logger.debug('Generate metadata for network policies: {}'
+                         .format(self.cluster.metadata['network_policy']))
+            self.cluster.save()
+
+        meta = self.cluster.metadata
         self.cluster_config = {
             'cluster': {
                 'name': self.cluster_id,
                 'initialNodeCount': kwargs.get('node_count', 1),
                 'nodeConfig': {
                     'machineType': kwargs.get('machine_type', 'n1-standard-1')
+                },
+                'addonsConfig': {
+                    'networkPolicyConfig': {
+                        'disabled': meta['network_policy'].get('provider', 'PROVIDER_UNSPECIFIED') == 'PROVIDER_UNSPECIFIED'
+                    }
+                },
+                'clusterIpv4Cidr': kwargs.get('network_range', ''),
+                'networkPolicy': {
+                    'provider': meta['network_policy'].get('provider', 'PROVIDER_UNSPECIFIED'),
+                    'enabled': meta['network_policy'].get('enabled', False)
                 }
             }
         }
+
+        logger.debug('GKE cluster configuration: {}'.format(self.cluster_config))
         self.client = self._get_client()
         # Cache settings
         self.cache_timeout = 5 * 60
@@ -140,13 +196,35 @@ class GceEngine(BaseEngine):
         """
         Implementation of :func:`~kqueen.engines.base.BaseEngine.provision`
         """
+
+        request = self.client.projects().zones().clusters().create(projectId=self.project,
+                                                                   zone=self.zone,
+                                                                   body=self.cluster_config)
+        cluster_config = self.cluster_config['cluster']
+        network_meta = self.cluster.metadata['network_policy']
+        if network_meta['provider'] == 'CALICO' and int(cluster_config['initialNodeCount']) < 2:
+            msg = 'Setting {} Network Policy for the cluster {} denied due to '\
+                  'unsupported configuration. The minimal size of the '\
+                  'cluster to run network policy enforcement is 2 '\
+                  'n1-standard-1 instances'.format(network_meta['provider'],
+                                                   self.cluster_id)
+            logger.error(msg)
+            return False, msg
         try:
-            self.client.projects().zones().clusters().create(projectId=self.project, zone=self.zone, body=self.cluster_config).execute()
+            request.execute()
             # TODO: check if provisioning response is healthy
         except Exception as e:
-            msg = 'Creating cluster {} failed with following reason:'.format(self.cluster_id)
+            msg = 'Creating cluster {} failed with the following reason: {}'.format(self.cluster_id,
+                                                                                    e)
             logger.exception(msg)
             return False, msg
+
+        if cluster_config['networkPolicy']['provider'] != 'PROVIDER_UNSPECIFIED':
+            network_meta['provider'] = cluster_config['networkPolicy']['provider']
+            network_meta['enabled'] = cluster_config['networkPolicy']['enabled']
+            logger.debug('Provisioning cluster {} started, updating metadata...{}'
+                         .format(self.cluster_id, self.cluster.metadata))
+            self.cluster.save()
 
         return True, None
 
@@ -158,18 +236,31 @@ class GceEngine(BaseEngine):
         result, error = super(GceEngine, self).deprovision(**kwargs)
         if result:
             return result, error
-
+        request = self.client.projects().zones().clusters().delete(projectId=self.project,
+                                                                   zone=self.zone,
+                                                                   clusterId=self.cluster_id)
         try:
-            self.client.projects().zones().clusters().delete(projectId=self.project, zone=self.zone, clusterId=self.cluster_id).execute()
+            request.execute()
             # TODO: check if provisioning response is healthy
         except Exception as e:
-            msg = 'Deleting cluster {} failed with following reason: {}'.format(self.cluster_id, repr(e))
+            msg = 'Deleting cluster {} failed with following reason: {}'.format(self.cluster_id,
+                                                                                repr(e))
             logger.exception(msg)
             return False, msg
 
         return True, None
 
     def resize(self, node_count, **kwargs):
+
+        if int(node_count) < 2 and \
+           self.cluster_config['cluster']['networkPolicy']['enabled'] is True:
+            msg = 'Resizing cluster {} denied. The minimum size cluster to run \
+                   network policy enforcement is 2 n1-standard-1 instances.\
+                   Otherwise, turn off network policy before resizing.'\
+                   .format(self.cluster_id)
+            logger.error(msg)
+            return False, msg
+
         request = self.client.projects().zones().clusters().nodePools().setSize(
             nodePoolId='default-pool',
             clusterId=self.cluster_id,
@@ -180,11 +271,75 @@ class GceEngine(BaseEngine):
         try:
             request.execute()
         except Exception as e:
-            msg = 'Resizing cluster {} failed with following reason: {}'.format(self.cluster_id, repr(e))
+            msg = 'Resizing cluster {} failed with the following reason: {}'\
+                  .format(self.cluster_id, repr(e))
             logger.exception(msg)
             return False, msg
 
         self.cluster.metadata['node_count'] = node_count
+        self.cluster.save()
+
+        return True, None
+
+    def set_network_policy(self, network_provider='CALICO', enabled=False, **kwargs):
+        """
+        Implementation of :func:`~kqueen.engines.base.BaseEngine.deprovision`
+        """
+        unsupported_instances = ['g1-small', 'f1-micro']
+        network_policy_body = {
+            'networkPolicy': {
+                'provider': network_provider,
+                'enabled': enabled
+            }
+        }
+
+        m_type = self.cluster_config['cluster']['nodeConfig']['machineType']
+        current_node_count = int(self.cluster_config['cluster'].get('initialNodeCount', 1))
+
+        if current_node_count < 2 or m_type in unsupported_instances:
+            msg = 'Setting {} Network Policy for the cluster {} denied due to \
+                   unsupported configuration. The recommended minimum size \
+                   cluster to run network policy enforcement is 3 \
+                   n1-standard-1 instances'.format(network_provider,
+                                                   self.cluster_id)
+            logger.error(msg)
+            return False, msg
+
+        logger.debug('Required Node amount for Network Policy is 2, current node amount: {}'
+                     .format(current_node_count))
+        network_addon = self.cluster_config['cluster']['addonsConfig'].get('networkPolicyConfig',
+                                                                           {})
+        logger.debug('Enabled Network addon: {}'.format(network_addon))
+
+        if network_addon.get('disabled', True) is True:
+            msg = 'Setting {} Network Policy for the cluster {} denied due to \
+                   disabled Network Policy addon. Recreate stack with enabled \
+                   Network Policy'.format(network_provider, self.cluster_id)
+            logger.error(msg)
+            return False, msg
+
+        logger.debug('Setting {} network policy to cluster {}...'.format(network_provider,
+                                                                         self.cluster_id))
+        request = self.client.projects().zones().clusters().setNetworkPolicy(
+            projectId=self.project, zone=self.zone,
+            clusterId=self.cluster_id, body=network_policy_body)
+
+        try:
+            request.execute()
+        except Exception as e:
+            msg = 'Setting {} Network Policy for cluster {} failed with the following reason: {}'\
+                .format(network_provider, self.cluster_id, e)
+            logger.exception(msg)
+            return False, msg
+
+        logger.debug('Setting {} network policy to cluster {} passed successfully,\
+                     saving metadata...'.format(network_provider, self.cluster_id))
+
+        meta = self.cluster.metadata.get('network_policy', {})
+        meta['provider'] = network_provider
+        meta['enabled'] = enabled
+        logger.debug('Updating network policy for cluster {} started, saving metadata...{}'
+                     .format(self.cluster_id, self.cluster.metadata['network_policy']))
         self.cluster.save()
 
         return True, None
@@ -194,7 +349,10 @@ class GceEngine(BaseEngine):
         Implementation of :func:`~kqueen.engines.base.BaseEngine.get_kubeconfig`
         """
         if not self.cluster.kubeconfig:
-            cluster = self.client.projects().zones().clusters().get(projectId=self.project, zone=self.zone, clusterId=self.cluster_id).execute()
+            request = self.client.projects().zones().clusters().get(projectId=self.project,
+                                                                    zone=self.zone,
+                                                                    clusterId=self.cluster_id)
+            cluster = request.execute()
 
             kubeconfig = {}
 
@@ -260,7 +418,8 @@ class GceEngine(BaseEngine):
         try:
             response = request.execute()
         except Exception as e:
-            msg = 'Fetching data from backend for cluster {} failed with following reason: {}'.format(self.cluster_id, repr(e))
+            msg = 'Fetching data from backend for cluster {} failed with the following reason: {}'\
+                .format(self.cluster_id, repr(e))
             logger.exception(msg)
             return {}
 
@@ -280,14 +439,17 @@ class GceEngine(BaseEngine):
         """
         Implementation of :func:`~kqueen.engines.base.BaseEngine.cluster_list`
 
-        Get list of all clusters, owned by project, both kqueen managed and others in either the specified zone or all zones
+        Get list of all clusters, owned by project,
+        both kqueen managed and others in either the specified zone or all zones
         """
 
-        request = self.client.projects().zones().clusters().list(projectId=self.project, zone=self.zone)
+        request = self.client.projects().zones().clusters().list(projectId=self.project,
+                                                                 zone=self.zone)
         try:
             response = request.execute()
         except Exception as e:
-            msg = 'Fetching data from backend for GCE project {} failed with following reason:'.format(self.project_id)
+            msg = 'Fetching data from backend for GCE project {} failed with the following reason:'\
+                .format(self.project_id)
             logger.exception(msg)
             return []
 
@@ -326,8 +488,9 @@ class GceEngine(BaseEngine):
         response = requests.get(test_url, headers=headers)
 
         if response.status_code == 401:
+            request = client.projects().zones().clusters().list(projectId=project, zone=project_zone)
             try:
-                client.projects().zones().clusters().list(projectId=project, zone=project_zone).execute()
+                request.execute()
             except Exception as e:
                 msg = 'Failed to discover GCE project. Check that credentials is valid. Error:'
                 logger.exception(msg)

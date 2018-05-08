@@ -38,8 +38,7 @@ Demo environment
 
     docker-compose -f docker-compose.yml -f docker-compose.demo.yml up
 
-or with mounted etcd data directory:
-
+  or with mounted etcd data directory:
 
   ::
 
@@ -62,11 +61,11 @@ Development
 
     ::
 
-    # Debian/Ubuntu
-    sudo apt-get install libsasl2-dev python-dev libldap2-dev libssl-dev
+      # Debian/Ubuntu
+      sudo apt-get install libsasl2-dev python-dev libldap2-dev libssl-dev
 
-    # RedHat/CentOS:
-    sudo yum install python-devel openldap-devel
+      # RedHat/CentOS:
+      sudo yum install python-devel openldap-devel
 
 - Prepare python virtual environment
 
@@ -74,8 +73,8 @@ Development
 
     python -m ensurepip --default-pip
     pip install --user pipenv
-    pipenv --three
-    pipenv install
+    pipenv --python 3.6
+    pipenv install --dev
 
     pipenv shell
 
@@ -86,6 +85,11 @@ Development
 
     docker-compose up -d
 
+- Initialize kqueen db: add *admin* user with *default* password
+
+  ::
+
+     ./bootstrap_admin.py DemoOrg demoorg admin default
 - You can start KQueen API service directly
 
   ::

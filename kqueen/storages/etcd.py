@@ -583,6 +583,7 @@ class Model:
     def save(self, validate=True, assign_id=True):
         """Save object to database
 
+        Hold lock during saving to avoid interruption into unique fields check
 
         Attributes:
             validate (bool): Validate model before saving. Defaults to `True`.
@@ -592,24 +593,24 @@ class Model:
             bool: `True` if model was saved without errors, `False` otherwise.
 
         """
+        with etcd.Lock(current_app.db.client, 'customer1'):
+            if assign_id:
+                self.verify_id()
 
-        if assign_id:
-            self.verify_id()
+            validation_status, validation_msg = self.validate()
+            if validate and not validation_status:
+                raise ValueError('Validation for model failed with: {}'.format(validation_msg))
 
-        validation_status, validation_msg = self.validate()
-        if validate and not validation_status:
-            raise ValueError('Validation for model failed with: {}'.format(validation_msg))
+            key = self.get_db_key()
+            logger.debug('Writing {} to {}'.format(self, key))
 
-        key = self.get_db_key()
-        logger.debug('Writing {} to {}'.format(self, key))
+            try:
+                current_app.db.client.write(key, self.serialize())
 
-        try:
-            current_app.db.client.write(key, self.serialize())
-
-            self._key = key
-            return True
-        except Exception:
-            raise
+                self._key = key
+                return True
+            except Exception:
+                raise
 
     def delete(self):
         """Delete the object"""
@@ -637,12 +638,17 @@ class Model:
                 return False, 'Required field {} is None'.format(field)
 
             if field_object.unique and field_object.value:
-                for k, v in self.list(self.namespace).items():
+                if self.is_namespaced():
+                    namespace = self._object_namespace
+                else:
+                    namespace = self.namespace
+
+                for k, v in self.list(namespace).items():
                     # Skip checking for uniqueness on object update
                     if getattr(v, 'id') == self.id:
                         continue
                     if getattr(v, field) == field_object.value:
-                        return False, 'Field {name} should be unique'.format(name=field)
+                        return False, 'Field "{name}" should be unique'.format(name=field)
 
             if field_object.value and not field_object.validate():
                 return False, 'Field {} validation failed'.format(field)

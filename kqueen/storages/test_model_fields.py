@@ -16,18 +16,18 @@ import itertools
 import pytest
 
 
-def create_model(required=False, global_ns=False, encrypted=False):
+def create_model(required=False, global_ns=False, encrypted=False, unique=False):
     class TestModel(Model, metaclass=ModelMeta):
         if global_ns:
             global_namespace = global_ns
 
-        id = IdField(required=required, encrypted=encrypted)
-        string = StringField(required=required, encrypted=encrypted)
-        json = JSONField(required=required, encrypted=encrypted)
-        password = PasswordField(required=required, encrypted=encrypted)
-        relation = RelationField(required=required, encrypted=encrypted)
-        datetime = DatetimeField(required=required, encrypted=encrypted)
-        boolean = BoolField(required=required, encrypted=encrypted)
+        id = IdField(required=required, encrypted=encrypted, unique=unique)
+        string = StringField(required=required, encrypted=encrypted, unique=unique)
+        json = JSONField(required=required, encrypted=encrypted, unique=unique)
+        password = PasswordField(required=required, encrypted=encrypted, unique=unique)
+        relation = RelationField(required=required, encrypted=encrypted, unique=unique)
+        datetime = DatetimeField(required=required, encrypted=encrypted, unique=unique)
+        boolean = BoolField(required=required, encrypted=encrypted, unique=unique)
 
         _required = required
         _global_ns = global_ns
@@ -123,7 +123,7 @@ class TestModelInit:
 
 class TestSave:
     def setup(self):
-        model = create_model(required=True)
+        model = create_model(required=True, unique=True)
         self.obj = model(namespace)
 
     def test_model_invalid(self):
@@ -158,6 +158,17 @@ class TestRequiredFields:
 
         validation, _ = obj.validate()
         assert validation != required
+
+
+class TestUniqueFields:
+    def test_required(self, unique=True):
+        model = create_model(unique=unique)
+        obj1 = model(namespace, **model_kwargs)
+        obj2 = model(namespace, **model_kwargs)
+
+        obj1.save()
+        with pytest.raises(ValueError, match='Validation for model failed with: Field "string" should be unique'):
+            obj2.save()
 
 
 class TestGetFieldNames:
