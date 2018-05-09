@@ -47,9 +47,26 @@ class JenkinsEngine(BaseEngine):
                 'validators': {
                     'required': True
                 }
+            },
+            # TODO below form should be increased dynamically in case of 'add one more parameter'
+            # Use-case: 'add parameter'->'key': 'value'-> 'add parameter'-> etc...
+            # Should return dict{}
+            'override_parameters': {
+                'type': 'text',
+                'label': 'Override Jenkins Parameters',
+                'order': 2,
+                'key': {
+                    'type': 'text',
+                    'label': 'Key',
+                    'order': 0,
+                },
+                'value': {
+                    'type': 'text',
+                    'label': 'Value',
+                    'order': 1,
+                }
             }
-        },
-        'cluster': {}
+        }
     }
 
     def __init__(self, cluster, **kwargs):
@@ -64,36 +81,8 @@ class JenkinsEngine(BaseEngine):
         self.client = self._get_client()
         # Cache settings
         self.cache_timeout = 5 * 60
-
-    def _get_provision_job_builds(self):
-        """
-        Get builds history of Jenkins job used to provision clusters
-
-        Returns:
-            dict: More information at :func:`~jenkins.Jenkins.get_job_info`
-        """
-        return self.client.get_job_info(self.provision_job_name, depth=1)
-
-    @classmethod
-    def engine_status(cls, **kwargs):
-        """
-        Implementation of :func:`~kqueen.engines.base.BaseEngine.engine_status`
-        """
-        conn_kw = {
-            'username': kwargs.get('username', config.get('JENKINS_USERNAME')),
-            'password': kwargs.get('password', config.get('JENKINS_PASSWORD')),
-            'timeout': 10
-        }
-        status = config.get('PROVISIONER_UNKNOWN_STATE')
-        try:
-            client = jenkins.Jenkins(config.get('JENKINS_API_URL'), **conn_kw)
-            auth_verify = client.get_whoami()
-            if auth_verify:
-                status = config.get('PROVISIONER_OK_STATE')
-        except Exception as e:
-            logger.exception('Could not contact JenkinsEngine backend: ')
-            status = config.get('PROVISIONER_ERROR_STATE')
-        return status
+        self.job_override_params = kwargs.get('override_parameters', {})
+        logger.critical('OVERRIDEDEEE {}'.format(self.job_override_params))
 
     def _get_client(self):
         """
@@ -108,6 +97,50 @@ class JenkinsEngine(BaseEngine):
             'timeout': 10
         })
 
+    def _get_provision_job_builds(self):
+        """
+        Get builds history of Jenkins job used to provision clusters
+
+        Returns:
+            dict: More information at :func:`~jenkins.Jenkins.get_job_info`
+        """
+        return self.client.get_job_info(self.provision_job_name, depth=1)
+
+    def _parameter_exist(self, parameter):
+        """
+        Check, that defined key parameter exist in Job
+
+        Args:
+            string: 'ParameterName'
+
+        Returns:
+            bool: True if all parameters exist
+        """
+
+        job_body = self.client.get_job_info(self.provision_job_name, depth=1)
+        parameters = []
+
+        for i in job_body['property']:
+            if i.get('parameterDefinitions', None):
+                for param in i['parameterDefinitions']:
+                    parameters.append(param.get('name', None))
+
+        if parameters:
+            if parameter in parameters:
+                logger.debug('Defined parameter {} can be configured through Kqueen'
+                             .format(parameter))
+                return True
+            else:
+                logger.error('Defined parameter {} can not be configured through Kqueen,'
+                             'check Jenkins Job body'.format(parameter))
+                return False
+        else:
+            logger.error('Failed to load Jenkins Job parameters')
+            return False
+
+        logger.error('Failed to load Jenkins Job body')
+        return False
+
     def provision(self, **kwargs):
         """
         Implementation of :func:`~kqueen.engines.base.BaseEngine.provision`
@@ -118,6 +151,17 @@ class JenkinsEngine(BaseEngine):
         # PATCH THE CTX TO CONTAIN CLUSTER NAME AND UUID
         ctx[cluster_name] = 'kqueen-{}'.format(self.cluster.id)
         ctx[cluster_uuid] = self.cluster.id
+        if self.job_override_params:
+            for key, value in self.job_override_params:
+                ctx[key] = ctx[value]
+
+        for param in ctx.keys():
+            if not self._parameter_exist(param):
+                msg = 'Failed to manage job parameter: {}'.format(param)
+                logger.error(msg)
+                return False, msg
+
+        logger.debug('Current Job configuration: {}, provisioning started...'.format(ctx))
         try:
             self.client.build_job(self.provision_job_name, ctx)
             return True, None
@@ -321,3 +365,24 @@ class JenkinsEngine(BaseEngine):
         except Exception:
             response = 500
         return {'response': response, 'progress': progress, 'result': result}
+
+    @classmethod
+    def engine_status(cls, **kwargs):
+        """
+        Implementation of :func:`~kqueen.engines.base.BaseEngine.engine_status`
+        """
+        conn_kw = {
+            'username': kwargs.get('username', config.get('JENKINS_USERNAME')),
+            'password': kwargs.get('password', config.get('JENKINS_PASSWORD')),
+            'timeout': 10
+        }
+        status = config.get('PROVISIONER_UNKNOWN_STATE')
+        try:
+            client = jenkins.Jenkins(config.get('JENKINS_API_URL'), **conn_kw)
+            auth_verify = client.get_whoami()
+            if auth_verify:
+                status = config.get('PROVISIONER_OK_STATE')
+        except Exception as e:
+            logger.exception('Could not contact JenkinsEngine backend: ')
+            status = config.get('PROVISIONER_ERROR_STATE')
+        return status
