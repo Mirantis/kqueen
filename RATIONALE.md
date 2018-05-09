@@ -11,7 +11,7 @@ Kubernetes is today's probably the most promising container orchestration platfo
 * [Azure Container Service](https://azure.microsoft.com/en-us/services/container-service/)
 
 
-There is no need to develop new installation method because we already have many sufficient solutions and Kubernetes instllation isn't a rocket science.
+There is no need to develop new installation method because we already have many sufficient solutions and Kubernetes installation isn't a rocket science.
 However, there are still customers strugling to integrate Kubernetes because of missing solution for complex orchestration of multiple clusters. In this document we aim to address these problems and propose architecture.
 
 ## User stories
@@ -20,7 +20,7 @@ It's important to understand what we're trying to achieve with KQueen. Consider 
 
 * **I'm application developer** and I'd like to have a tool to quickly spin-up the cluster and run my application on it. I have multiple applications and need to have multiple clusters for different application. It would be nice to have a possibility to run diffirent application versions in on cluster.
 
-* **I'm KaaS administrator** and I need be able to manage all the clusters for our internal customers. I need to list then, control resources and get basic overview about each cluster. I can do administration manualy but I'd like to be able to kill some dead minions and replace them easily. Autoscaling clusters (with predefined range) would be a nice bonus.
+* **I'm KaaS administrator** and I need be able to manage all the clusters for our internal customers. I need to list then, control resources and get basic overview about each cluster. I can do administration manually but I'd like to be able to kill some dead minions and replace them easily. Autoscaling clusters (with predefined range) would be a nice bonus.
 
 These goals lead to specific design principles explained in the next section.
 
