@@ -177,7 +177,7 @@ def cluster_topology_data(pk):
 def cluster_kubeconfig(pk):
     obj = get_object(Cluster, pk, current_identity)
 
-    return jsonify(obj.get_kubeconfig())
+    return jsonify(obj.kubeconfig)
 
 
 @api.route('/clusters/<uuid:pk>/progress', methods=['GET'])
