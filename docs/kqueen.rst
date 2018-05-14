@@ -360,6 +360,31 @@ Provision a Kubernetes cluster
 
 You can provision a Kubernetes cluster using various community of engines, such as Google Kubernetes engine or Azure Kubernetes Service.
 
+To provision a Kubernetes cluster using the Openstack Engine:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+1. Login into your Openstack Horizon Dashboard
+2. Switch to your Project/Tenant
+3. Navigate to ``Project`` -> ``Compute`` -> ``API Access`` tab and click ``View Credentials``
+4. Copy ``User Name``, ``Project Name``, ``Authentication URL``
+5. Navigate to ``Project`` -> ``Network`` -> ``Networking``
+6. Click on your Private Network, then click on a Subnet of your Private Network.
+7. Copy the ID of the Subnet and the Network ID
+8. Navigate to ``Project`` -> ``Network`` -> ``Networking``
+9. Click on your Public Network, then copy the public network ID
+10. Import into Glance the following image http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud-1801-01.qcow2
+11. Download the following heat template https://github.com/Mirantis/kqueen/prod/openstack/heat-templates/kubernetes.yaml
+12. Under the ``parameters:`` section replace the private_net_id, private_subnet_id and public_net_id default values with ones you copied.
+13. Login in to KQueen web UI.
+14. From the ``Create Provisioner`` tab, select ``Openstack Engine``.
+15. Fill the form with the User Name, Password, Project/Tenant Name and Authentication URL
+16. Copy/Paste the modify kubernetes.yaml heat template under the field ``Heat template to use for building k8s clusters``
+17. Save the provisioner
+18. Click ``Deploy Cluster``.
+19. Select the defined Openstack provisioner.
+20. Specify the cluster requirements.
+21. Click ``Submit``.
+22. To track the cluster status, navigate to the KQueen main dashboard.
 
 To provision a Kubernetes cluster using the Google Kubernetes Engine:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
