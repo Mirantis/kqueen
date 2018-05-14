@@ -358,7 +358,7 @@ All application metrics are exported to the **/metrics**  API endpoint. Any exte
 Provision a Kubernetes cluster
 ------------------------------
 
-You can provision a Kubernetes cluster using various community of engines, such as Google Kubernetes engine or Azure Kubernetes Service.
+You can provision a Kubernetes cluster using various community of engines, such as Google Kubernetes engine, Azure Kubernetes Service or Openstack Heat.
 
 To provision a Kubernetes cluster using the Openstack Engine:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

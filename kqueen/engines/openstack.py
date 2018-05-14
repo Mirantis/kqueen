@@ -23,7 +23,6 @@ STATE_MAP = {
     'UPDATED': config.get('CLUSTER_UPDATING_STATE')
 }
 
-
 class OpenstackEngine(BaseEngine):
     """
     Openstack Heat Service
@@ -144,7 +143,7 @@ class OpenstackEngine(BaseEngine):
             self.client.stacks.delete(self.cluster.id)
             # TODO: check if deprovisioning response is healthy
         except Exception as e:
-            msg = 'Deleting cluster {} failed with following reason:'.format(self.cluster.id)
+            msg = 'Deleting cluster {} failed with the following reason:'.format(self.cluster.id)
             logger.exception(msg)
             return False, msg
         return True, None
