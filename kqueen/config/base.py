@@ -12,6 +12,17 @@ class BaseConfig:
     KQUEEN_HOST = '127.0.0.1'
     KQUEEN_PORT = 5000
 
+    POOL_MAX_WORKERS = 64
+
+    # Kubespray settings
+    KS_FILES_PATH = "/tmp/kqueen"
+    KS_KUBESPRAY_PATH = "/tmp/kubespray"
+    KS_SSH_CMD = "/usr/bin/ssh"
+    KS_SSH_KEYGEN_CMD = "/usr/bin/ssh-keygen"
+    KS_ANSIBLE_CMD = "/usr/bin/ansible"
+    KS_ANSIBLE_PLAYBOOK_CMD = "/usr/bin/ansible-playbook"
+    KS_DEFAULT_NAMESERVERS = "1.1.1.1,8.8.8.8"
+
     # etcd settings
     # ETCD_HOST
     # ETCD_PORT

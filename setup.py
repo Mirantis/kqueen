@@ -40,6 +40,7 @@ setup(
         'gunicorn',
         'kubernetes',
         'oauth2client==3.0.0',
+        'openstacksdk==0.12.0',
         'pycrypto',
         'prometheus_client',
         'python-etcd',

@@ -29,3 +29,13 @@ ManualEngine
     :undoc-members:
     :show-inheritance:
     :exclude-members: app
+
+
+OpenstackKubesprayEngine
+------------------------
+
+.. automodule:: kqueen.engines.openstack_kubespray
+    :members:
+    :undoc-members:
+    :show-inheritance:
+    :exclude-members: app
