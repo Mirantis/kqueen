@@ -111,7 +111,7 @@ class OpenstackEngine(BaseEngine):
                                         password=self.os_password,
                                         project_name=self.os_project_name)
         sess = session.Session(auth=auth)
-        client = hclient.Client('1', session=sess)    
+        client = hclient.Client('1', session=sess)
         return client
 
     def provision(self, **kwargs):
