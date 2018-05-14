@@ -59,15 +59,15 @@ class OpenstackEngine(BaseEngine):
             'os_auth_url': {
                 'type': 'text',
                 'label': 'Authentication URL (keystone)',
-                'order': 6,
+                'order': 3,
                 'validators': {
                     'required': True
                 }
             },
             'os_heat_k8s_template': {
-                'type': 'textarea',
+                'type': 'yaml_file',
                 'label': 'Heat template to use for building k8s clusters',
-                'order': 8,
+                'order': 4,
                 'validators': {
                     'required': True
                 }
@@ -80,21 +80,12 @@ class OpenstackEngine(BaseEngine):
                 'default': 1,
                 'validators': {
                     'required': True,
-                    'max': 1,
+                    'min': 1,
                     'number': True
-                }
-            },
-            'name': {
-                'type': 'string',
-                'label': 'Cluster Name',
-                'default': 'k8s',
-                'validators': {
-                    'required': True
                 }
             }
         }
     }
-
 
     def __init__(self, cluster, **kwargs):
         """
@@ -112,18 +103,19 @@ class OpenstackEngine(BaseEngine):
         # Cache settings
         self.cache_timeout = 5 * 60
 
-
     def _get_client(self):
         """
         Initialize Openstack Heat client
 
         """
         loader = loading.get_plugin_loader(self.os_password)
-        auth = loader.load_from_options(auth_url=self.os_auth_url, username=self.os_username, password=self.os_password, project_name=self.os_project_name)
+        auth = loader.load_from_options(auth_url=self.os_auth_url,
+                                        username=self.os_username,
+                                        password=self.os_password,
+                                        project_name=self.os_project_name)
         sess = session.Session(auth=auth)
         client = hclient.Client('1', session=sess)    
         return client
-
 
     def provision(self, **kwargs):
         """
@@ -139,7 +131,6 @@ class OpenstackEngine(BaseEngine):
             logger.exception(msg)
             return False, msg
         return True, None
-
 
     def deprovision(self, **kwargs):
         """
@@ -158,7 +149,6 @@ class OpenstackEngine(BaseEngine):
             return False, msg
         return True, None
 
-
     def resize(self, node_count, **kwargs):
         """ Implement Later """
         msg = 'Resizing cluster for Openstack engine is disabled'
@@ -174,7 +164,6 @@ class OpenstackEngine(BaseEngine):
         #self.cluster.save()
         #return True, None
 
-
     def get_kubeconfig(self):
         """
         Implementation of :func:`~kqueen.engines.base.BaseEngine.get_kubeconfig`
@@ -189,7 +178,6 @@ class OpenstackEngine(BaseEngine):
             self.cluster.kubeconfig = yaml.load(kubeconfig)
             self.cluster.save()
         return self.cluster.kubeconfig
-
 
     def cluster_get(self):
         """
@@ -213,7 +201,6 @@ class OpenstackEngine(BaseEngine):
         }
         return cluster
 
-
     def cluster_list(self):
         """Is not needed in Heat"""
         return []
@@ -223,9 +210,10 @@ class OpenstackEngine(BaseEngine):
     def engine_status(cls, **kwargs):
         try:
             loader = loading.get_plugin_loader(self.os_password)
-
-            auth = loader.load_from_options(auth_url=self.os_auth_url, username=self.os_username, password=self.os_password, project_name=self.os_project_name)
-
+            auth = loader.load_from_options(auth_url=self.os_auth_url,
+                                            username=self.os_username,
+                                            password=self.os_password,
+                                            project_name=self.os_project_name)
             sess = session.Session(auth=auth)
         except AuthenticationError:
             logger.exception('Invalid credentials for {} Openstack Provisioner'.format(cls.name))

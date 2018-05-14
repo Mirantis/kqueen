@@ -5,7 +5,6 @@ description: >
   resource types, and without the requirement for heat-cfntools in the image.
 
 parameters:
-
   key_name:
     type: string
     description: Name of a KeyPair to enable SSH access to the instance
@@ -17,7 +16,7 @@ parameters:
   image_id:
     type: string
     description: >
-      Image to use for kubernetes servers .
+      Image to use for kubernetes servers.
     default: CentOS-7-x86_64-GenericCloud-1801-01
   private_net_id:
     type: string
