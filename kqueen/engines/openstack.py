@@ -4,10 +4,10 @@ from kqueen.engines.base import BaseEngine
 from keystoneauth1 import loading
 from keystoneauth1 import session
 from heatclient import client as hclient
+from urllib.request import urlopen
 
 import logging
 import yaml
-import urllib2
 
 logger = logging.getLogger('kqueen_api')
 config = current_config()
@@ -151,12 +151,12 @@ class OpenstackEngine(BaseEngine):
         msg = 'Resizing cluster for Openstack engine is disabled'
         return False, msg
         # try:
-            # self.client.stacks.update(stack_id, data)
-            # TODO: check if resizing response is healthy
+        # self.client.stacks.update(stack_id, data)
+        # TODO: check if resizing response is healthy
         # except Exception as e:
-            # msg = 'Resizing cluster {} failed with the following reason:'.format(self.cluster.id)
-            # logger.exception(msg)
-            # return False, msg
+        # msg = 'Resizing cluster {} failed with the following reason:'.format(self.cluster.id)
+        # logger.exception(msg)
+        # return False, msg
         # self.cluster.metadata['node_count'] = node_count
         # self.cluster.save()
         # return True, None
@@ -170,7 +170,7 @@ class OpenstackEngine(BaseEngine):
             kubeconfig = {}
             if cluster.stack_status != "CREATE_COMPLETE":
                 return self.cluster.kubeconfig
-            response = urllib2.urlopen(self.client.stacks.output_show(self.cluster.id, "kubeconfig"))
+            response = urlopen(self.client.stacks.output_show(self.cluster.id, "kubeconfig"))
             kubeconfig = response.read()
             self.cluster.kubeconfig = yaml.load(kubeconfig)
             self.cluster.save()
@@ -205,7 +205,7 @@ class OpenstackEngine(BaseEngine):
     @classmethod
     def engine_status(cls, **kwargs):
         try:
-            loader = loading.get_plugin_loader(self.os_password)
+            loader = loading.get_plugin_loader(cls.os_password)
             auth = loader.load_from_options(auth_url=cls.os_auth_url,
                                             username=cls.os_username,
                                             password=cls.os_password,
