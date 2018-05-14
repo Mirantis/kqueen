@@ -52,6 +52,7 @@ setup(
         'google-auth-httplib2==0.0.3',
         'azure==2.0.0',
         'azure-mgmt-containerservice==3.0.0',
+        'python-heatclient',
     ],
     setup_requires=[
         'pytest-runner',

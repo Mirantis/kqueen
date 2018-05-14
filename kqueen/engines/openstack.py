@@ -5,16 +5,14 @@ from keystoneauth1 import loading
 from keystoneauth1 import session
 from heatclient import client as hclient
 
-import copy
 import logging
-import base64
 import yaml
 import urllib2
 
 logger = logging.getLogger('kqueen_api')
 config = current_config()
 
-#TODO: change to match openstack heat status
+# TODO: change to match openstack heat status
 STATE_MAP = {
     'CREATE_IN_PROGRESS': config.get('CLUSTER_PROVISIONING_STATE'),
     'CREATE_COMPLETE': config.get('CLUSTER_OK_STATE'),
@@ -22,6 +20,7 @@ STATE_MAP = {
     'FAILED': config.get('CLUSTER_ERROR_STATE'),
     'UPDATED': config.get('CLUSTER_UPDATING_STATE')
 }
+
 
 class OpenstackEngine(BaseEngine):
     """
@@ -93,11 +92,11 @@ class OpenstackEngine(BaseEngine):
         # Call parent init to save cluster on self
         super(OpenstackEngine, self).__init__(cluster, **kwargs)
         # Client initialization
-        self.os_username = kwargs.get('os_username','')
-        self.os_password = kwargs.get('os_password','')
-        self.os_tenant_name = kwargs.get('os_tenant_name','')
-        self.os_auth_url = kwargs.get('os_auth_url','')
-        self.os_heat_k8s_template = kwargs.get('os_heat_k8s_template','')
+        self.os_username = kwargs.get('os_username', '')
+        self.os_password = kwargs.get('os_password', '')
+        self.os_tenant_name = kwargs.get('os_tenant_name', '')
+        self.os_auth_url = kwargs.get('os_auth_url', '')
+        self.os_heat_k8s_template = kwargs.get('os_heat_k8s_template', '')
         self.client = self._get_client()
         # Cache settings
         self.cache_timeout = 5 * 60
@@ -151,16 +150,16 @@ class OpenstackEngine(BaseEngine):
         """ Implement Later """
         msg = 'Resizing cluster for Openstack engine is disabled'
         return False, msg
-        #try:
-            #self.client.stacks.update(stack_id, data)
+        # try:
+            # self.client.stacks.update(stack_id, data)
             # TODO: check if resizing response is healthy
-        #except Exception as e:
-            #msg = 'Resizing cluster {} failed with the following reason:'.format(self.cluster.id)
-            #logger.exception(msg)
-            #return False, msg
-        #self.cluster.metadata['node_count'] = node_count
-        #self.cluster.save()
-        #return True, None
+        # except Exception as e:
+            # msg = 'Resizing cluster {} failed with the following reason:'.format(self.cluster.id)
+            # logger.exception(msg)
+            # return False, msg
+        # self.cluster.metadata['node_count'] = node_count
+        # self.cluster.save()
+        # return True, None
 
     def get_kubeconfig(self):
         """
@@ -172,7 +171,7 @@ class OpenstackEngine(BaseEngine):
             if cluster.stack_status != "CREATE_COMPLETE":
                 return self.cluster.kubeconfig
             response = urllib2.urlopen(self.client.stacks.output_show(self.cluster.id, "kubeconfig"))
-            kubeconfig = response.read() 
+            kubeconfig = response.read()
             self.cluster.kubeconfig = yaml.load(kubeconfig)
             self.cluster.save()
         return self.cluster.kubeconfig
@@ -207,14 +206,11 @@ class OpenstackEngine(BaseEngine):
     def engine_status(cls, **kwargs):
         try:
             loader = loading.get_plugin_loader(self.os_password)
-            auth = loader.load_from_options(auth_url=self.os_auth_url,
-                                            username=self.os_username,
-                                            password=self.os_password,
-                                            project_name=self.os_project_name)
+            auth = loader.load_from_options(auth_url=cls.os_auth_url,
+                                            username=cls.os_username,
+                                            password=cls.os_password,
+                                            project_name=cls.os_project_name)
             sess = session.Session(auth=auth)
-        except AuthenticationError:
-            logger.exception('Invalid credentials for {} Openstack Provisioner'.format(cls.name))
-            return config.get('PROVISIONER_ERROR_STATE')
         except Exception:
             logger.exception('{} Openstack Provisioner validation failed.'.format(cls.name))
             return config.get('PROVISIONER_UNKNOWN_STATE')
