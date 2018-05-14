@@ -105,7 +105,6 @@ class OpenstackEngine(BaseEngine):
     def _get_client(self):
         """
         Initialize Openstack Heat client
-
         """
         loader = loading.get_plugin_loader(self.os_password)
         auth = loader.load_from_options(auth_url=self.os_auth_url,
@@ -126,7 +125,7 @@ class OpenstackEngine(BaseEngine):
             self.cluster.save()
             # TODO: check if provisioning response is healthy
         except Exception as e:
-            msg = 'Creating cluster {} failed with following reason:'.format(self.cluster.id)
+            msg = 'Creating cluster {} failed with the following reason:'.format(self.cluster.id)
             logger.exception(msg)
             return False, msg
         return True, None
@@ -156,7 +155,7 @@ class OpenstackEngine(BaseEngine):
             #self.client.stacks.update(stack_id, data)
             # TODO: check if resizing response is healthy
         #except Exception as e:
-            #msg = 'Resizing cluster {} failed with following reason:'.format(self.cluster.id)
+            #msg = 'Resizing cluster {} failed with the following reason:'.format(self.cluster.id)
             #logger.exception(msg)
             #return False, msg
         #self.cluster.metadata['node_count'] = node_count
@@ -185,7 +184,7 @@ class OpenstackEngine(BaseEngine):
         try:
             response = self.client.stacks.get(self.cluster.id)
         except Exception as e:
-            msg = 'Fetching data from backend for cluster {} failed with following reason:'.format(self.cluster.id)
+            msg = 'Fetching data from backend for cluster {} failed with the following reason:'.format(self.cluster.id)
             logger.exception(msg)
             return {}
         state = STATE_MAP.get(response.stack_status, config.get('CLUSTER_UNKNOWN_STATE'))
@@ -203,7 +202,6 @@ class OpenstackEngine(BaseEngine):
     def cluster_list(self):
         """Is not needed in Heat"""
         return []
-
 
     @classmethod
     def engine_status(cls, **kwargs):
