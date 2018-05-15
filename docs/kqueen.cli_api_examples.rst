@@ -1,7 +1,10 @@
-Kqueen CLI API Examples
+KQueen CLI API examples
 -----------------------
 
-Obtain bearer token and authenticate to kqueen:
+This section lists the available KQueen API operations that you can perform
+through the command-line interface and provides examples.
+
+**To obtain a bearer token and authenticate to KQueen:**
 
 .. code-block:: bash
 
@@ -9,7 +12,7 @@ Obtain bearer token and authenticate to kqueen:
    $ echo $TOKEN
 
 
-List organizations
+**To list the organizations:**
 
 .. code-block:: bash
 
@@ -24,7 +27,7 @@ List organizations
    ]
 
 
-Check the clusters:
+**To check the clusters:**
 
 .. code-block:: bash
 
@@ -32,7 +35,7 @@ Check the clusters:
    []
 
 
-List all provisioners
+**To list the provisioners:**
 
 .. code-block:: bash
 
@@ -40,7 +43,7 @@ List all provisioners
    ...
 
 
-List users
+**To list users:**
 
 .. code-block:: bash
 
@@ -64,7 +67,9 @@ List users
    ]
 
 
-Create new organization "testorganization"
+**To create a new organization:**
+
+The following command uses ``testorganization`` as an example.
 
 .. code-block:: bash
 
@@ -77,7 +82,10 @@ Create new organization "testorganization"
    }
 
 
-Add new user/password "testusername"/"testpassword" to new organization "testorganization"
+**To add a new user and password to the new organization:**
+
+The following example shows how to add the ``testusername`` user name and
+``testpassword`` password to the newly created ``testorganization`` organization.
 
 .. code-block:: bash
 
@@ -100,7 +108,10 @@ Add new user/password "testusername"/"testpassword" to new organization "testorg
    }
 
 
-Switch to "testusername"
+**To switch to a particular user:**
+
+The following example shows how to switch to the ``testusername`` user.
+
 
 .. code-block:: bash
 
@@ -108,7 +119,10 @@ Switch to "testusername"
    $ echo $TOKEN
 
 
-Add new Azure Managed Kubernetes Service provisioner created by "testusername"
+**To add a new Azure Managed Kubernetes Service provisioner:**
+
+The following example shows how to add a new Azure Managed Kubernetes Service
+provisioner created by the ``testusername`` user.
 
 .. code-block:: bash
 
@@ -146,7 +160,11 @@ Add new Azure Managed Kubernetes Service provisioner created by "testusername"
    }
 
 
-Deploy new Kubernetes using Azure Managed Kubernetes Service provisioner "testprovisioner" created by "testusername"
+**To deploy a new Kubernetes cluster using Azure Managed Kubernetes Service provisioner:** 
+
+The following example shows how to deploy a new Kubernetes cluster using the
+Azure Managed Kubernetes Service provisioner ``testprovisioner`` created by
+the ``testusername`` user.
 
 .. code-block:: bash
 
@@ -156,7 +174,7 @@ Deploy new Kubernetes using Azure Managed Kubernetes Service provisioner "testpr
    ...
 
 
-Check the clusters
+**To check the clusters:**
 
 .. code-block:: bash
 
