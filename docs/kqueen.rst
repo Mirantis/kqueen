@@ -179,8 +179,8 @@ To set up the NGINX server
 2. Open the docker-compose.production.yml file for editing.
 3. Verify the proxy service configuration. Pay attention on following variables:
 
-  1. ``VHOSTNAME``, the domain name for the KQueen service. Should be the same as the domain name in the generated certificates. By default, the ``NGINX_VHOSTNAME`` from the `.env` file is used. 
-  2. ``SSL_CERTIFICATE_DIR``, the mapped directory for certificates forwarding into a docker container. By default, the ``$NGINX_SSL_CERTIFICATE_DIR/$NGINX_VHOSTNAME`` variable from the `.env` file is used. 
+  1. ``VHOSTNAME``, the domain name for the KQueen service. Should be the same as the domain name in the generated certificates. By default, the ``NGINX_VHOSTNAME`` from the `.env` file is used.
+  2. ``SSL_CERTIFICATE_DIR``, the mapped directory for certificates forwarding into a docker container. By default, the ``$NGINX_SSL_CERTIFICATE_DIR/$NGINX_VHOSTNAME`` variable from the `.env` file is used.
   3. ``SSL_CERTIFICATE_PATH``, the path for the cert+key certificate. The default is ``$SSL_CERTIFICATE_DIR/fullchain.cer``.
   4. ``SSL_CERTIFICATE_KEY_PATH``, the path for the certificate key. The default is ``$SSL_CERTIFICATE_DIR/$VHOSTNAME.key``.
   5. ``SSL_TRUSTED_CERTIFICATE_PATH``, the path for the certificate. The default is ``$SSL_CERTIFICATE_DIR/ca.cer``.
@@ -207,7 +207,7 @@ To set up the NGINX server
    .. code-block:: bash
 
       docker-compose -f docker-compose.yml -f docker-compose.production.yml  up --force-recreate
- 
+
 
 To set up the mail server
 --------------------------------
@@ -413,7 +413,7 @@ To provision a Kubernetes cluster using the Azure Kubernetes Service:
 
 .. note::
 
-   The AKS creates a separate resource during the creation of a Kubernetes cluster and uses the defined Resource Group as a prefix. This may affect your billing. For example: 
+   The AKS creates a separate resource during the creation of a Kubernetes cluster and uses the defined Resource Group as a prefix. This may affect your billing. For example:
 
       .. code-block:: text
 
@@ -428,8 +428,8 @@ To manually add an existing Kubernetes cluster:
 
 #. Log in to the KQueen web UI.
 #. Click ``Create Provisioner``.
-#. Enter the provisioner name, select ``Manual Engine`` from the Engine drop-down list, and then click ``Submit``. 
-#. Click ``Deploy Cluster``. 
+#. Enter the provisioner name, select ``Manual Engine`` from the Engine drop-down list, and then click ``Submit``.
+#. Click ``Deploy Cluster``.
 #. On the ``Deploy Cluster`` page, define the cluster name, select a predefined manual provisioner, and attach a valid Kubernetes configuration file.
 #. Click ``Submit``.
 
@@ -456,7 +456,7 @@ Backup and recovery ETCD
 
 Etcd is the only stateful component of KQueen. To recover etcd in case of a failure, follow the procedure described in https://coreos.com/etcd/docs/latest/v2/admin_guide.html#disaster-recovery.
 
-.. note:: 
+.. note::
 
    The ``v2`` etcd keys are used in deployment.
 
