@@ -118,7 +118,7 @@ class GceEngine(BaseEngine):
                 'label': 'Network Policy',
                 'order': 5,
                 'choices': [
-                    ('PROVIDER_UNSPECIFIED', '(None)'),
+                    ('PROVIDER_UNSPECIFIED', '<disabled>'),
                     ('CALICO', 'Calico')
                 ],
                 'default': 'PROVIDER_UNSPECIFIED',
