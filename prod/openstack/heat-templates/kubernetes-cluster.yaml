@@ -1,0 +1,243 @@
+heat_template_version: 2013-05-23
+
+description: >
+  Heat Kubernetes template to support linux OS, using only Heat Openstack-native
+  resource types, and without the requirement for heat-cfntools in the image.
+
+parameters:
+  key_name:
+    type: string
+    description: Name of a KeyPair to enable SSH access to the instance
+    default: secret
+  instance_type:
+    type: string
+    description: Instance type for k8s server
+    default: m1.small
+  image_id:
+    type: string
+    description: >
+      Image to use for kubernetes servers.
+    default: CentOS-7-x86_64-GenericCloud-1801-01
+  private_net_id:
+    type: string
+    description: Private network id
+    default: eb3c6f64-9058-40c1-98b1-5b7da7a1e547
+  private_subnet_id:
+    type: string
+    description: Private subnet id
+    default: e2b35744-dfbb-4a43-bee5-d3ca067b70c9
+  public_net_id:
+    type: string
+    description: Public network id
+    default: dbdcd7a9-5931-4296-9b3e-25ef469ef769
+  k8s_password:
+    type: string
+    description: K8S admin password
+    hidden: true
+    default: password
+  k8s_nodes:
+    type: string
+    description: Number of K8S cluster nodes
+    default: 3
+
+resources:
+
+  master_wait_handle:
+    type: OS::Heat::WaitConditionHandle
+
+  master_wait_condition:
+    type: OS::Heat::WaitCondition
+    depends_on: kubernetes_instance
+    properties:
+      handle: {get_resource: master_wait_handle}
+      timeout: 6000
+
+  secgroup_base:
+    type: OS::Neutron::SecurityGroup
+    properties:
+      rules:
+        - protocol: icmp
+        - protocol: tcp
+          port_range_min: 22
+          port_range_max: 22
+
+  secgroup_all_open:
+    type: OS::Neutron::SecurityGroup
+    properties:
+      rules:
+        - protocol: icmp
+        - protocol: tcp
+        - protocol: udp
+
+  secgroup_kubernetes:
+    type: OS::Neutron::SecurityGroup
+    properties:
+      rules:
+        - protocol: tcp
+          port_range_min: 7080
+          port_range_max: 7080
+        - protocol: tcp
+          port_range_min: 8080
+          port_range_max: 8080
+        - protocol: tcp
+          port_range_min: 4001
+          port_range_max: 4001
+        - protocol: tcp
+          port_range_min: 7001
+          port_range_max: 7001
+        - protocol: tcp
+          port_range_min: 6443
+          port_range_max: 6443
+        - protocol: tcp
+          port_range_min: 2379
+          port_range_max: 2380
+        - protocol: tcp
+          port_range_min: 10250
+          port_range_max: 10255
+        - protocol: tcp
+          port_range_min: 30000
+          port_range_max: 32767
+
+  instance1_port0:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_param: private_net_id }
+      security_groups:
+        - default
+        - {get_resource: secgroup_base}
+        - {get_resource: secgroup_kubernetes}
+        - {get_resource: secgroup_all_open}
+      fixed_ips:
+        - subnet_id: { get_param: private_subnet_id }
+      replacement_policy: AUTO
+
+  instance1_public:
+    type: OS::Neutron::FloatingIP
+    properties:
+      floating_network_id: { get_param: public_net_id }
+      port_id: { get_resource: instance1_port0 }
+
+  kubernetes_instance:
+    type: OS::Nova::Server
+    properties:
+      image: { get_param: image_id }
+      flavor: { get_param: instance_type }
+      #key_name: { get_param: key_name }
+      networks:
+        - port: { get_resource: instance1_port0 }
+      user_data:
+        str_replace:
+          template: |
+            #!/bin/bash -v
+            
+            yum -y install epel-release
+            yum install -y wget curl socat httpd bind-utils net-tools
+            yum install -y yum-utils device-mapper-persistent-data lvm2
+            yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+            yum install -y docker-ce
+            service docker start
+            service httpd start
+            systemctl enable docker.service
+            swapoff -a
+            cat <<EOF > /etc/yum.repos.d/kubernetes.repo
+            [kubernetes]
+            name=Kubernetes
+            baseurl=https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
+            enabled=1
+            gpgcheck=1
+            repo_gpgcheck=1
+            gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+            EOF
+            setenforce 0
+            yum install -y kubectl kubeadm kubelet
+            systemctl enable kubelet && systemctl start kubelet
+            sed -i "s/cgroup-driver=systemd/cgroup-driver=cgroupfs/g" /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
+            systemctl daemon-reload
+            service kubelet restart
+            cat <<EOF >  /etc/sysctl.d/k8s.conf
+            net.bridge.bridge-nf-call-ip6tables = 1
+            net.bridge.bridge-nf-call-iptables = 1
+            EOF
+            sysctl --system
+            kubeadm init --pod-network-cidr=10.244.0.0/16
+            mkdir -p $HOME/.kube
+            cp /etc/kubernetes/admin.conf $HOME/.kube/config
+            cp /etc/kubernetes/admin.conf /var/www/html/kubeconfig 
+            kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/v0.10.0/Documentation/kube-flannel.yml
+            kubeadm token create --print-join-command > /var/www/html/joincommand
+            chmod 755 /var/www/html/kubeconfig
+            chmod 755 /var/www/html/joincommand
+            wc_notify --data-binary '{"status": "SUCCESS"}'
+          params:
+            $password: { get_param: k8s_password }
+            $KUBEMASTER: { get_attr: [ instance1_public, floating_ip_address ] }
+            wc_notify: {get_attr: [master_wait_handle, curl_cli]}
+
+  kube_nodes:
+    type: OS::Heat::AutoScalingGroup
+    depends_on:
+      - master_wait_condition
+    properties:
+      desired_capacity: { get_param: k8s_nodes }
+      max_size: 5
+      min_size: 1
+      resource:
+        type: OS::Nova::Server
+        properties:
+          image: { get_param: image_id }
+          flavor: { get_param: instance_type }
+          #key_name: { get_param: key_name }
+          user_data:
+            str_replace:
+              template: |
+                #!/bin/bash -v
+                echo "Installing Kubenode"
+                yum -y install epel-release
+                yum install -y wget curl socat httpd
+                yum install -y yum-utils device-mapper-persistent-data lvm2
+                yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+                yum install -y docker-ce
+                service docker start
+                service httpd start
+                systemctl enable docker.service
+                swapoff -a
+                cat <<EOF > /etc/yum.repos.d/kubernetes.repo
+                [kubernetes]
+                name=Kubernetes
+                baseurl=https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
+                enabled=1
+                gpgcheck=1
+                repo_gpgcheck=1
+                gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+                EOF
+                setenforce 0
+                yum install -y kubectl kubeadm kubelet
+                systemctl enable kubelet && systemctl start kubelet
+                sed -i "s/cgroup-driver=systemd/cgroup-driver=cgroupfs/g" /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
+                systemctl daemon-reload
+                service kubelet restart
+                cat <<EOF >  /etc/sysctl.d/k8s.conf
+                net.bridge.bridge-nf-call-ip6tables = 1
+                net.bridge.bridge-nf-call-iptables = 1
+                EOF
+                sysctl --system
+                wget http://$KUBEMASTER/joincommand
+                bash ./joincommand
+              params:
+                $password: { get_param: k8s_password }
+                $KUBEMASTER: { get_attr: [ instance1_public, floating_ip_address ] }
+
+outputs:
+  instance1_private_ip:
+    description: IP address of instance1 in private network
+    value: { get_attr: [ kubernetes_instance, first_address ] }
+  instance1_public_ip:
+    description: Floating IP address of instance1 in public network
+    value: { get_attr: [ instance1_public, floating_ip_address ] }
+  kubeconfig:
+    description: kubeconfig download url
+    value:
+      str_replace:
+        template: http://host/kubeconfig
+        params:
+          host: { get_attr: [ instance1_public, floating_ip_address] }
