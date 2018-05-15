@@ -67,7 +67,8 @@ class OpenstackEngine(BaseEngine):
                 'label': 'Heat template to use for building k8s clusters',
                 'order': 4,
                 'validators': {
-                    'required': True
+                    'required': True,
+                    'yamlfile': []
                 }
             }
         },

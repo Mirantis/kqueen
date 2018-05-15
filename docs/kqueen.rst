@@ -376,15 +376,15 @@ To provision a Kubernetes cluster using the Openstack Engine:
 #. Download the following heat template https://github.com/Mirantis/kqueen/prod/openstack/heat-templates/kubernetes.yaml
 #. Under the ``parameters:`` section replace the private_net_id, private_subnet_id and public_net_id default values with ones you copied.
 #. Log in to KQueen web UI.
-#. From the ``Create Provisioner`` tab, select ``Openstack Engine``.
+#. From the ``Create Provisioner`` page, select ``Openstack Engine``.
 #. Fill the form with the User Name, Password, Project/Tenant Name and Authentication URL
 #. Copy and paste the modified kubernetes.yaml heat template under the field ``Heat template to use for building k8s clusters``
 #. Save the provisioner
 #. Click ``Deploy Cluster``.
 #. Select the defined Openstack provisioner.
-20. Specify the cluster requirements.
-21. Click ``Submit``.
-22. To track the cluster status, navigate to the KQueen main dashboard.
+#. Specify the cluster requirements.
+#. Click ``Submit``.
+#. To track the cluster status, navigate to the KQueen main dashboard.
 
 To provision a Kubernetes cluster using the Google Kubernetes Engine:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
