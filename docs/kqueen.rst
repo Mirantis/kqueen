@@ -369,12 +369,17 @@ To provision a Kubernetes cluster using the Openstack Engine:
 #. Copy ``User Name``, ``Project Name``, ``Authentication URL``
 #. Navigate to ``Project`` -> ``Network`` -> ``Networking``
 #. Click on your Private Network, then click on a Subnet of your Private Network.
-#. Copy the ID of the Subnet and the Network ID
+#. Copy the ID of the Subnet and the Network ID.
 #. Navigate to ``Project`` -> ``Network`` -> ``Networking``
-#. Click on your Public Network, then copy the public network ID
+#. Click on your ``Public Network``, then copy the public network ID.
 #. Import into Glance the following image http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud-1801-01.qcow2
-#. Download the following heat template https://github.com/Mirantis/kqueen/prod/openstack/heat-templates/kubernetes.yaml
-#. Under the ``parameters:`` section replace the private_net_id, private_subnet_id and public_net_id default values with ones you copied.
+#. Navigate to ``Project`` -> ``Compute`` -> ``API Access`` tab and click ``Key Pairs``.
+#. Create key pair for k8s cluster.
+#. Download the following heat template https://github.com/Mirantis/kqueen/prod/openstack/heat-templates/kubernetes-cluster.yaml
+#. Open the heat template file for editing.
+#. Under the ``parameters:`` section replace the ``private_net_id``, ``private_subnet_id`` and ``public_net_id`` default values with ones you copied.
+#. Under the ``parameters:`` section replace the ``image_id`` with defined name  while importing image in Glance.
+#. Under the ``parameters:`` section replace the ``key_name`` with defined Key pair name.
 #. Log in to KQueen web UI.
 #. From the ``Create Provisioner`` page, select ``Openstack Engine``.
 #. Fill the form with the User Name, Password, Project/Tenant Name and Authentication URL
