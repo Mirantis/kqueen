@@ -518,3 +518,8 @@ Example of the etcd recovery workflow:
    # for example: etcd --force-new-cluster
 
 .. include:: kqueen.cli_api_examples.rst
+
+.. include:: kqueen.cli_gcloud_examples.rst
+
+.. include:: kqueen.cli_azure_examples.rst
+
