@@ -4,8 +4,8 @@ Google Cloud CLI operations with KQueen
 In KQueen, you can perform a number of Google Cloud operations using the command-line interface (CLI).
 For example, you can create a Google Cloud account, create a new Kubernetes cluster (GKE), download the kubeconfig and use it to push an application into Kubernetes.
 
-To create / configure the Google Cloud to work with KQueen:
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Configure Google Cloud Engine to work with KQueen
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 #. Create a Google Cloud account and configure the `gcloud` tool to access your GCE:
 
@@ -65,8 +65,8 @@ https://cloud.google.com/sdk/gcloud/reference/init
    $ gcloud projects add-iam-policy-binding $GCE_PROJECT_ID --member="serviceAccount:$GCE_SERVICE_ACCOUNT_EMAIL" --role="roles/container.clusterAdmin"
    $ gcloud projects add-iam-policy-binding $GCE_PROJECT_ID --member="serviceAccount:$GCE_SERVICE_ACCOUNT_EMAIL" --role="roles/iam.serviceAccountActor"
 
-To create / configure the GKE cluster using KQueen:
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Create and configure a GCE cluster using KQueen
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 #. Start KQueen and obtain bearer token:
 
