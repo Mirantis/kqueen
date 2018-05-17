@@ -427,19 +427,27 @@ Provision a Kubernetes cluster using Azure Kubernetes Service
 #. Log in to the KQueen web UI.
 #. From the ``Create provisioner`` tab, select the AKS engine and set the
    following:
-	1. Set the ``Client ID`` as Application ID from step 3.
-	2. Set the ``Resource group name`` as Resource group name from step 4.
-	3. Set the ``Secret`` as Application Secret from step 3.
-	4. Set the ``Subscription ID`` as  Subscription ID from step 3.
-	5. Set the ``Tenant ID`` as Tenant(Directory) ID from step 3.
+
+	#. Set the ``Client ID`` as Application ID from step 3.
+	#. Set the ``Resource group name`` as Resource group name from step 5.
+	#. Set the ``Secret`` as Application Secret from step 3.
+	#. Set the ``Subscription ID`` as  Subscription ID from step 3.
+	#. Set the ``Tenant ID`` as Tenant(Directory) ID from step 3.
+
 #. In the KQueen web UI, click ``Deploy Cluster``.
 #. Select the AKS provisioner.
 #. Specify the cluster requirements.
-#. Specify the public SSH key to connect to AKS VMs. For an SSH access to the
-   created VMs, assign the public IP address to the VM as described in
-   `guide <https://gist.github.com/naumvd95/576d6e48200597ca89b26de15e8d3675>`_).
-   Once done, use foollowing command:
-   ``ssh azureuser@<<public_ip>> -i .ssh/your_defined_id_rsa``.
+#. Specify the public SSH key to connect to AKS VMs.
+
+   .. note::
+
+      For an SSH access to created VMs, assign a public IP address to a
+      VM as described in
+      `How to connect to Azure AKS Kubernetes node VM by SSH  
+      <https://gist.github.com/naumvd95/576d6e48200597ca89b26de15e8d3675>`_.
+      Once done, run the ``ssh azureuser@<<public_ip>> -i .ssh/your_defined_id_rsa``
+      command.
+
 #. Click ``Submit``.
 #. To track the cluster status, navigate to the KQueen main dashboard.
 
