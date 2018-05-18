@@ -54,21 +54,28 @@ class OpenstackEngine(BaseEngine):
                     'required': True
                 }
             },
-            'os_auth_url': {
+            'os_project_id': {
                 'type': 'text',
-                'label': 'Authentication URL (keystone)',
+                'label': 'Project/Tenant ID',
                 'order': 3,
                 'validators': {
                     'required': True
                 }
             },
-            'os_heat_k8s_template': {
-                'type': 'yaml_file',
-                'label': 'Heat template to use for building k8s clusters',
+            'os_user_domain_name': {
+                'type': 'text',
+                'label': 'User Domain Name',
                 'order': 4,
                 'validators': {
-                    'required': True,
-                    'yamlfile': []
+                    'required': True
+                }
+            },
+            'os_auth_url': {
+                'type': 'text',
+                'label': 'Authentication URL (keystone)',
+                'order': 5,
+                'validators': {
+                    'required': True
                 }
             }
         },
@@ -76,7 +83,7 @@ class OpenstackEngine(BaseEngine):
             'node_count': {
                 'type': 'integer',
                 'label': 'Node Count',
-                'default': 1,
+                'default': 3,
                 'validators': {
                     'required': True,
                     'min': 1,
@@ -97,7 +104,12 @@ class OpenstackEngine(BaseEngine):
         self.os_password = kwargs.get('os_password', '')
         self.os_tenant_name = kwargs.get('os_tenant_name', '')
         self.os_auth_url = kwargs.get('os_auth_url', '')
-        self.os_heat_k8s_template = kwargs.get('os_heat_k8s_template', '')
+        self.os_user_domain_name = kwargs.get('os_user_domain_name', '')
+        self.os_project_id = kwargs.get('os_project_id', '')
+        k8stemp = open("/code/prod/openstack/heat-templates/kubernetes-cluster.yaml")
+        self.os_heat_k8s_template = yaml.load(k8stemp)
+        self.os_heat_k8s_template["heat_template_version"]="2013-05-23"
+        # self.os_heat_k8s_template = kwargs.get('os_heat_k8s_template', '')
         self.client = self._get_client()
         # Cache settings
         self.cache_timeout = 5 * 60
@@ -106,11 +118,13 @@ class OpenstackEngine(BaseEngine):
         """
         Initialize Openstack Heat client
         """
-        loader = loading.get_plugin_loader(self.os_password)
+        loader = loading.get_plugin_loader('password')
         auth = loader.load_from_options(auth_url=self.os_auth_url,
                                         username=self.os_username,
                                         password=self.os_password,
-                                        project_name=self.os_project_name)
+                                        project_id=self.os_project_id,
+                                        user_domain_name=self.os_user_domain_name,
+                                        project_name=self.os_tenant_name)
         sess = session.Session(auth=auth)
         client = hclient.Client('1', session=sess)
         return client
@@ -119,9 +133,10 @@ class OpenstackEngine(BaseEngine):
         """
         Implementation of :func:`~kqueen.engines.base.BaseEngine.provision`
         """
+        # self.name = kwargs.get('name', 'noname')
         try:
-            response = self.client.stacks.create(files={}, disable_rollback=True, name=self.name, template=self.os_heat_k8s_template)
-            self.cluster.id = response.id
+            response = self.client.stacks.create(files={}, disable_rollback=True, stack_name=self.cluster.name, template=self.os_heat_k8s_template)
+            self.cluster.metadata['heat_cluster_id'] = response['stack']['id']
             self.cluster.save()
             # TODO: check if provisioning response is healthy
         except Exception as e:
@@ -139,7 +154,7 @@ class OpenstackEngine(BaseEngine):
         if result:
             return result, error
         try:
-            self.client.stacks.delete(self.cluster.id)
+            self.client.stacks.delete(self.cluster.metadata['heat_cluster_id'])
             # TODO: check if deprovisioning response is healthy
         except Exception as e:
             msg = 'Deleting cluster {} failed with the following reason:'.format(self.cluster.id)
@@ -167,13 +182,18 @@ class OpenstackEngine(BaseEngine):
         Implementation of :func:`~kqueen.engines.base.BaseEngine.get_kubeconfig`
         """
         if not self.cluster.kubeconfig:
-            cluster = self.client.stacks.get(self.cluster.id)
+            cluster = self.client.stacks.get(self.cluster.metadata['heat_cluster_id'])
             kubeconfig = {}
             if cluster.stack_status != "CREATE_COMPLETE":
                 return self.cluster.kubeconfig
-            response = urlopen(self.client.stacks.output_show(self.cluster.id, "kubeconfig"))
-            kubeconfig = response.read()
+            response = self.client.stacks.output_show(self.cluster.metadata['heat_cluster_id'], "kubeconfig")
+            conf = urlopen(response['output']['output_value'])
+            response2 = self.client.stacks.output_show(self.cluster.metadata['heat_cluster_id'], "instance1_public_ip")
+            publicip = response2['output']['output_value']
+            kubeconfig = conf.read()
+            k8s_yml = yaml.load(kubeconfig)
             self.cluster.kubeconfig = yaml.load(kubeconfig)
+            self.cluster.kubeconfig["clusters"][0]["cluster"] = { "insecure-skip-tls-verify" : True, "server" : "https://" + publicip + ":6443" }
             self.cluster.save()
         return self.cluster.kubeconfig
 
@@ -181,10 +201,11 @@ class OpenstackEngine(BaseEngine):
         """
         Implementation of :func:`~kqueen.engines.base.BaseEngine.cluster_get`
         """
+        response = {}
         try:
-            response = self.client.stacks.get(self.cluster.id)
+            response = self.client.stacks.get(self.cluster.metadata['heat_cluster_id'])
         except Exception as e:
-            msg = 'Fetching data from backend for cluster {} failed with the following reason:'.format(self.cluster.id)
+            msg = 'Fetching data from backend for cluster {} failed with the following reason:'.format(self.cluster.metadata['heat_cluster_id'])
             logger.exception(msg)
             return {}
         state = STATE_MAP.get(response.stack_status, config.get('CLUSTER_UNKNOWN_STATE'))
@@ -195,7 +216,7 @@ class OpenstackEngine(BaseEngine):
             'name': response.stack_name,
             'id': response.id,
             'state': state,
-            'metadata': {}
+            'metadata': self.cluster.metadata
         }
         return cluster
 
@@ -206,15 +227,23 @@ class OpenstackEngine(BaseEngine):
     @classmethod
     def engine_status(cls, **kwargs):
         try:
-            loader = loading.get_plugin_loader(cls.os_password)
-            auth = loader.load_from_options(auth_url=cls.os_auth_url,
-                                            username=cls.os_username,
-                                            password=cls.os_password,
-                                            project_name=cls.os_project_name)
+            loader = loading.get_plugin_loader('password')
+            os_username = kwargs.get('os_username', '')
+            os_password = kwargs.get('os_password', '')
+            os_auth_url = kwargs.get('os_auth_url', '')
+            os_project_name = kwargs.get('os_tenant_name', '')
+            os_project_id = kwargs.get('os_project_id', '')
+            os_user_domain_name = kwargs.get('os_user_domain_name', '')
+            auth = loader.load_from_options(auth_url=os_auth_url,
+                                            username=os_username,
+                                            password=os_password,
+                                            project_id=os_project_id,
+                                            user_domain_name=os_user_domain_name,
+                                            project_name=os_project_name)
             sess = session.Session(auth=auth)
         except Exception:
             logger.exception('{} Openstack Provisioner validation failed.'.format(cls.name))
-            return config.get('PROVISIONER_UNKNOWN_STATE')
+            return config.get('PROVISIONER_ERROR_STATE')
         client = hclient.Client('1', session=sess)
         try:
             list(client.stacks.list())

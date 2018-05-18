@@ -21,15 +21,15 @@ parameters:
   private_net_id:
     type: string
     description: Private network id
-    default: eb3c6f64-9058-40c1-98b1-5b7da7a1e547
+    default: 1ef59b3f-2593-43e2-bcdc-674788396262
   private_subnet_id:
     type: string
     description: Private subnet id
-    default: e2b35744-dfbb-4a43-bee5-d3ca067b70c9
+    default: 808863c0-c3ad-4a77-8bf5-406f867f4754
   public_net_id:
     type: string
     description: Public network id
-    default: dbdcd7a9-5931-4296-9b3e-25ef469ef769
+    default: 095f43ed-65ba-48ce-8185-d4080e430a88
   k8s_password:
     type: string
     description: K8S admin password
@@ -159,7 +159,7 @@ resources:
             net.bridge.bridge-nf-call-iptables = 1
             EOF
             sysctl --system
-            kubeadm init --pod-network-cidr=10.244.0.0/16
+            kubeadm init --pod-network-cidr=10.244.0.0/16 --apiserver-cert-extra-sans=$KUBEMASTER
             mkdir -p $HOME/.kube
             cp /etc/kubernetes/admin.conf $HOME/.kube/config
             cp /etc/kubernetes/admin.conf /var/www/html/kubeconfig 
@@ -167,7 +167,7 @@ resources:
             kubeadm token create --print-join-command > /var/www/html/joincommand
             chmod 755 /var/www/html/kubeconfig
             chmod 755 /var/www/html/joincommand
-            wc_notify --data-binary '{"status": "SUCCESS"}'
+            wc_notify -k --data-binary '{"status": "SUCCESS"}'
           params:
             $password: { get_param: k8s_password }
             $KUBEMASTER: { get_attr: [ instance1_public, floating_ip_address ] }

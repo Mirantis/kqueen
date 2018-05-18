@@ -3,7 +3,7 @@ services:
   api:
     image: kqueen/api:v0.19
     ports:
-      - 127.0.0.1:5000:5000
+      - 5000:5000
     depends_on:
       - etcd
     environment:
@@ -25,7 +25,7 @@ services:
   ui:
     image: kqueen/ui:v0.9
     ports:
-      - 127.0.0.1:5080:5080
+      - 5080:5080
     depends_on:
       - api
     environment:
