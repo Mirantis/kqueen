@@ -108,7 +108,7 @@ class OpenstackEngine(BaseEngine):
         self.os_project_id = kwargs.get('os_project_id', '')
         k8stemp = open("/code/prod/openstack/heat-templates/kubernetes-cluster.yaml")
         self.os_heat_k8s_template = yaml.load(k8stemp)
-        self.os_heat_k8s_template["heat_template_version"]="2013-05-23"
+        self.os_heat_k8s_template["heat_template_version"] = "2013-05-23"
         # self.os_heat_k8s_template = kwargs.get('os_heat_k8s_template', '')
         self.client = self._get_client()
         # Cache settings
@@ -191,9 +191,8 @@ class OpenstackEngine(BaseEngine):
             response2 = self.client.stacks.output_show(self.cluster.metadata['heat_cluster_id'], "instance1_public_ip")
             publicip = response2['output']['output_value']
             kubeconfig = conf.read()
-            k8s_yml = yaml.load(kubeconfig)
             self.cluster.kubeconfig = yaml.load(kubeconfig)
-            self.cluster.kubeconfig["clusters"][0]["cluster"] = { "insecure-skip-tls-verify" : True, "server" : "https://" + publicip + ":6443" }
+            self.cluster.kubeconfig["clusters"][0]["cluster"] = {"insecure-skip-tls-verify": True, "server": "https://" + publicip + ":6443"}
             self.cluster.save()
         return self.cluster.kubeconfig
 
