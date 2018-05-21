@@ -125,7 +125,7 @@ class OpenstackEngine(BaseEngine):
                                         project_id=self.os_project_id,
                                         user_domain_name=self.os_user_domain_name,
                                         project_name=self.os_tenant_name)
-        sess = session.Session(auth=auth)
+        sess = session.Session(auth=auth, verify=False)
         client = hclient.Client('1', session=sess)
         return client
 
@@ -239,7 +239,7 @@ class OpenstackEngine(BaseEngine):
                                             project_id=os_project_id,
                                             user_domain_name=os_user_domain_name,
                                             project_name=os_project_name)
-            sess = session.Session(auth=auth)
+            sess = session.Session(auth=auth, verify=False)
         except Exception:
             logger.exception('{} Openstack Provisioner validation failed.'.format(cls.name))
             return config.get('PROVISIONER_ERROR_STATE')
