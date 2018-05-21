@@ -12,7 +12,7 @@ services:
   etcd:
     image: quay.io/coreos/etcd:latest
     ports:
-      - 127.0.0.1:4001:4001
+      - 4001:4001
     environment:
       ETCD_NAME: 0
       ETCD_INITIAL_ADVERTISE_PEER_URLS: http://etcd:2380

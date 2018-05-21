@@ -386,8 +386,35 @@ external Prometheus instance can then scrape this metric.
 Provision a Kubernetes cluster
 ------------------------------
 
-You can provision a Kubernetes cluster using various community of engines,
-such as Google Kubernetes engine or Azure Kubernetes Service.
+You can provision a Kubernetes cluster using various community of engines, 
+such as Google Kubernetes engine, Azure Kubernetes Service or Openstack Heat.
+
+To provision a Kubernetes cluster using the Openstack Engine:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+#. Log in to your Openstack Horizon Dashboard
+#. Switch to your Project/Tenant
+#. Navigate to ``Project`` -> ``Compute`` -> ``API Access`` 
+   tab and click ``View Credentials``
+#. Copy ``User Name``, ``Project Name``, ``Authentication URL``
+#. Navigate to ``Project`` -> ``Network`` -> ``Networking``
+#. Click on your Private Network, then click on a Subnet of 
+   your Private Network.
+#. Copy the ID of the Subnet and the Network ID
+#. Navigate to ``Project`` -> ``Network`` -> ``Networking``
+#. Click on your Public Network, then copy the public network ID
+#. Import into Glance the following image http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud-1801-01.qcow2
+#. Download the following heat template https://github.com/Mirantis/kqueen/prod/openstack/heat-templates/kubernetes.yaml
+#. Under the ``parameters:`` section replace the private_net_id, 
+   private_subnet_id and public_net_id default values with ones you copied.
+#. Log in to KQueen web UI.
+#. From the ``Create Provisioner`` page, select ``Openstack Engine``.
+#. Fill the form with the User Name, Password, Project/Tenant Name and Authentication URL
+#. Copy and paste the modified kubernetes.yaml heat template under 
+   the field ``Heat template to use for building k8s clusters``
+#. Save the provisioner
+#. Click ``Deploy Cluster``.
+#. Select the defined Openstack provisioner.
 
 Provision a Kubernetes cluster using Google Kubernetes Engine
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

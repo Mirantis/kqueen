@@ -1,0 +1,127 @@
+heat_template_version: 2013-05-23
+
+description: >
+  Heat Kubernetes template to support linux OS, using only Heat Openstack-native
+  resource types, and without the requirement for heat-cfntools in the image.
+
+parameters:
+  key_name:
+    type: string
+    description: Name of a KeyPair to enable SSH access to the instance
+    default: secret
+  instance_type:
+    type: string
+    description: Instance type for k8s server
+    default: m1.small
+  image_id:
+    type: string
+    description: >
+      Image to use for kubernetes servers.
+    default: CentOS-7-x86_64-GenericCloud-1801-01
+  private_net_id:
+    type: string
+    description: Private network id
+    default: eb3c6f64-9058-40c1-98b1-5b7da7a1e547
+  private_subnet_id:
+    type: string
+    description: Private subnet id
+    default: e2b35744-dfbb-4a43-bee5-d3ca067b70c9
+  public_net_id:
+    type: string
+    description: Public network id
+    default: dbdcd7a9-5931-4296-9b3e-25ef469ef769
+  k8s_password:
+    type: string
+    description: K8S admin password
+    hidden: true
+    default: password
+
+resources:
+  instance1_port0:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_param: private_net_id }
+      security_groups:
+        - default
+      fixed_ips:
+        - subnet_id: { get_param: private_subnet_id }
+  instance1_public:
+    type: OS::Neutron::FloatingIP
+    properties:
+      floating_network_id: { get_param: public_net_id }
+      port_id: { get_resource: instance1_port0 }
+  kubernetes_instance:
+    type: OS::Nova::Server
+    properties:
+      image: { get_param: image_id }
+      flavor: { get_param: instance_type }
+      #key_name: { get_param: key_name }
+      networks:
+        - port: { get_resource: instance1_port0 }
+      user_data:
+        str_replace:
+          template: |
+            #!/bin/bash -v
+            
+            yum -y install epel-release
+            yum install -y wget curl socat httpd
+            yum install -y yum-utils device-mapper-persistent-data lvm2
+            yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+            yum install -y docker-ce
+            service docker start
+            service httpd start
+            cat <<EOF > /etc/yum.repos.d/kubernetes.repo
+            [kubernetes]
+            name=Kubernetes
+            baseurl=https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
+            enabled=1
+            gpgcheck=1
+            repo_gpgcheck=1
+            gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+            EOF
+            yum install -y kubectl 
+            wget https://github.com/kubernetes/minikube/releases/download/v0.26.1/minikube-linux-amd64
+            mv minikube-linux-amd64 /bin/minikube
+            chmod 755 /bin/minikube
+            minikube start --vm-driver=none 
+            cat <<EOF > /var/www/html/kubeconfig
+            apiVersion: v1
+            clusters:
+            - cluster:
+                #certificate-authority: /root/.minikube/ca.crt
+                insecure-skip-tls-verify: true
+                server: https://$KUBEMASTER:8443
+              name: minikube
+            contexts:
+            - context:
+                cluster: minikube
+                user: minikube
+              name: minikube
+            current-context: minikube
+            kind: Config
+            preferences: {}
+            users:
+            - name: minikube
+              user:
+                client-certificate-data: $(cat /root/.minikube/client.crt | base64 -w 0)
+                client-key-data: $(cat /root/.minikube/client.key | base64 -w 0)
+            EOF
+
+          params:
+            $password: { get_param: k8s_password }
+            $KUBEMASTER: { get_attr: [ instance1_public, floating_ip_address ] }
+
+outputs:
+  instance1_private_ip:
+    description: IP address of instance1 in private network
+    value: { get_attr: [ kubernetes_instance, first_address ] }
+  instance1_public_ip:
+    description: Floating IP address of instance1 in public network
+    value: { get_attr: [ instance1_public, floating_ip_address ] }
+  kubeconfig:
+    description: kubeconfig download url
+    value:
+      str_replace:
+        template: http://host/kubeconfig
+        params:
+          host: { get_attr: [ instance1_public, floating_ip_address] }
