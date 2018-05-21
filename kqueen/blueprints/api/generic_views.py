@@ -227,7 +227,7 @@ class CreateView(GenericView):
                 self.save_object()
                 self.after_save()
             except Exception as e:
-                current_app.logger.error(e)
+                current_app.logger.exception(e)
                 abort(500, description='Creation failed with: {}'.format(e))
 
             output = self.get_content(*args, **kwargs)
