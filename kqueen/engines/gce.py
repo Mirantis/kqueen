@@ -14,7 +14,8 @@ STATE_MAP = {
     'PROVISIONING': config.get('CLUSTER_PROVISIONING_STATE'),
     'RUNNING': config.get('CLUSTER_OK_STATE'),
     'STOPPING': config.get('CLUSTER_DEPROVISIONING_STATE'),
-    'RECONCILING': config.get('CLUSTER_UPDATING_STATE')
+    'RECONCILING': config.get('CLUSTER_UPDATING_STATE'),
+    'ERROR': config.get('CLUSTER_ERROR_STATE')
 }
 
 
@@ -429,7 +430,7 @@ class GceEngine(BaseEngine):
             'name': self.cluster_id,
             'id': self.cluster.id,
             'state': state,
-            'metadata': {}
+            'metadata': {'status_message': response['statusMessage']} if 'statusMessage' in response else {}
         }
         return cluster
 

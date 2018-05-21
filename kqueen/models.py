@@ -45,6 +45,8 @@ class Cluster(Model, metaclass=ModelMeta):
             remote_cluster = {}
 
         if 'state' in remote_cluster:
+
+            self.set_status(remote_cluster)
             if remote_cluster['state'] == self.state:
                 return self.state
 
@@ -61,6 +63,12 @@ class Cluster(Model, metaclass=ModelMeta):
             self.save()
 
         return self.state
+
+    def set_status(self, cluster):
+        detailed_status = cluster.get('metadata', {}).get('status_message')
+        if detailed_status:
+            self.metadata['status_message'] = detailed_status
+            self.save()
 
     @property
     def engine(self):
