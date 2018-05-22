@@ -213,10 +213,9 @@ class GceEngine(BaseEngine):
             request.execute()
             # TODO: check if provisioning response is healthy
         except Exception as e:
-            msg = 'Creating cluster {} failed with the following reason: {}'.format(self.cluster_id,
-                                                                                    e)
+            msg = 'Creating cluster {} failed with the following reason: {}'.format(self.cluster_id, e)
             logger.exception(msg)
-            return False, msg
+            return False, e
 
         if cluster_config['networkPolicy']['provider'] != 'PROVIDER_UNSPECIFIED':
             network_meta['provider'] = cluster_config['networkPolicy']['provider']
