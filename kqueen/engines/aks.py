@@ -92,7 +92,9 @@ class AksEngine(BaseEngine):
             'ssh_key': {
                 'type': 'text_area',
                 'label': 'SSH Key (public)',
-                'validators': {}
+                'validators': {
+                    'required': True
+                }
             },
             'node_count': {
                 'type': 'integer',
