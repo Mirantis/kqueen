@@ -6,7 +6,6 @@ from kqueen.conftest import ClusterFixture
 import pytest
 
 
-@pytest.mark.usefixtures('user')
 class TestGetObject:
     def setup(self):
         self.test_cluster = ClusterFixture()
@@ -16,10 +15,10 @@ class TestGetObject:
     def teardown(self):
         self.test_cluster.destroy()
 
-    def test_get_objects(self, user):
+    def test_get_objects(self):
 
         obj = get_object(self.cluster.__class__,
-                         self.cluster.id, user)
+                         self.cluster.id, self.cluster.owner)
 
         assert obj.get_dict(True) == obj.get_dict(True)
 

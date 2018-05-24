@@ -11,11 +11,12 @@ import etcd
 import faker
 import json
 import pytest
+import random
+import string
 import uuid
 import yaml
 
 config = current_config()
-fake = faker.Faker()
 fake = faker.Faker()
 current_app = None
 
@@ -79,9 +80,9 @@ class ProvisionerFixture:
 
 
 class UserFixture:
-    def __init__(self):
+    def __init__(self, namespace=None):
         profile = fake.simple_profile()
-        self.test_org = OrganizationFixture()
+        self.test_org = OrganizationFixture(namespace)
         user = User.create(
             None,
             username=profile['username'],
@@ -90,7 +91,7 @@ class UserFixture:
             role='superadmin',
             active=True
         )
-        user.save()
+        user.save(validate=False)
         self.obj = user
 
     def destroy(self):
@@ -103,14 +104,17 @@ class UserFixture:
 
 
 class OrganizationFixture:
-    def __init__(self):
+    def __init__(self, name=None):
         """Prepare organization object."""
+        if not name:
+            name = ''.join(random.choice(string.ascii_letters) for _ in range(8))
         organization = Organization(
             None,
-            name='DemoOrg',
-            namespace='demoorg',
+            name=name,
+            namespace=name
         )
-        organization.save()
+        organization.save(validate=False)
+
         self.obj = organization
 
     def destroy(self):

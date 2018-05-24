@@ -397,7 +397,7 @@ class Organization(Model, metaclass=ModelMeta):
 
     id = IdField(required=True)
     name = StringField(required=True)
-    namespace = StringField(required=True)
+    namespace = StringField(required=True, unique=True)
     policy = JSONField()
     created_at = DatetimeField(default=datetime.utcnow)
 
