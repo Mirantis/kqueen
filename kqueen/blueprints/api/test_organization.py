@@ -36,6 +36,13 @@ class TestOrganizationCRUD(BaseTestCRUD):
             assert response.status_code == 500
             assert isinstance(remaining, list) and remaining
 
+    def get_create_data(self):
+        data = self.obj.get_dict(expand=True)
+        data.update(self.get_edit_data())
+        data['id'] = None
+
+        return data
+
     def test_policy(self):
         url = url_for('api.organization_policy', pk=self.obj.id)
 
