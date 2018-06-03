@@ -145,7 +145,7 @@ components:
           type: "string"
         organization:
           type: "string"
-          description: "Reference to related Organization"
+          description: "Reference to the related Organization"
           example: "Organization:<uuid>"
         created_at:
           type: "string"
@@ -205,7 +205,7 @@ components:
           type: "string"
         provisioner:
           type: "string"
-          description: "Reference to related Provisioner"
+          description: "Reference to the related Provisioner"
           example: "Provisioner:<uuid>"
         state:
           $ref: "#/components/schemas/clusterState"
@@ -219,12 +219,11 @@ components:
           format: "date-time"
         owner:
           type: "string"
-          description: "Reference to related User"
+          description: "Reference to the related User"
           example: "User:<uuid>"
       required:
         - "name"
         - "provisioner"
-        - "created_at"
         - "owner"
     getProvisioner:
       type: "object"
@@ -237,11 +236,7 @@ components:
         engine:
           type: "string"
         state:
-          type: "string"
-          enum:
-            - "OK"
-            - "Error"
-            - "Not Reachable"
+          $ref: "#/components/schemas/provisionerState"
         parameters:
           description: "Engine-specific parameters"
           type: "object"
@@ -250,7 +245,106 @@ components:
           format: "date-time"
         owner:
           $ref: "#/components/schemas/getUser"
-    postProvisioner:
+    GCEProvisioner:
+      type: "object"
+      description: "Set up with UI: http://kqueen.readthedocs.io/en/latest/kqueen.html#provision-a-kubernetes-cluster-using-google-kubernetes-engine
+                    Set up with CLI: http://kqueen.readthedocs.io/en/latest/kqueen.html#google-cloud-cli-operations-with-kqueen"
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+        name:
+          type: "string"
+        engine:
+          type: "string"
+          enum:
+            - "kqueen.engines.GceEngine"
+        state:
+          $ref: "#/components/schemas/provisionerState"
+        parameters:
+          description: "GCE-specific parameters"
+          type: "object"
+          properties:
+            service_account_info:
+              description: "Google cloud account json file
+                            https://cloud.google.com/video-intelligence/docs/common/auth"
+              type: "object"
+              properties:
+                auth_provider_x509_cert_url:
+                  type: "string"
+                auth_uri:
+                  type: "string"
+                client_email:
+                  type: "string"
+                client_id:
+                  type: "string"
+                client_x509_cert_url:
+                  type: "string"
+                private_key:
+                  type: "string"
+                private_key_id:
+                  type: "string"
+                project_id:
+                  type: "string"
+                token_uri:
+                  type: "string"
+        created_at:
+          type: "string"
+          format: "date-time"
+        owner:
+          type: "string"
+          description: "Reference to the related User"
+          example: "User:<uuid>"
+      required:
+        - "name"
+        - "engine"
+        - "owner"
+    AzureProvisioner:
+      type: "object"
+      description: "Set up with UI: http://kqueen.readthedocs.io/en/latest/kqueen.html#provision-a-kubernetes-cluster-using-azure-kubernetes-service
+                    Set up with CLI: http://kqueen.readthedocs.io/en/latest/kqueen.html#azure-cli-operations-with-kqueen"
+
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+        name:
+          type: "string"
+        engine:
+          type: "string"
+          enum:
+            - "kqueen.engines.AksEngine"
+        state:
+          $ref: "#/components/schemas/provisionerState"
+        parameters:
+          description: "Azure-specific parameters"
+          type: "object"
+          properties:
+            client_id:
+              type: "string"
+              description: "Application ID"
+            secret:
+              type: "string"
+              description: "secret keyL (add link)"
+            tenant:
+              type: "string"
+              description: "Directory ID"
+            subscription_id:
+              type: "string"
+            resource_group_name:
+              type: "string"
+        created_at:
+          type: "string"
+          format: "date-time"
+        owner:
+          type: "string"
+          description: "Reference to the related User"
+          example: "User:<uuid>"
+      required:
+        - "name"
+        - "engine"
+        - "owner"
+    JenkinsProvisioner:
       type: "object"
       properties:
         id:
@@ -260,27 +354,64 @@ components:
           type: "string"
         engine:
           type: "string"
-        state:
-          type: "string"
           enum:
-            - "OK"
-            - "Error"
-            - "Not Reachable"
+            - "kqueen.engines.JenkinsEngine"
+        state:
+          $ref: "#/components/schemas/provisionerState"
         parameters:
-          description: "Engine-specific parameters"
+          description: "JenkinsEngine-specific parameters"
           type: "object"
+          properties:
+            username:
+              type: "string"
+              description: "Jenkins username for the jenkins server
+                            provided in the config file"
+            password:
+              type: "string"
+              description: "Jenkins password for the jenkins server
+                            provided in the config file"
         created_at:
           type: "string"
           format: "date-time"
         owner:
           type: "string"
-          description: "Reference to related User"
+          description: "Reference to the related User"
           example: "User:<uuid>"
       required:
         - "name"
         - "engine"
-        - "created_at"
         - "owner"
+    ManualProvisioner:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+        name:
+          type: "string"
+        engine:
+          type: "string"
+          enum:
+            - "kqueen.engines.ManualEngine"
+        state:
+          $ref: "#/components/schemas/provisionerState"
+        created_at:
+          type: "string"
+          format: "date-time"
+        owner:
+          type: "string"
+          description: "Reference to the related User"
+          example: "User:<uuid>"
+      required:
+        - "name"
+        - "engine"
+        - "owner"
+    provisionerState:
+      type: "string"
+      enum:
+        - "OK"
+        - "Error"
+        - "Not Reachable"
     Engine:
       type: "object"
       properties:
@@ -950,7 +1081,47 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/postProvisioner"
+              oneOf:
+                - $ref: "#/components/schemas/GCEProvisioner"
+                - $ref: "#/components/schemas/AzureProvisioner"
+                - $ref: "#/components/schemas/ManualProvisioner"
+                - $ref: "#/components/schemas/JenkinsProvisioner"
+              example:
+                GCEProvisioner:
+                  application/json:
+                    {
+                      "engine": "kqueen.engines.GceEngine",
+                      "name": "TestGCE",
+                      "owner": "User:f3f17c72-09b3-49d4-9619-2880c84826ef",
+                      "parameters": {
+                         "service_account_info": {
+                           "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+                           "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+                           "client_email": "97547965373-compute@developer.gserviceaccount.com",
+                           "client_id": "101913034534212144781",
+                           "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/97547965373-compute%40developer.gserviceaccount.com",
+                           "private_key": "-----BEGIN PRIVATE KEY--...-----END PRIVATE KEY-----",
+                           "private_key_id": "b93950d543e8964995afabfe14561a77414a9d37",
+                           "project_id": "awesome-beaker-197214",
+                           "token_uri": "https://accounts.google.com/o/oauth2/token",
+                           "type": "service_account"
+                         }
+                      }
+                    }
+                AzureProvisioner:
+                  application/json:
+                    {
+                      "engine": "kqueen.engines.AksEngine",
+                      "name": "AzurePostman5",
+                      "owner": "User:09587e34-812d-4efc-af17-fbfd7315674c",
+                      "parameters": {
+                         "client_id":"48544b51-4c89-44c0-ba6d-2b80d21e032b",
+                         "secret": "my_password",
+                         "tenant": "70475187-fdde-4a8e-b088-7dda69aabb8d",
+                         "subscription_id": "8c8b0653-693e-4e9c-b8f4-6c99847d6152",
+                         "resource_group_name": "kqueen-demo-rg"
+                      }
+                    }
       responses:
         "200":
           description: "Successful operation"
@@ -999,7 +1170,11 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/postProvisioner"
+              oneOf:
+                - $ref: "#/components/schemas/GCEProvisioner"
+                - $ref: "#/components/schemas/AzureProvisioner"
+                - $ref: "#/components/schemas/ManualProvisioner"
+                - $ref: "#/components/schemas/JenkinsProvisioner"
       responses:
         "200":
           description: "Successful operation"
@@ -1074,4 +1249,3 @@ paths:
                 $ref: "#/components/schemas/getUser"
         "401":
           $ref: "#/components/responses/Unauthorized"
-
