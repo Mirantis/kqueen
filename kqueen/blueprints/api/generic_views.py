@@ -180,25 +180,37 @@ class UpdateView(GenericView):
 class ListView(GenericView):
     methods = ['GET']
     action = 'list'
+    objects_per_page = 5
+
+    def _save_objects_range(self, objects, page=0):
+        sorted_by_date = sorted(objects, key=lambda x: x.created_at, reverse=True)
+        if page > 0:
+            page_end = ListView.objects_per_page * page
+            self.obj = sorted_by_date[page_end - ListView.objects_per_page:page_end]
+        else:
+            self.obj = sorted_by_date
 
     def set_object(self, *args, **kwargs):
+        page_number = kwargs.get('page', 0)
+        obj_class = self.get_class()
+
+        def get_objects_list(namespace):
+            return list(obj_class.list(namespace, return_objects=True).values())
+
         if request.args.get('all_namespaces'):
             objects = []
             for namespace in self.get_namespaces():
-                objects = objects + list(self.get_class().list(namespace, return_objects=True).values())
-            self.obj = objects
+                objects += get_objects_list(namespace)
+            self._save_objects_range(objects, page_number)
             self.check_authorization()
             return
 
         try:
-            if request.args.get('namespace'):
-                namespace = request.args.get('namespace')
-            else:
-                namespace = current_identity.namespace
+            namespace = request.args.get('namespace') or current_identity.namespace
         except AttributeError:
             namespace = None
 
-        self.obj = list(self.get_class().list(namespace, return_objects=True).values())
+        self._save_objects_range(get_objects_list(namespace), page_number)
         self.check_authorization()
 
     def get_content(self, *args, **kwargs):

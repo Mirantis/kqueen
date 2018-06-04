@@ -10,14 +10,13 @@ url_skip = ['/api/v1/health']
 
 def generate_arg(name):
     """Return sample argument value for argument name."""
-
     if name == 'pk':
         return uuid4()
-
-    elif name == 'filename':
+    if name == 'filename':
         return 'test.json'
-    else:
-        raise KeyError('Argument name {} not known'.format(name))
+    if name == 'page':
+        return '0'
+    raise KeyError('Argument name {} not known'.format(name))
 
 
 def skip_rule(rule):
