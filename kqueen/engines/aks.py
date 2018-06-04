@@ -200,9 +200,9 @@ class AksEngine(BaseEngine):
             self.client.managed_clusters.create_or_update(self.resource_group_name, self.cluster.id, managed_cluster)
             # TODO: check if provisioning response is healthy
         except Exception as e:
-            msg = 'Creating cluster {} failed with following reason:'.format(self.cluster.id)
+            msg = 'Creating cluster {} failed with following reason {}:'.format(self.cluster.id, e)
             logger.exception(msg)
-            return False, msg
+            return False, e
 
         return True, None
 
