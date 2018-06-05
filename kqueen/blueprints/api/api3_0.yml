@@ -195,7 +195,77 @@ components:
           format: "date-time"
         owner:
           $ref: "#/components/schemas/getUser"
-    postCluster:
+    GCECluster:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+        name:
+          type: "string"
+        provisioner:
+          type: "string"
+          description: "Reference to the related Provisioner"
+          example: "Provisioner:<uuid>"
+        state:
+          $ref: "#/components/schemas/clusterState"
+        metadata:
+          description: "GCE-specific parameters required for a cluster creation"
+          type: "object"
+          properties:
+            zone:
+              type: "string"
+              enum:
+                - "us-central1-a"
+                - "us-west1-a"
+                - "us-east1-b"
+                - "us-east4-a"
+                - "northamerica-northeast1-a"
+                - "southamerica-east1-a"
+                - "europe-west1-b"
+                - "europe-west2-a"
+                - "europe-west3-a"
+                - "europe-west4-b"
+                - "asia-northeast1-a"
+                - "asia-east1-a"
+                - "asia-southeast1-a"
+                - "australia-southeast1-a"
+            node_count:
+              type: "integer"
+            machine_type:
+              type: "string"
+              enum:
+                - "n1-standard-1"
+                - "n1-standard-2"
+                - "n1-standard-4"
+                - "n1-standard-8"
+                - "n1-standard-16"
+                - "n1-standard-32"
+                - "n1-standard-64"
+            network_range:
+              type: "string"
+              description: "CIDR block representing network range.
+                            Note, that subnets in the same GCP network must have unique IP ranges"
+              example: "10.0.0.0/14"
+            network_policy:
+              type: "string"
+              description: "Policy for a network can be configured with one of the existent providers"
+              enum:
+                - "PROVIDER_UNSPECIFIED"
+                - "CALICO"
+        created_at:
+          type: "string"
+          format: "date-time"
+        owner:
+          type: "string"
+          description: "Reference to the related User"
+          example: "User:<uuid>"
+      required:
+        - "name"
+        - "provisioner"
+        - "owner"
+        - "metadata"
+    AzureCluster:
       type: "object"
       properties:
         id:
@@ -213,7 +283,92 @@ components:
           description: "Kubeconfig file in JSON format"
           type: "object"
         metadata:
+          description: "Azure-specific parameters required for a cluster creation"
           type: "object"
+          properties:
+            location:
+              type: "string"
+              enum:
+                - "eastus"
+                - "centralus"
+                - "westeurope"
+            ssh_key:
+              type: "string"
+            node_count:
+              type: "integer"
+            vm_size:
+              type: "string"
+              enum:
+                - "Standard_D1_v2"
+                - "Standard_D2_v2"
+                - "Standard_D3_v2"
+                - "Standard_D4_v2"
+                - "Standard_D5_v2"
+        created_at:
+          type: "string"
+          format: "date-time"
+        owner:
+          type: "string"
+          description: "Reference to the related User"
+          example: "User:<uuid>"
+      required:
+        - "name"
+        - "provisioner"
+        - "owner"
+        - "metadata"
+    ManualCluster:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+        name:
+          type: "string"
+        provisioner:
+          type: "string"
+          description: "Reference to the related Provisioner"
+          example: "Provisioner:<uuid>"
+        state:
+          $ref: "#/components/schemas/clusterState"
+        kubeconfig:
+          description: "Kubeconfig file in JSON format"
+          type: "object"
+        created_at:
+          type: "string"
+          format: "date-time"
+        owner:
+          type: "string"
+          description: "Reference to the related User"
+          example: "User:<uuid>"
+      required:
+        - "name"
+        - "provisioner"
+        - "owner"
+        - "kubeconfig"
+    JenkinsCluster:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+        name:
+          type: "string"
+        provisioner:
+          type: "string"
+          description: "Reference to the related Provisioner"
+          example: "Provisioner:<uuid>"
+        state:
+          $ref: "#/components/schemas/clusterState"
+        kubeconfig:
+          description: "Kubeconfig file in JSON format"
+          type: "object"
+        metadata:
+          description: "Jenkins-specific parameters required for a cluster creation"
+          type: "object"
+          properties:
+            override_parameters:
+              type: "object"
+              description: "key-value pairs, which overrides the parameters of the Jenkins job specified in the config"
         created_at:
           type: "string"
           format: "date-time"
@@ -266,7 +421,7 @@ components:
           type: "object"
           properties:
             service_account_info:
-              description: "Google cloud account json file
+              description: "Google cloud account credentials file in Json format
                             https://cloud.google.com/video-intelligence/docs/common/auth"
               type: "object"
               properties:
@@ -303,7 +458,6 @@ components:
       type: "object"
       description: "Set up with UI: http://kqueen.readthedocs.io/en/latest/kqueen.html#provision-a-kubernetes-cluster-using-azure-kubernetes-service
                     Set up with CLI: http://kqueen.readthedocs.io/en/latest/kqueen.html#azure-cli-operations-with-kqueen"
-
       properties:
         id:
           type: "string"
@@ -325,7 +479,6 @@ components:
               description: "Application ID"
             secret:
               type: "string"
-              description: "secret keyL (add link)"
             tenant:
               type: "string"
               description: "Directory ID"
@@ -364,11 +517,11 @@ components:
           properties:
             username:
               type: "string"
-              description: "Jenkins username for the jenkins server
+              description: "Jenkins username for the Jenkins server
                             provided in the config file"
             password:
               type: "string"
-              description: "Jenkins password for the jenkins server
+              description: "Jenkins password for the Jenkins server
                             provided in the config file"
         created_at:
           type: "string"
@@ -862,7 +1015,38 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/postCluster"
+              oneOf:
+                - $ref: "#/components/schemas/GCECluster"
+                - $ref: "#/components/schemas/AzureCluster"
+                - $ref: "#/components/schemas/ManualCluster"
+                - $ref: "#/components/schemas/JenkinsCluster"
+              example:
+                GCECluster:
+                  application/json:
+                    {
+                      "name": "ExampleGCE",
+                      "owner": "User:09587e34-812d-4efc-af17-fbfd7315674c",
+                      "provisioner": "Provisioner:be834dc3-6377-4989-a36d-d789697dfacf",
+                      "metadata": {
+                        "node_count": "1",
+                        "zone": "asia-east1-a",
+                        "machine_type": "n1-standard-1",
+                        "network_range": "10.0.0.0/14"
+                      }
+                    }
+                AzureCluster:
+                  application/json:
+                    {
+                    "name": "ExampleAzure",
+                    "owner": "User:09587e34-812d-4efc-af17-fbfd7315674c",
+                    "provisioner": "Provisioner:e377f656-21a5-4313-9906-7763971c07a2",
+                    "metadata": {
+                      "location": "eastus",
+                      "ssh_key": "ssh-rsa ...",
+                      "node_count": 1,
+                      "vm_size": "Standard_D1_v2"
+                    }
+                  }
       responses:
         "200":
           description: "Successful operation"
@@ -911,7 +1095,11 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/postCluster"
+              oneOf:
+                - $ref: "#/components/schemas/GCECluster"
+                - $ref: "#/components/schemas/AzureCluster"
+                - $ref: "#/components/schemas/ManualCluster"
+                - $ref: "#/components/schemas/JenkinsCluster"
       responses:
         "200":
           description: "Successful operation"
@@ -1115,7 +1303,7 @@ paths:
                       "name": "AzurePostman5",
                       "owner": "User:09587e34-812d-4efc-af17-fbfd7315674c",
                       "parameters": {
-                         "client_id":"48544b51-4c89-44c0-ba6d-2b80d21e032b",
+                         "client_id": "48544b51-4c89-44c0-ba6d-2b80d21e032b",
                          "secret": "my_password",
                          "tenant": "70475187-fdde-4a8e-b088-7dda69aabb8d",
                          "subscription_id": "8c8b0653-693e-4e9c-b8f4-6c99847d6152",
