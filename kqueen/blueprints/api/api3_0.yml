@@ -245,7 +245,7 @@ components:
             network_range:
               type: "string"
               description: "CIDR block representing network range.
-                            Note, that subnets in the same GCP network must have unique IP ranges"
+                            Note that subnets in the same GCP network must have unique IP ranges"
               example: "10.0.0.0/14"
             network_policy:
               type: "string"
@@ -368,7 +368,7 @@ components:
           properties:
             override_parameters:
               type: "object"
-              description: "key-value pairs, which overrides the parameters of the Jenkins job specified in the config"
+              description: "key-value pairs, which override the parameters of the Jenkins job specified in the config"
         created_at:
           type: "string"
           format: "date-time"
