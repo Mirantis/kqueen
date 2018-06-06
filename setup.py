@@ -51,7 +51,8 @@ setup(
         'google-auth==1.2.1',
         'google-auth-httplib2==0.0.3',
         'azure',
-        'azure-mgmt-containerservice',
+        'azure-mgmt-containerservice==3.0.1',
+        'urllib3==1.22'
     ],
     setup_requires=[
         'pytest-runner',
