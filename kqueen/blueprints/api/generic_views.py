@@ -101,12 +101,31 @@ class GenericView(View):
 
         return jsonify(output)
 
+    def hide_secure_data(self, obj):
+        """Search and hide non-kqueen secure parameters
+        """
+        def nested_concealment(d):
+            if not isinstance(d, dict):
+                return
+            for k, v in d.items():
+                if isinstance(v, dict):
+                    nested_concealment(v)
+                if k in secure_keys:
+                    d[k] = '*******'
+
+        secure_keys = ['ssh_key', 'private_key', 'secret', 'subscription_id', 'password']
+
+        nested_concealment(getattr(obj, 'metadata', None))
+        nested_concealment(getattr(obj, 'parameters', None))
+        return obj
+
 
 class GetView(GenericView):
     methods = ['GET']
     action = 'get'
 
     def get_content(self, *args, **kwargs):
+        self.obj = self.hide_secure_data(self.obj)
         return self.obj
 
 
@@ -131,6 +150,7 @@ class UpdateView(GenericView):
     action = 'update'
 
     def get_content(self, *args, **kwargs):
+        self.obj = self.hide_secure_data(self.obj)
         return self.obj
 
     def dispatch_request(self, *args, **kwargs):
@@ -188,8 +208,11 @@ class ListView(GenericView):
                 namespace = obj._object_namespace
                 obj_dict = obj.get_dict(expand=True)
                 obj_dict['_namespace'] = namespace
+                obj_dict = self.hide_secure_data(obj_dict)
                 objs.append(obj_dict)
             return objs
+        for i, obj in enumerate(self.obj):
+            self.obj[i] = self.hide_secure_data(obj)
         return self.obj
 
 
@@ -214,6 +237,7 @@ class CreateView(GenericView):
         self.check_authorization()
 
     def get_content(self, *args, **kwargs):
+        self.obj = self.hide_secure_data(self.obj)
         return self.obj.get_dict(expand=True)
 
     def dispatch_request(self, *args, **kwargs):
