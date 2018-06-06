@@ -180,18 +180,22 @@ class UpdateView(GenericView):
 class ListView(GenericView):
     methods = ['GET']
     action = 'list'
-    objects_per_page = 5
+    limit = 0
+    offset = 0
+    _objects_total = 0
 
-    def _save_objects_range(self, objects, page=0):
+    def _save_objects_range(self, objects):
+        self._objects_total = len(objects)
         sorted_by_date = sorted(objects, key=lambda x: x.created_at, reverse=True)
-        if page > 0:
-            page_end = ListView.objects_per_page * page
-            self.obj = sorted_by_date[page_end - ListView.objects_per_page:page_end]
+        if self.limit > 0:
+            self.obj = sorted_by_date[self.offset:self.offset + self.limit]
         else:
             self.obj = sorted_by_date
 
     def set_object(self, *args, **kwargs):
-        page_number = kwargs.get('page', 0)
+        self.offset = int(request.args.get('offset', -1))
+        if self.offset != -1:
+            self.limit = int(request.args.get('limit', 20))
         obj_class = self.get_class()
 
         def get_objects_list(namespace):
@@ -201,7 +205,7 @@ class ListView(GenericView):
             objects = []
             for namespace in self.get_namespaces():
                 objects += get_objects_list(namespace)
-            self._save_objects_range(objects, page_number)
+            self._save_objects_range(objects)
             self.check_authorization()
             return
 
@@ -210,7 +214,7 @@ class ListView(GenericView):
         except AttributeError:
             namespace = None
 
-        self._save_objects_range(get_objects_list(namespace), page_number)
+        self._save_objects_range(get_objects_list(namespace))
         self.check_authorization()
 
     def get_content(self, *args, **kwargs):
@@ -226,6 +230,14 @@ class ListView(GenericView):
         for i, obj in enumerate(self.obj):
             self.obj[i] = self.hide_secure_data(obj)
         return self.obj
+
+    def dispatch_request(self, *args, **kwargs):
+        self.check_authentication()
+        self.set_object(*args, **kwargs)
+        output = self.get_content(*args, **kwargs)
+        if self.limit > 0:
+            return jsonify({'items': output, 'total': self._objects_total})
+        return jsonify(output)
 
 
 class CreateView(GenericView):

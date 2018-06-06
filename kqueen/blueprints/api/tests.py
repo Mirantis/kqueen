@@ -14,8 +14,6 @@ def generate_arg(name):
         return uuid4()
     if name == 'filename':
         return 'test.json'
-    if name == 'page':
-        return '0'
     raise KeyError('Argument name {} not known'.format(name))
 
 

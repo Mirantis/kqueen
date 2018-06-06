@@ -149,9 +149,7 @@ class DeleteCluster(DeleteView):
     object_class = Cluster
 
 
-list_clusters_view = ListClusters.as_view('cluster_list')
-api.add_url_rule('/clusters', view_func=list_clusters_view, defaults={'page': 0})
-api.add_url_rule('/clusters/page/<int:page>', view_func=list_clusters_view)
+api.add_url_rule('/clusters', view_func=ListClusters.as_view('cluster_list'))
 api.add_url_rule('/clusters', view_func=CreateCluster.as_view('cluster_create'))
 api.add_url_rule('/clusters/<uuid:pk>', view_func=GetCluster.as_view('cluster_get'))
 api.add_url_rule('/clusters/<uuid:pk>', view_func=UpdateCluster.as_view('cluster_update'))
@@ -303,9 +301,7 @@ class DeleteProvisioner(DeleteView):
     object_class = Provisioner
 
 
-list_provisioners_view = ListProvisioners.as_view('provisioner_list')
-api.add_url_rule('/provisioners', view_func=list_provisioners_view, defaults={'page': 0})
-api.add_url_rule('/provisioners/page/<int:page>', view_func=list_provisioners_view)
+api.add_url_rule('/provisioners', view_func=ListProvisioners.as_view('provisioner_list'))
 api.add_url_rule('/provisioners', view_func=CreateProvisioner.as_view('provisioner_create'))
 api.add_url_rule('/provisioners/<uuid:pk>', view_func=GetProvisioner.as_view('provisioner_get'))
 api.add_url_rule('/provisioners/<uuid:pk>', view_func=UpdateProvisioner.as_view('provisioner_update'))
