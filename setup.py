@@ -52,6 +52,7 @@ setup(
         'google-auth-httplib2==0.0.3',
         'azure',
         'azure-mgmt-containerservice',
+        'boto3',
     ],
     setup_requires=[
         'pytest-runner',
