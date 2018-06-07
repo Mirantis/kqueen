@@ -33,45 +33,42 @@ class Field:
     is_field = True
 
     def __init__(self, *args, **kwargs):
-        """Initialize Field object
+        """Initialize Field object.
 
-        Argss:
+        Args:
             value: Set field value. This has higher priority than using attributes.
 
         Attributes:
             required (bool): Set field to be required before saving the model. Defaults to False.
-            unique (bool): Set field to be unique within the Model before saving the model. Defaults to False.
+            unique (bool): Set field to be unique within the Model before saving the model.
+                           Defaults to False.
             value: Set field value.
-
         """
-
-        # field parameters
+        # Field parameters
         self.required = kwargs.get('required', False)
         self.encrypted = kwargs.get('encrypted', False)
         self.default = kwargs.get('default', None)
         self.unique = kwargs.get('unique', False)
 
-        # value can be passed as args[0] or kwargs['value']
+        # Value can be passed as args[0] or kwargs['value']
         if len(args) >= 1:
             self.value = args[0]
         else:
             self.value = kwargs.get('value', self._default_value())
 
-        # set block size for crypto
+        # Set block size for crypto
         self.bs = 16
 
     def _default_value(self):
-        """Return default value directly or by calling return function"""
-
+        """Return default value directly or by calling return function."""
         if self.default is None:
             return
-        elif callable(self.default):
+        if callable(self.default):
             return self.default()
-        else:
-            return self.default
+        return self.default
 
     def on_create(self, **kwargs):
-        """Optional action that should be run only on newly created objects"""
+        """Optional action that should be run only on newly created objects."""
         pass
 
     def set_value(self, value, **kwargs):
@@ -81,16 +78,11 @@ class Field:
         return self.value
 
     def dict_value(self):
-        """Return field representation for API"""
-
+        """Return field representation for API."""
         return self.get_value()
 
     def serialize(self):
-
-        if self.value is not None:
-            return str(self.value)
-        else:
-            return None
+        return str(self.value) if self.value is not None else None
 
     def deserialize(self, serialized, **kwargs):
         """
@@ -103,7 +95,6 @@ class Field:
         Attributes:
             serialized (string): Serialized value of the field.
         """
-
         self.set_value(serialized, **kwargs)
 
     def empty(self):
@@ -112,7 +103,7 @@ class Field:
     def validate(self):
         """
         This method is called before saving model and can be used to validate format or
-        consitence of fields
+        consistence of fields.
 
         Returns:
             Result of validation. True for success, False otherwise.
@@ -120,21 +111,19 @@ class Field:
         return True
 
     def _get_encryption_key(self):
-        """
-        Read encryption key and format it.
+        """Read encryption key and format it.
 
         Returns:
             Encryption key.
         """
-
-        # check for key
+        # Check for key
         config = current_config()
         key = config.get('SECRET_KEY')
 
         if key is None:
             raise Exception('Missing SECRET_KEY')
 
-        # calculate hash passowrd
+        # Calculate hash password
         return hashlib.sha256(key.encode('utf-8')).digest()[:self.bs]
 
     def _pad(self, s):
@@ -144,8 +133,7 @@ class Field:
         return s[:-ord(s[len(s) - 1:])]
 
     def encrypt(self):
-        """Encrypt stored value"""
-
+        """Encrypt stored value."""
         serialized = self.serialize()
 
         if not self.encrypted:
@@ -163,7 +151,6 @@ class Field:
             return encoded
 
     def decrypt(self, crypted, **kwargs):
-
         if not self.encrypted:
             return self.deserialize(crypted, **kwargs)
 
@@ -183,11 +170,10 @@ class Field:
         return str(self.value)
 
     def __eq__(self, other):
-        # second is field
+        # The second is field
         if hasattr(other, 'is_field') and other.is_field:
             return self.value == other.value
-        else:
-            return self.value == other
+        return self.value == other
 
 
 class StringField(Field):
@@ -195,7 +181,6 @@ class StringField(Field):
 
 
 class BoolField(Field):
-
     def deserialize(self, serialized, **kwargs):
         if isinstance(serialized, str):
             value = json.loads(serialized)
@@ -215,29 +200,21 @@ class BoolField(Field):
 
 class IdField(Field):
     def set_value(self, value, **kwargs):
-        """Don't serialize None"""
-        if value is not None:
-            self.value = str(value)
-        else:
-            self.value = value
+        """Don't serialize None."""
+        self.value = str(value) if value is not None else value
 
 
 class PasswordField(Field):
-
     def on_create(self):
         from kqueen.auth import encrypt_password
         self.value = encrypt_password(self.value)
 
 
 class DatetimeField(Field):
-    """
-    Datetime is stored as UTC timestamp in DB and as naive datetime on instance.
-    """
+    """Datetime is stored as UTC timestamp in DB and as naive datetime on instance."""
 
     def deserialize(self, serialized, **kwargs):
-        value = None
-
-        # convert to float if serialized is digit
+        # Convert to float if serialized is digit
         if isinstance(serialized, str) and serialized.isdigit():
             serialized = float(serialized)
 
@@ -255,22 +232,15 @@ class DatetimeField(Field):
             self.deserialize(value)
 
     def serialize(self):
-        if isinstance(self.value, datetime):
-            return int(self.value.timestamp())
-        else:
-            return None
+        return int(self.value.timestamp()) if isinstance(self.value, datetime) else None
 
     def dict_value(self):
-        """Return API representation of value"""
-
-        if self.value and isinstance(self.value, datetime):
-            return self.value.isoformat()
-        else:
-            return None
+        """Return API representation of value."""
+        return self.value.isoformat() if self.value and isinstance(self.value, datetime) else None
 
 
 class JSONField(Field):
-    """JSON is stored as value"""
+    """JSON is stored as value."""
 
     def set_value(self, value, **kwargs):
         if isinstance(value, str):
@@ -279,10 +249,7 @@ class JSONField(Field):
             self.value = value
 
     def serialize(self):
-        if isinstance(self.value, dict):
-            return json.dumps(self.value)
-        else:
-            return None
+        return json.dumps(self.value) if isinstance(self.value, dict) else None
 
 
 class RelationField(Field):
@@ -293,7 +260,6 @@ class RelationField(Field):
 
     def __init__(self, *args, **kwargs):
         super(RelationField, self).__init__(*args, **kwargs)
-
         self.remote_class_name = kwargs.get('remote_class_name')
 
     def serialize(self):
@@ -311,11 +277,9 @@ class RelationField(Field):
                 model_name=model_name,
                 object_id=self.value.id,
             )
-        else:
-            return None
 
     def deserialize(self, serialized, **kwargs):
-        """Deserialize relation to real object"""
+        """Deserialize relation to real object."""
 
         # TODO: CRITICAL make namespaced and check it
         if ':' in serialized:
@@ -335,7 +299,6 @@ class RelationField(Field):
 
     def _get_related_class(self, class_name):
         module = importlib.import_module('kqueen.models')
-
         return getattr(module, class_name)
 
     def validate(self):
@@ -350,7 +313,6 @@ class RelationField(Field):
     def set_value(self, value, **kwargs):
         """Detect serialized format and deserialized according to format."""
         if isinstance(value, str) and ':' in value:
-            # deserialize
             self.deserialize(value, **kwargs)
         else:
             super(RelationField, self).set_value(value, **kwargs)
@@ -361,7 +323,7 @@ class ModelMeta(type):
         newattributes = attributedict.copy()
         fields = {}
 
-        # loop attributes and set getters and setter for Fields
+        # Loop attributes and set getters and setter for Fields
         for attr_name, attr in attributedict.items():
             attr_class = attr.__class__
             if hasattr(attr_class, 'is_field') and attr_class.is_field:
@@ -385,35 +347,32 @@ class ModelMeta(type):
 
 
 class Model:
-    """Parent class for all models"""
-    # id field is required for all models
-    id = IdField()
+    """Parent class for all models."""
+    id = IdField()  # id field is required for all models
 
     def __init__(self, ns=None, **kwargs):
-        """
-        Create model object.
+        """Create model object.
 
         Args:
             ns (str): Namespace for created object. Required for namespaced objects.
 
         Attributes:
             **kwargs: Object attributes.
-
         """
-
-        # manage namespace
+        # Manage namespace
         if self.__class__.is_namespaced():
             self._object_namespace = ns
 
             if not self._object_namespace:
                 raise BackendError('Missing namespace for class {}'.format(self.__class__.__name__))
 
-        # loop fields and set it
+        # Loop fields and set it
         for field_name, field in self.__class__.get_fields().items():
             field_class = field.__class__
             if hasattr(field_class, 'is_field'):
                 field_object = field_class(**field.__dict__)
-                field_object.set_value(kwargs.get(field_name, field_object._default_value()), namespace=ns)
+                field_object.set_value(kwargs.get(field_name, field_object._default_value()),
+                                       namespace=ns)
 
                 # Hash password field in case of new DB entry
                 if kwargs.get('__create__', False):
@@ -423,36 +382,28 @@ class Model:
 
     @classmethod
     def get_model_name(cls):
-        """Return lowercased name of the class"""
-
+        """Return lowercased name of the class."""
         return cls.__name__.lower()
 
     @classmethod
     def is_namespaced(cls):
-        """
-        Check if model is namespaced or global.
+        """Check whether model is namespaced or global.
 
         Returns:
             bool: True for namespaced models, False for global models.
         """
-        if hasattr(cls, 'global_namespace') and cls.global_namespace:
-            return False
-        else:
-            return True
+        return not (hasattr(cls, 'global_namespace') and cls.global_namespace)
 
     @classmethod
     def get_db_prefix(cls, namespace=None):
-        """Calculate prefix for writing DB objects
+        """Calculate prefix for writing DB objects.
 
         Returns:
             string: Database prefix
 
         Example:
-
             /kqueen/default/MyModel/
-
         """
-
         if cls.is_namespaced():
             if not namespace:
                 raise BackendError('Missing namespace for class {}'.format(cls.__name__))
@@ -467,18 +418,14 @@ class Model:
 
     @classmethod
     def create(cls, ns, **kwargs):
-        """Create new object"""
-
+        """Create a new object."""
         kwargs['__create__'] = True
-        o = cls(ns, **kwargs)
-
-        return o
+        return cls(ns, **kwargs)
 
     @classmethod
     def list(cls, namespace, return_objects=True):
-        """List objects in the database"""
+        """List objects in the database."""
         output = {}
-
         key = cls.get_db_prefix(namespace)
 
         try:
@@ -486,29 +433,28 @@ class Model:
         except etcd.EtcdKeyNotFound:
             return output
 
-        # Don't allow iteration over children generator on empty directory
-        # More informations here: https://github.com/jplana/python-etcd/issues/54
+        # Don't allow iteration over children generator on empty directory.
+        # More information is here: https://github.com/jplana/python-etcd/issues/54
         if not getattr(directory, '_children', []):
             return output
 
         for result in directory.children:
-            if return_objects:
-                output[result.key.replace(key, '')] = cls.deserialize(result.value, namespace=namespace)
-            else:
-                output[result.key.replace(key, '')] = None
+            output[result.key.replace(key, '')] = (
+                cls.deserialize(result.value, namespace=namespace)
+                if return_objects else None
+            )
 
         return output
 
     @classmethod
     def load(cls, namespace, object_id):
-        """Load object from database"""
-
+        """Load object from database."""
         key = '{}{}'.format(cls.get_db_prefix(namespace), str(object_id))
         try:
             response = current_app.db.client.read(key)
             value = response.value
         except etcd.EtcdKeyNotFound:
-            raise NameError('Object not found')
+            raise NameError('Object is not found')
         except Exception:
             raise
 
@@ -516,8 +462,7 @@ class Model:
 
     @classmethod
     def exists(cls, namespace, object_id):
-        """Check if object exists"""
-
+        """Check if object exists."""
         try:
             cls.load(namespace, object_id)
             return True
@@ -527,7 +472,7 @@ class Model:
     @classmethod
     def deserialize(cls, serialized, **kwargs):
         object_kwargs = {}
-        # deserialize toplevel dict and loop fields and deserialize them
+        # Deserialize toplevel dict and loop fields and deserialize them
         toplevel = json.loads(serialized)
 
         for field_name, field in cls.get_fields().items():
@@ -548,25 +493,19 @@ class Model:
 
     @classmethod
     def get_fields(cls):
-        """Return dict of fields and it classes"""
-
+        """Return dict of fields and it classes."""
         return cls._fields
 
     @classmethod
     def get_field_names(cls):
-        """Return list of field names"""
-
+        """Return list of field names."""
         return list(cls._fields.keys())
 
     def get_db_key(self):
         if not self.id:
             raise Exception('Missing object id')
 
-        if self.__class__.is_namespaced():
-            namespace = self._object_namespace
-        else:
-            namespace = None
-
+        namespace = self._object_namespace if self.__class__.is_namespaced() else None
         return '{}{}'.format(self.__class__.get_db_prefix(namespace), self.id)
 
     def verify_id(self):
@@ -575,15 +514,15 @@ class Model:
         else:
             newid = uuid.uuid4()
 
-            # TODO check id doesn't exists
+            # TODO check if id doesn't exists
 
             self.id = newid
             return self.id
 
     def save(self, validate=True, assign_id=True):
-        """Save object to database
+        """Save object to database.
 
-        Hold lock during saving to avoid interruption into unique fields check
+        Hold lock during saving to avoid interruption into unique fields check.
 
         Attributes:
             validate (bool): Validate model before saving. Defaults to `True`.
@@ -591,7 +530,6 @@ class Model:
 
         Return:
             bool: `True` if model was saved without errors, `False` otherwise.
-
         """
         with etcd.Lock(current_app.db.client, 'customer1'):
             if assign_id:
@@ -613,12 +551,11 @@ class Model:
                 raise
 
     def delete(self):
-        """Delete the object"""
-
+        """Delete the object."""
         current_app.db.client.delete(self.get_db_key())
 
     def validate(self):
-        """Validate the model object pass all requirements
+        """Validate the model object passes all requirements.
 
         Checks:
             * Required fields
@@ -626,22 +563,18 @@ class Model:
         Returns:
             Validation result. `True` for passed, `False` for failed.
         """
-
         fields = self.__class__.get_field_names()
         for field in fields:
             hidden_field = '_{}'.format(field)
             field_object = getattr(self, hidden_field)
 
-            # validation
+            # Validation
             # TODO: move to validate method of Field
             if field_object.required and field_object.value is None:
                 return False, 'Required field {} is None'.format(field)
 
             if field_object.unique and field_object.value:
-                if self.is_namespaced():
-                    namespace = self._object_namespace
-                else:
-                    namespace = self.namespace
+                namespace = self._object_namespace if self.is_namespaced() else self.namespace
 
                 for k, v in self.list(namespace).items():
                     # Skip checking for uniqueness on object update
@@ -671,7 +604,6 @@ class Model:
         Returns:
             Dict with object properties
         """
-
         output = {}
 
         for field_name in self.__class__.get_field_names():
@@ -707,7 +639,7 @@ class Model:
         else:
             return False
 
-# TODO: implement autogenerated fields (generete them if missing)
+# TODO: implement autogenerated fields (generate them if missing)
 # TODO: implement predefined values for fields
 # TODO: use validation
 # TODO: add is_saved method
