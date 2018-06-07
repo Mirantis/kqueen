@@ -161,8 +161,11 @@ to configuration.
 Documentation
 -------------
 
-Full documentation including API reference can be found at
+Full documentation can be found at
 `kqueen.readthedocs.io <http://kqueen.readthedocs.io>`__.
+
+API reference is defined at `api.yml <https://github.com/Mirantis/kqueen/blob/master/kqueen/blueprints/api/api3_0.yml>`_
+and Swagger UI is available at ``<kqueen_api_url>/api/docs``
 
 .. |Build Status| image:: https://travis-ci.org/Mirantis/kqueen.svg?branch=master
    :target: https://travis-ci.org/Mirantis/kqueen
