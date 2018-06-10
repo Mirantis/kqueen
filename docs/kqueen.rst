@@ -409,6 +409,33 @@ Provision a Kubernetes cluster using Google Kubernetes Engine
 #. Click ``Submit``.
 #. To track the cluster status, navigate to the KQueen main dashboard.
 
+Provision a Kubernetes cluster using Amazon Elastic Kubernetes Service
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+#. Create your Amazon EKS service role, Amazon EKS Cluster VPC - `Official EKS Quickstart <https://docs.aws.amazon.com/eks/latest/userguide/getting-started.html>`_.
+#. Create Amazon EKS IAM Policy - `Creating Amazon EKS IAM Policies <https://docs.aws.amazon.com/eks/latest/userguide/EKS_IAM_user_policies.html>`_.
+#. Create Amazon EKS IAM Passrole Policy - `Creating Amazon Passrole Policies <https://aws.amazon.com/blogs/security/granting-permission-to-launch-ec2-instances-with-iam-roles-passrole-permission/>`_. In policy json-snippet switch all ``ec2`` entities to ``eks``.
+#. Create User account with Programmatic Access and attach all created policies - `Creating an IAM User in Your AWS Account <https://docs.aws.amazon.com/IAM/latest/UserGuide/id_users_create.html>`_. Don't forget to save User Key/Secret Pair.
+#. Log in to the KQueen web UI.
+#. From the ``Create Provisioner`` tab, select ``Amazon Elastic Kubernetes Service`` and set the
+   following:
+
+	#. Set the ``AWS Access Key`` as User Key from step 4.
+	#. Set the ``AWS Access Secret`` as User Secret from step 4.
+	#. Set the ``AWS Region`` for your deployments, pay attention, that currently Amazon EKS clusters works properly only in ``US West (Oregon) (us-west-2)`` and ``US East (N. Virginia) (us-east-1)``.
+
+#. In the KQueen web UI, click ``Deploy Cluster``.
+#. Select created EKS provisioner.
+#. From the ``Deploy Cluster`` tab, select ``Amazon Elastic Kubernetes Service`` provisioner and set the
+   following:
+
+	#. Set the ``IAM Role ARN`` as Amazon EKS service role from step 1.
+	#. Set the ``Subnet Id`` and ``Security Group Id`` related to Amazon EKS Cluster VPC from step 1.
+  #. Specify the cluster requirements.
+
+#. Click ``Submit``.
+#. To track the cluster status, navigate to the KQueen main dashboard.
+
 Provision a Kubernetes cluster using Azure Kubernetes Service
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -425,7 +452,7 @@ Provision a Kubernetes cluster using Azure Kubernetes Service
    tab, verify that the Application has the ``Owner`` role in the resource
    group.
 #. Log in to the KQueen web UI.
-#. From the ``Create provisioner`` tab, select the AKS engine and set the
+#. From the ``Create provisioner`` tab, select the ``AKS engine`` and set the
    following:
 
 	#. Set the ``Client ID`` as Application ID from step 3.
