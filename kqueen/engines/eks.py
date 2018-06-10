@@ -126,9 +126,10 @@ class EksEngine(BaseEngine):
         # Cluster settings
         self.role_arn = kwargs['role_arn']
         subnets = kwargs['subnet_id']
-        self.subnet_id = subnets.split(',').strip()
         security_groups = kwargs.get('security_group_id', '')
-        self.security_group_id = security_groups.split(',').strip()
+
+        self.subnet_id = subnets.replace(' ', '').split(',')
+        self.security_group_id = security_groups.replace(' ', '').split(',')
         # Get templates
         files = self._get_template_files()
         self.eks_kubeconfig = files['template.yaml']
