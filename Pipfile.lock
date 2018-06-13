@@ -648,10 +648,10 @@
         },
         "python-jenkins": {
             "hashes": [
-                "sha256:6169623a1a913649a0c2730373bde292fe8dbb01813adce4f57cafe9946e7a5e",
-                "sha256:62cb35eaee1c149550b0a0fdbfb3b1c9dcd3de048dd18d6de20add6d78356ef4"
+                "sha256:af899c4fb773a97acc920dc329dcc39f8bc6d2b3b6c7ad231d46f2eb370f9ab3",
+                "sha256:b30e4493633cace205bc17dae63868f3e5f1e9651d798e53f7a496dac2b17339"
             ],
-            "version": "==1.0.0"
+            "version": "==0.4.16"
         },
         "python-ldap": {
             "hashes": [
@@ -1366,13 +1366,6 @@
                 "sha256:f1b5ebb825a3e8190494f5ce1509fde9069f2754838ed90402a8c11e1f52b8cb"
             ],
             "version": "==0.4.5"
-        },
-        "python-jenkins": {
-            "hashes": [
-                "sha256:6169623a1a913649a0c2730373bde292fe8dbb01813adce4f57cafe9946e7a5e",
-                "sha256:62cb35eaee1c149550b0a0fdbfb3b1c9dcd3de048dd18d6de20add6d78356ef4"
-            ],
-            "version": "==1.0.0"
         },
         "python-ldap": {
             "hashes": [

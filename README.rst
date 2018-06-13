@@ -161,8 +161,11 @@ to configuration.
 Documentation
 -------------
 
-Full documentation including API reference can be found at
+Full documentation can be found at
 `kqueen.readthedocs.io <http://kqueen.readthedocs.io>`__.
+
+API reference is defined at `api.yml <https://github.com/Mirantis/kqueen/blob/master/kqueen/blueprints/api/api3_0.yml>`_
+and Swagger UI is available at ``<kqueen_api_url>/api/docs``
 
 .. |Build Status| image:: https://travis-ci.org/Mirantis/kqueen.svg?branch=master
    :target: https://travis-ci.org/Mirantis/kqueen
@@ -183,3 +186,11 @@ DEMOs
 
 .. image:: https://img.youtube.com/vi/xHydnJGcs2k/0.jpg
    :target: https://youtu.be/xHydnJGcs2k
+
+**Network policy management in KQueen**
+
+The following video provides an overview on how to manage the Calico network policy
+for a Kubernetes cluster provisioned with Google Kubernetes Engine using KQueen.
+
+.. image:: https://img.youtube.com/vi/MYXFI75Fm10/0.jpg
+   :target: https://youtu.be/MYXFI75Fm10

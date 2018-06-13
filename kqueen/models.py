@@ -45,22 +45,27 @@ class Cluster(Model, metaclass=ModelMeta):
             remote_cluster = {}
 
         if 'state' in remote_cluster:
+            self.set_status(remote_cluster)
             if remote_cluster['state'] == self.state:
                 return self.state
-
             self.state = remote_cluster['state']
-            self.save()
         else:
             self.state = config.get('CLUSTER_UNKNOWN_STATE')
-            self.save()
 
-        # check for stale clusters
+        # Check for stale clusters
         max_age = timedelta(seconds=config.get('PROVISIONER_TIMEOUT'))
-        if self.state == config.get('CLUSTER_PROVISIONING_STATE') and datetime.utcnow() - self.created_at > max_age:
+        provisioning_state = config.get('CLUSTER_PROVISIONING_STATE')
+        if self.state == provisioning_state and datetime.utcnow() - self.created_at > max_age:
             self.state = config.get('CLUSTER_ERROR_STATE')
-            self.save()
 
+        self.save()
         return self.state
+
+    def set_status(self, cluster):
+        detailed_status = cluster.get('metadata', {}).get('status_message')
+        if detailed_status:
+            self.metadata['status_message'] = detailed_status
+            self.save()
 
     @property
     def engine(self):
@@ -77,8 +82,7 @@ class Cluster(Model, metaclass=ModelMeta):
             raise Exception('Missing provisioner')
 
     def delete(self):
-        """Deprovision cluster and delete object from database"""
-
+        """Deprovision cluster and delete object from database."""
         deprov_status, deprov_msg = self.engine.deprovision()
 
         if deprov_status:
@@ -95,9 +99,11 @@ class Cluster(Model, metaclass=ModelMeta):
         return kubeconfig
 
     def save(self, **kwargs):
-        # while used in async method, app context is not available by default and needs to be imported
+        # While used in async method, app context is not available by default
+        # and needs to be imported
         from flask import current_app as app
         from kqueen.server import create_app
+
         try:
             if not app.testing:
                 app = create_app()
@@ -108,10 +114,9 @@ class Cluster(Model, metaclass=ModelMeta):
             return super().save(**kwargs)
 
     def status(self):
-        """Return information about Kubernetes cluster"""
+        """Return information about Kubernetes cluster."""
         try:
             kubernetes = KubernetesAPI(cluster=self)
-
             out = {
                 'addons': kubernetes.list_services(filter_addons=True),
                 'deployments': kubernetes.list_deployments(),
@@ -133,31 +138,29 @@ class Cluster(Model, metaclass=ModelMeta):
 
     def topology_data(self):
         """
-        Return information about Kubernetes cluster in format used in
+        Return information about Kubernetes cluster in the format used in
         visual processing.
         """
-        raw_data = []
         kubernetes = KubernetesAPI(cluster=self)
 
+        def set_kind(objects, kind):
+            for obj in objects:
+                obj['kind'] = kind
+
         nodes = kubernetes.list_nodes()
-        for node in nodes:
-            node['kind'] = 'Node'
+        set_kind(nodes, 'Node')
 
         pods = kubernetes.list_pods(False)
-        for pod in pods:
-            pod['kind'] = 'Pod'
+        set_kind(pods, 'Pod')
 
         namespaces = kubernetes.list_namespaces()
-        for namespace in namespaces:
-            namespace['kind'] = 'Namespace'
+        set_kind(namespaces, 'Namespace')
 
         services = kubernetes.list_services(False)
-        for service in services:
-            service['kind'] = 'Service'
+        set_kind(services, 'Service')
 
         deployments = kubernetes.list_deployments(False)
-        for deployment in deployments:
-            deployment['kind'] = 'Deployment'
+        set_kind(deployments, 'Deployment')
 
         replica_sets = kubernetes.list_replica_sets(False)
         replica_set_dict = {datum['metadata']['uid']: datum for datum in replica_sets}
@@ -212,26 +215,27 @@ class Cluster(Model, metaclass=ModelMeta):
                 })
 
             if resource['kind'] == 'Pod':
-
-                # define relationship between pods and nodes
+                # Define the relationship between pods and nodes
                 if resource['spec']['node_name'] is not None:
                     relations.append({
                         'source': resource_id,
                         'target': node_name_2_uid[resource['spec']['node_name']]
                     })
 
-                # define relationships between pods and rep sets and
+                # Define relationships between pods and rep sets and
                 # replication controllers
                 if resource['metadata'].get('owner_references', False):
                     if resource['metadata']['owner_references'][0]['kind'] == 'ReplicaSet':
-                        rep_set_id = resource['metadata']['owner_references'][0]['uid']
-                        deploy_id = replica_set_dict[rep_set_id]['metadata']['owner_references'][0]['uid']
+                        def get_uid(x):
+                            return x['metadata']['owner_references'][0]['uid']
+                        rep_set_id = get_uid(resource)
+                        deploy_id = get_uid(replica_set_dict[rep_set_id])
                         relations.append({
                             'source': deploy_id,
                             'target': resource_id
                         })
 
-                # rel'n between pods and services
+                # Relation between pods and services
                 if resource.get('metadata', {}).get('labels', {}).get('run', False):
                     relations.append({
                         'source': resource_id,
@@ -240,11 +244,12 @@ class Cluster(Model, metaclass=ModelMeta):
 
                 if resource.get('metadata', {}).get('labels', {}).get('app', False):
                     try:
+                        app_id = service_select_app_2_uid[resource['metadata']['labels']['app']]
                         relations.append({
                             'source': resource_id,
-                            'target': service_select_app_2_uid[resource['metadata']['labels']['app']]
+                            'target': app_id
                         })
-                    except Exception:
+                    except Exception as e:
                         pass
 
         out = {
@@ -254,27 +259,18 @@ class Cluster(Model, metaclass=ModelMeta):
                 'Pod': '',
             }
         }
-#        except Exception:
-#            out = {
-#                'items': [],
-#                'relations': []
-#            }
-
         return out
 
     def get_kubeconfig_file(self):
-        """
-        Create file with kubeconfig and make this file available on filesystem.
+        """Create file with kubeconfig and make this file available on filesystem.
 
         Returns:
             str: Filename (including path).
-
         """
-
         if hasattr(self, 'kubeconfig_path') and os.path.isfile(self.kubeconfig_path):
             return self.kubeconfig_path
 
-        # create kubeconfig file
+        # Create kubeconfig file
         filehandle, file_path = mkstemp()
         filehandle = open(filehandle, 'w')
         filehandle.write(yaml.dump(self.kubeconfig))
@@ -283,27 +279,24 @@ class Cluster(Model, metaclass=ModelMeta):
         return file_path
 
     def apply(self, resource_text):
-        """
-        Apply YAML file supplied as text
+        """Apply YAML file supplied as text.
 
         Args:
             resource_text (text): Content of file to apply
 
         Returns:
             tuple: (return_code, stdout)
-
-
         """
         kubeconfig = self.get_kubeconfig_file()
 
-        # create temporary resource file
-        # TODO: create helper for this
+        # Create temporary resource file
+        # TODO: create a helper for this
         filehandle, file_path = mkstemp()
         filehandle = open(filehandle, 'w')
         filehandle.write(resource_text)
         filehandle.close()
 
-        # apply resource file
+        # Apply resource file
         cmd = ['kubectl', '--kubeconfig', kubeconfig, 'apply', '-f', file_path]
 
         # TODO: validate output
@@ -328,8 +321,7 @@ class Provisioner(Model, metaclass=ModelMeta):
 
     @classmethod
     def list_engines(self):
-        """Read engines and filter them according to whitelist"""
-
+        """Read engines and filter them according to whitelist."""
         engines = config.get('PROVISIONER_ENGINE_WHITELIST')
 
         if engines is None:
@@ -339,7 +331,7 @@ class Provisioner(Model, metaclass=ModelMeta):
         return engines
 
     def get_engine_cls(self):
-        """Return engine class"""
+        """Return engine class."""
         try:
             module_path = '.'.join(self.engine.split('.')[:-1])
             class_name = self.engine.split('.')[-1]
@@ -348,7 +340,6 @@ class Provisioner(Model, metaclass=ModelMeta):
         except Exception as e:
             logger.exception('Error')
             _class = None
-
         return _class
 
     def engine_status(self, save=True):
@@ -363,7 +354,8 @@ class Provisioner(Model, metaclass=ModelMeta):
         return state
 
     def save(self, check_status=True, **kwargs):
-        # while used in async method, app context is not available by default and needs to be imported
+        # While used in async method, app context is not available by default
+        # and needs to be imported
         from flask import current_app as app
         from kqueen.server import create_app
         try:
@@ -389,7 +381,7 @@ class Organization(Model, metaclass=ModelMeta):
 
     id = IdField(required=True)
     name = StringField(required=True)
-    namespace = StringField(required=True)
+    namespace = StringField(required=True, unique=True)
     policy = JSONField()
     created_at = DatetimeField(default=datetime.utcnow)
 
@@ -433,7 +425,8 @@ class Organization(Model, metaclass=ModelMeta):
             resource_string = '{} {}'.format(resource['object'].lower(), resource['uuid'])
             resource_list.append(resource_string)
         resources = ', '.join(resource_list)
-        raise Exception('Cannot delete Organization {}, following resources needs to be deleted first: {}'.format(self.id, resources))
+        raise Exception('Cannot delete Organization {}, following resources '
+                        'needs to be deleted first: {}'.format(self.id, resources))
 
 
 class User(Model, metaclass=ModelMeta):
@@ -452,11 +445,9 @@ class User(Model, metaclass=ModelMeta):
 
     @property
     def namespace(self):
-        """
-        Get namespace from organization.
+        """Get namespace from organization.
 
         Returns:
             str: Namespace (from organization)
         """
-
         return self.organization.namespace
