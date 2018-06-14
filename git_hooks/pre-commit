@@ -1,0 +1,82 @@
+#!/usr/bin/env python
+# Copyright (c) 2017 Ekaterina Chernova (@katyafervent)
+# Copyright (c) 2016 Christian Brueffer (@cbrueffer )
+# Copyright (c) 2015 Youta EGUSA (@chibiegg)
+# Copyright (c) 2010 Kevin McConnell (@lentil)
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+from __future__ import with_statement, print_function
+import os
+import re
+import subprocess
+import sys
+
+# Use just one of these
+select_codes = []
+ignore_codes = []
+
+# Add parameters like '--max-line-length' below
+overrides = ['--max-line-length=160']
+
+
+def system(*args, **kwargs):
+    kwargs.setdefault('stdout', subprocess.PIPE)
+    proc = subprocess.Popen(args, **kwargs)
+    out, err = proc.communicate()
+    return out
+
+
+def autopep8(filepath):
+    args = ['autopep8', '--in-place', '--verbose', '--ignore-local-config']
+    if select_codes and ignore_codes:
+        print(u'Error: select and ignore codes are mutually exclusive')
+        sys.exit(1)
+    elif select_codes:
+        args.extend(('--select', ','.join(select_codes)))
+    elif ignore_codes:
+        args.extend(('--ignore', ','.join(ignore_codes)))
+    args.extend(overrides)
+    args.append(filepath)
+    result = system(*args)
+    print(result)
+
+
+def main():
+    print('Executing autopep8 pre-commit hook')
+    try:
+        import autopep8 as ap8
+    except ImportError:
+        print('"autopep8" is required. Please install with `pip install autopep8`.', file=sys.stderr)
+        exit(1)
+
+    modified = re.compile('^[AM]+\s+(?P<name>.*\.py)', re.MULTILINE)
+    basedir = system('git', 'rev-parse', '--show-toplevel').decode('utf-8').strip()
+    files = system('git', 'status', '--porcelain').decode('utf-8')
+    files = modified.findall(files)
+
+    for name in files:
+        filepath = os.path.join(basedir, name)
+        autopep8(filepath)
+        system('git', 'add', filepath)
+
+
+if __name__ == '__main__':
+    main()
+
