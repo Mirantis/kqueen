@@ -35,6 +35,17 @@ through the command-line interface and provides examples.
    []
 
 
+**To list the part of clusters:**
+
+.. code-block:: bash
+
+   $ curl -s -H "Authorization: Bearer $TOKEN" 127.0.0.1:5000/api/v1/clusters?limit=5\&offset=10 | jq
+   {
+      "items": [],
+      "total": 0
+   }
+
+
 **To list the provisioners:**
 
 .. code-block:: bash
