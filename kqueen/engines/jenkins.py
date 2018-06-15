@@ -56,7 +56,8 @@ class JenkinsEngine(BaseEngine):
                 'order': 2,
                 'validators': {
                     'required': False
-                }
+                },
+                'help_message': 'Overrides the existing parameters of the Jenkins job'
             }
         }
     }
