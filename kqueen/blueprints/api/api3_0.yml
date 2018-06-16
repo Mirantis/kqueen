@@ -250,9 +250,18 @@ components:
             network_policy:
               type: "string"
               description: "Policy for a network can be configured with one of the existent providers"
-              enum:
-                - "PROVIDER_UNSPECIFIED"
-                - "CALICO"
+              object:
+                properties:
+                  provider:
+                    type: "string"
+                    enum:
+                      - "PROVIDER_UNSPECIFIED"
+                      - "CALICO"
+                  enabled:
+                    type: "boolean"
+                requred:
+                  - "provider"
+                  - "enabled"
         created_at:
           type: "string"
           format: "date-time"
