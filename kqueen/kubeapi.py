@@ -54,7 +54,6 @@ class KubernetesAPI:
             config_dict=kubeconfig,
         )
         kcl.load_and_set(client_config)
-
         return client.ApiClient(configuration=client_config)
 
     def get_version(self):
