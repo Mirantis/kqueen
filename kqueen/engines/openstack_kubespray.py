@@ -307,7 +307,7 @@ class OpenstackKubesprayEngine(BaseEngine):
             for cmd in ("KS_SSH_KEYGEN_CMD", "KS_SSH_CMD", "KS_ANSIBLE_CMD"):
                 if not os.access(config.get(cmd), os.X_OK):
                     raise RuntimeError("%s is not properly configured" % cmd)
-            # TODO: check OpenStack connection
+            OpenStack.connection_status(kwargs)
             return config.PROVISIONER_OK_STATE
         except Exception as e:
             logging.exception("Error engine status: %s", e)
@@ -476,7 +476,6 @@ class Kubespray:
             "OS_AUTH_URL": self.os_kwargs["auth_url"],
             "OS_USERNAME": self.os_kwargs["username"],
             "OS_INTERFACE": self.os_kwargs["identity_interface"],
-            #  "OS_IDENTITY_API_VERSION": "3",
         })
         return env
 
@@ -529,19 +528,11 @@ class OpenStack:
     """Openstack client wrapper."""
 
     def __init__(self, stack_name, *, os_kwargs, cluster, extra_ssh_key):
-        self.c = openstack.connection.Connection(
-            auth_url=os_kwargs["auth_url"],
-            project_id=os_kwargs["project_id"],
-            username=os_kwargs["username"],
-            domain_name=os_kwargs["domain_name"] or None,
-            identity_interface=os_kwargs["identity_interface"],
-            password=os_kwargs["password"],
-        )
+        self.c = OpenStack.get_connection(os_kwargs)
+        self.c.authorize()
         self.cluster = cluster
         self.extra_ssh_key = extra_ssh_key
-
         self.stack_name = stack_name
-        self.c.authorize()
 
     def provision(self):
         master_count = self.cluster.metadata["master_count"]
@@ -673,3 +664,19 @@ class OpenStack:
             else:
                 break
         return [self.c.get_server(sid) for sid in server_ids]
+
+    @staticmethod
+    def get_connection(os_kwargs):
+        return openstack.connection.Connection(
+            auth_url=os_kwargs["auth_url"],
+            project_id=os_kwargs["project_id"],
+            username=os_kwargs["username"],
+            domain_name=os_kwargs["domain_name"] or None,
+            identity_interface=os_kwargs["identity_interface"],
+            password=os_kwargs["password"],
+        )
+
+    @staticmethod
+    def connection_status(os_kwargs):
+        c = OpenStack.get_connection(os_kwargs)
+        c.authorize()
