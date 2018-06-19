@@ -57,6 +57,24 @@ paths:
             items:
               $ref: "#/definitions/Cluster"
 
+  /clusters?limit={limit}&offset={offset}:
+    get:
+      summary: List part of clusters
+      produces:
+        - "application/json"
+      responses:
+        200:
+          description: "Successful operation"
+          schema:
+            type: "object"
+            properties:
+              items:
+                type: "array"
+                items:
+                  $ref: "#/definitions/Cluster"
+              total:
+                type: "int"
+
   /clusters/{id}:
     get:
       summary: Get information about cluster
@@ -136,7 +154,7 @@ paths:
           description: "Invalid id supplied"
         404:
           description: "Cluster not found"
-          
+
   # provisioners
   /provisioners:
     get:

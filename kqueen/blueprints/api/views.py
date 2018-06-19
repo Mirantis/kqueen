@@ -108,6 +108,32 @@ class ListClusters(ListView):
         return super().get_content(self, *args, **kwargs)
 
 
+class GetClustersHealth(ListView):
+    object_class = Cluster
+
+    def get_content(self, *args, **kwargs):
+        clusters = self.obj
+
+        deployed_clusters = 0
+        healthy_clusters = 0
+
+        for cluster in clusters:
+            if cluster.state != config.get('CLUSTER_PROVISIONING_STATE'):
+                deployed_clusters += 1
+            if cluster.state in [config.get('CLUSTER_UPDATING_STATE'),
+                                 config.get('CLUSTER_OK_STATE')]:
+                healthy_clusters += 1
+
+        cluster_health = 0
+        if healthy_clusters and deployed_clusters:
+            cluster_health = int((healthy_clusters / deployed_clusters) * 100)
+
+        return {
+            'total': len(clusters),
+            'healthy_percentage': cluster_health
+        }
+
+
 class CreateCluster(CreateView):
     object_class = Cluster
 
@@ -150,6 +176,7 @@ class DeleteCluster(DeleteView):
 
 
 api.add_url_rule('/clusters', view_func=ListClusters.as_view('cluster_list'))
+api.add_url_rule('/clusters/health', view_func=GetClustersHealth.as_view('clusters_health'))
 api.add_url_rule('/clusters', view_func=CreateCluster.as_view('cluster_create'))
 api.add_url_rule('/clusters/<uuid:pk>', view_func=GetCluster.as_view('cluster_get'))
 api.add_url_rule('/clusters/<uuid:pk>', view_func=UpdateCluster.as_view('cluster_update'))
@@ -285,6 +312,27 @@ class ListProvisioners(ListView):
         return super().get_content(self, *args, **kwargs)
 
 
+class GetProvisionersHealth(ListView):
+    object_class = Provisioner
+
+    def get_content(self, *args, **kwargs):
+        provisioners = self.obj
+
+        healthy_provisioners = 0
+        for provisioner in provisioners:
+            if provisioner.state != config.get('PROVISIONER_ERROR_STATE'):
+                healthy_provisioners += 1
+
+        provisioner_health = 0
+        if healthy_provisioners and provisioners:
+            provisioner_health = int((healthy_provisioners / len(provisioners)) * 100)
+
+        return {
+            'total': len(provisioners),
+            'healthy_percentage': provisioner_health
+        }
+
+
 class CreateProvisioner(CreateView):
     object_class = Provisioner
 
@@ -302,6 +350,8 @@ class DeleteProvisioner(DeleteView):
 
 
 api.add_url_rule('/provisioners', view_func=ListProvisioners.as_view('provisioner_list'))
+api.add_url_rule('/provisioners/health',
+                 view_func=GetProvisionersHealth.as_view('provisioners_health'))
 api.add_url_rule('/provisioners', view_func=CreateProvisioner.as_view('provisioner_create'))
 api.add_url_rule('/provisioners/<uuid:pk>', view_func=GetProvisioner.as_view('provisioner_get'))
 api.add_url_rule('/provisioners/<uuid:pk>', view_func=UpdateProvisioner.as_view('provisioner_update'))
