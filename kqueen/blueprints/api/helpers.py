@@ -21,7 +21,8 @@ def get_object(object_class, pk, user=None):
     # load object
     try:
         obj = object_class.load(namespace, object_id)
-    except NameError:
-        abort(404)
-
+    except NameError as e:
+        abort(404, repr(e))
+    except Exception as e:
+        abort(500, repr(e))
     return obj

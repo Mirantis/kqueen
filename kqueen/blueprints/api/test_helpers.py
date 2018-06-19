@@ -1,6 +1,6 @@
 from .helpers import get_object
 
-from kqueen.storages.exceptions import BackendError
+from werkzeug.exceptions import InternalServerError
 from kqueen.conftest import ClusterFixture
 
 import pytest
@@ -29,5 +29,6 @@ class TestGetObject:
         {},
     ])
     def test_get_object_malformed_user(self, bad_user):
-        with pytest.raises(BackendError, match='Missing namespace for class'):
+        with pytest.raises(InternalServerError,
+                           match='Missing namespace for class Cluster'):
             get_object(self.cluster.__class__, self.cluster.id, bad_user)
