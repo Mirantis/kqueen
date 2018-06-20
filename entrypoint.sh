@@ -1,5 +1,7 @@
 #!/bin/bash
+set -ex
 
+# export additional variables
 export prometheus_multiproc_dir="$(mktemp -d)"
 BOOTSTRAP_ADMIN="${BOOTSTRAP_ADMIN:-False}"
 BOOTSTRAP_ADMIN_USERNAME="${BOOTSTRAP_ADMIN_USERNAME:-admin}"

@@ -70,18 +70,18 @@ class EksEngine(BaseEngine):
             }
         },
         'cluster': {
-            'node_count': {
-            # TODO unsupported, need to define template k8s input
-                'type': 'integer',
-                'label': 'Node Count',
-                'default': 3,
-                'order': 3,
-                'validators': {
-                    'required': True,
-                    'min': 1,
-                    'number': True
-                }
-            },
+#            'node_count': {
+#              TODO  currently unsupported due to EKS API restrictions
+#                'type': 'integer',
+#                'label': 'Node Count',
+#                'default': 3,
+#                'order': 3,
+#                'validators': {
+#                    'required': True,
+#                    'min': 1,
+#                    'number': True
+#                }
+#            },
             'role_arn': {
                 'type': 'text',
                 'label': 'IAM Role ARN',
@@ -203,20 +203,27 @@ class EksEngine(BaseEngine):
         """
         Implementation of :func:`~kqueen.engines.base.BaseEngine.get_kubeconfig`
         """
+        # TODO Currently, KQueen can't parse k8s config body due to unsupported user-exec auth through plugins,
+        # like Heptio, link: https://github.com/kubernetes-client/python/issues/514
+
         if not self.cluster.kubeconfig:
             cluster = self.client.describe_cluster(name=self.cluster.id)
             kubeconfig = {}
-            if cluster['cluster']['status'] != "ACTIVE":
+            if cluster['cluster']['status'] != 'ACTIVE':
                 return self.cluster.kubeconfig
             self.cluster.kubeconfig = yaml.load(self.eks_kubeconfig)
-            self.cluster.kubeconfig["clusters"][0]["cluster"] = {
-                "server": cluster['cluster']['endpoint'],
-                "certificate-authority-data": cluster['cluster']['certificateAuthority']['data']
+            self.cluster.kubeconfig['clusters'][0]['cluster'] = {
+                'server': cluster['cluster']['endpoint'],
+                'certificate-authority-data': cluster['cluster']['certificateAuthority']['data']
             }
-            self.cluster.kubeconfig["users"][0]["user"]["exec"]["args"][2] = cluster['cluster']['name']
-            # TODO define , do we need to use user Arn or Cluster Arn
-#            self.cluster.kubeconfig["users"][0]["user"]["exec"]["args"][4] = cluster['cluster']['roleArn']
-#            self.cluster.kubeconfig["users"][0]["user"]["exec"]["args"][4] = cluster['cluster']['arn']
+            self.cluster.kubeconfig['users'][0]['user']['exec']['args'][2] = cluster['cluster']['name']
+            # Set user credentials for Heptio auth
+            self.cluster.kubeconfig['users'][0]['user']['exec']['env'][0]['value'] = self.aws_access_key
+            self.cluster.kubeconfig['users'][0]['user']['exec']['env'][1]['value'] = self.aws_secret_key
+
+            # Uncomment following lines in case of specifying additional ARN role for heptio auth
+#            self.cluster.kubeconfig['users'][0]['user']['exec']['args'][4] = cluster['cluster']['roleArn']
+#            self.cluster.kubeconfig['users'][0]['user']['exec']['args'][4] = cluster['cluster']['arn']
             self.cluster.save()
         return self.cluster.kubeconfig
 

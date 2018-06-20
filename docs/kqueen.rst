@@ -415,7 +415,15 @@ Provision a Kubernetes cluster using Amazon Elastic Kubernetes Service
 #. Create your Amazon EKS service role, Amazon EKS Cluster VPC - `Official EKS Quickstart <https://docs.aws.amazon.com/eks/latest/userguide/getting-started.html>`_.
 #. Create Amazon EKS IAM Policy - `Creating Amazon EKS IAM Policies <https://docs.aws.amazon.com/eks/latest/userguide/EKS_IAM_user_policies.html>`_.
 #. Create Amazon EKS IAM Passrole Policy - `Creating Amazon Passrole Policies <https://aws.amazon.com/blogs/security/granting-permission-to-launch-ec2-instances-with-iam-roles-passrole-permission/>`_. In policy json-snippet switch all ``ec2`` entities to ``eks``.
-#. Create User account with Programmatic Access and attach all created policies - `Creating an IAM User in Your AWS Account <https://docs.aws.amazon.com/IAM/latest/UserGuide/id_users_create.html>`_. Don't forget to save User Key/Secret Pair.
+#. Create User account with Programmatic Access and attach created policies - `Creating an IAM User in Your AWS Account <https://docs.aws.amazon.com/IAM/latest/UserGuide/id_users_create.html>`_. Don't forget to save User Key/Secret Pair.
+#. Attach additional policies to User account for Heptio Authentication:
+
+  #. AmazonEC2FullAccess
+  #. AmazonRoute53FullAccess
+  #. AmazonS3FullAccess
+  #. IAMFullAccess
+  #. AmazonVPCFullAccess
+
 #. Log in to the KQueen web UI.
 #. From the ``Create Provisioner`` tab, select ``Amazon Elastic Kubernetes Service`` and set the
    following:
@@ -435,6 +443,12 @@ Provision a Kubernetes cluster using Amazon Elastic Kubernetes Service
 
 #. Click ``Submit``.
 #. To track the cluster status, navigate to the KQueen main dashboard.
+
+.. note::
+
+   Currently, KQueen does not support Kubernetes workers-management because of the Amazon EKS API restrictions.
+   To cover the Kubernetes workers use cases, see `Getting started with Amazon EKS <https://docs.aws.amazon.com/eks/latest/userguide/getting-started.html>`_.
+
 
 Provision a Kubernetes cluster using Azure Kubernetes Service
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

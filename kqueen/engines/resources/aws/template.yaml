@@ -18,6 +18,11 @@ users:
     exec:
       apiVersion: client.authentication.k8s.io/v1alpha1
       command: heptio-authenticator-aws
+      env:
+      - name: "AWS_ACCESS_KEY_ID"
+        value: "<YOUR_AKID>"
+      - name: "AWS_SECRET_ACCESS_KEY"
+        value: "<YOUR_SECRET_KEY>"
       args:
         - "token"
         - "-i"
