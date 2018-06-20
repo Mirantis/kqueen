@@ -243,11 +243,11 @@ class OpenstackKubesprayEngine(BaseEngine):
             self.cluster.metadata["resources"] = resources
             self.cluster.save()
             self.ks.scale(resources)
-            self.cluster.state = config.CLUSTER_OK_STATE
-            self.cluster.save()
-            return True, "Resize completed"
         except Exception as e:
             logger.exception("Failed to resize cluster: %s" % e)
+        finally:
+            self.cluster.state = config.CLUSTER_OK_STATE
+            self.cluster.save()
 
     def _scale_down(self, new_slave_count):
         try:
@@ -259,12 +259,11 @@ class OpenstackKubesprayEngine(BaseEngine):
             resources = self.os.shrink(resources=resources,
                                        remove_hostnames=remove_hostnames)
             self.cluster.metadata["resources"] = resources
+        except Exception as e:
+            logger.exception("Failed to resize cluster: %s" % e)
+        finally:
             self.cluster.state = config.CLUSTER_OK_STATE
             self.cluster.save()
-        except Exception as e:
-            message = "Error growing cluster: %s" % e
-            logger.exception(message)
-            return False, message
 
     def resize(self, node_count):
         logger.info("Resize to %s nodes requested" % node_count)
