@@ -430,7 +430,8 @@ class Model:
 
         try:
             directory = current_app.db.client.get(key)
-        except etcd.EtcdKeyNotFound:
+        except (etcd.EtcdKeyNotFound, etcd.EtcdException):
+            logger.exception('Error while getting {} key from the etcd'.format(key))
             return output
 
         # Don't allow iteration over children generator on empty directory.

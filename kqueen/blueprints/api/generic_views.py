@@ -233,7 +233,11 @@ class ListView(GenericView):
 
     def dispatch_request(self, *args, **kwargs):
         self.check_authentication()
-        self.set_object(*args, **kwargs)
+        try:
+            self.set_object(*args, **kwargs)
+        except Exception as e:
+            logger.exception(e)
+            abort(500, description='Unable to get objects list. {}'.format(repr(e)))
         output = self.get_content(*args, **kwargs)
         if self.limit > 0:
             return jsonify({'items': output, 'total': self._objects_total})
