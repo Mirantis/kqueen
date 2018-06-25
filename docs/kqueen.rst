@@ -159,6 +159,39 @@ pattern.
       - 127.0.0.0/8
       - Addresses allowed to access metrics endpoint without token
 
+
+Default user access configuration
+_________________________________
+
+Default CRUD (Create, Read, Update, Delete) model for KQueen user roles.
+
+Superadmin view
+~~~~~~~~~~~~~~~
+
+- ``CRUD`` all organizations.
+- ``CRUD/Manage`` all members.
+- ``CRUD/Manage`` all member roles.
+- Full admin rights.
+
+Admin view
+~~~~~~~~~~
+
+- Invite/remove members in own organization (Email/LDAP).
+- ``CRD`` all provisioners.
+- ``CRUD`` all clusters.
+- Collect Prometheus metrics.
+- Full user rights.
+
+
+User view
+~~~~~~~~~
+
+- Login.
+- ``R`` organization members.
+- ``R`` provisioners.
+- ``CRUD`` self clusters.
+
+
 Before you provision a Kubernetes cluster, you may need to deploy and configure
 the following external services:
 
