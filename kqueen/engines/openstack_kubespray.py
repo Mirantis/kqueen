@@ -225,7 +225,7 @@ class OpenstackKubesprayEngine(BaseEngine):
         try:
             self.ks.delete()
         except Exception as e:
-            logger.warn("Unable to cleatup cluster data: %s" % e)
+            logger.warn("Unable to cleanup cluster data: %s" % e)
         try:
             self.os.deprovision()
         except Exception as e:
@@ -536,6 +536,7 @@ class OpenStack:
         self.cluster = cluster
         self.extra_ssh_key = extra_ssh_key
         self.stack_name = stack_name
+        self.os_kwargs = os_kwargs
 
     def provision(self):
         master_count = self.cluster.metadata["master_count"]
@@ -592,6 +593,7 @@ class OpenStack:
         return resources
 
     def deprovision(self):
+        self._cleanup_lbaas()
         for server in self.c.list_servers():
             if server.name.startswith(self.stack_name):
                 self.c.delete_server(server.id)
@@ -644,9 +646,9 @@ class OpenStack:
                       add_random_suffix=False):
         server_ids = []
         for i in servers_range:
-            hostname = name + str(i)
+            hostname = "-".join((name, str(i)))
             if add_random_suffix:
-                hostname += base64.b32encode(os.urandom(10)).decode('ascii').lower()
+                hostname += "-" + base64.b32encode(os.urandom(10)).decode("ascii").lower()
             server = self.c.create_server(
                 name=hostname,
                 image=image,
@@ -667,6 +669,36 @@ class OpenStack:
             else:
                 break
         return [self.c.get_server(sid) for sid in server_ids]
+
+    def _cleanup_lbaas(self):
+        # NOTE(sskripnick) openstacksdk does not support neutron lbaas
+        from keystoneauth1 import identity
+        from keystoneauth1 import session
+        from neutronclient.v2_0 import client
+        auth = identity.Password(
+            auth_url=self.os_kwargs["auth_url"],
+            username=self.os_kwargs["username"],
+            password=self.os_kwargs["password"],
+            user_domain_name=self.os_kwargs["domain_name"],
+            project_id=self.os_kwargs["project_id"],
+        )
+        sess = session.Session(auth=auth)
+        neutron = client.Client(session=sess,
+                                region_name=self.os_kwargs["region_name"],
+                                endpoint_type=self.os_kwargs["identity_interface"])
+        for n in neutron.list_networks()["networks"]:
+            if n["name"] != self.stack_name:
+                continue
+            for p in neutron.list_ports(network_id=n["id"])["ports"]:
+                if p["device_owner"] != "neutron:LOADBALANCERV2":
+                    continue
+                lb = neutron.show_loadbalancer(p["device_id"])["loadbalancer"]
+                for pool in lb["pools"]:
+                    # NOTE(sskripnick) use direct call due to bug in delete_pool method
+                    neutron.delete("/lbaas/pools/%s" % pool["id"])
+                for listener in lb["listeners"]:
+                    neutron.delete_listener(listener["id"])
+                neutron.delete_loadbalancer(lb["id"])
 
     @staticmethod
     def get_connection(os_kwargs):
