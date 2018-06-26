@@ -27,7 +27,8 @@ class ManualEngine(BaseEngine):
                         'apiVersion',
                         'kind'
                     ]
-                }
+                },
+                'help_message': 'Only "username" and "password" are supported for the user description.'
             }
         }
     }

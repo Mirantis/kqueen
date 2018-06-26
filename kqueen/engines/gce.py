@@ -61,7 +61,10 @@ class GceEngine(BaseEngine):
                     'required': True,
                     'min': 1,
                     'number': True
-                }
+                },
+                'help_message':
+                    'To enable network policy, your cluster must have at least 2 nodes. The recommended minimum '
+                    'cluster size to run the network policy enforcement is 3 Standard-1 instances'
             },
             'zone': {
                 'type': 'select',
@@ -92,13 +95,13 @@ class GceEngine(BaseEngine):
                 'label': 'Machine Type',
                 'order': 3,
                 'choices': [
-                    ('n1-standard-1', 'Standart: 1 vCPU, 3.75 GB RAM'),
-                    ('n1-standard-2', 'Standart: 2 vCPU, 7.5 GB RAM'),
-                    ('n1-standard-4', 'Standart: 4 vCPU, 15 GB RAM'),
-                    ('n1-standard-8', 'Standart: 8 vCPU, 30 GB RAM'),
-                    ('n1-standard-16', 'Standart: 16 vCPU, 60 GB RAM'),
-                    ('n1-standard-32', 'Standart: 32 vCPU, 120 GB RAM'),
-                    ('n1-standard-64', 'Standart: 64 vCPU, 240 GB RAM')
+                    ('n1-standard-1', 'Standard: 1 vCPU, 3.75 GB RAM'),
+                    ('n1-standard-2', 'Standard: 2 vCPU, 7.5 GB RAM'),
+                    ('n1-standard-4', 'Standard: 4 vCPU, 15 GB RAM'),
+                    ('n1-standard-8', 'Standard: 8 vCPU, 30 GB RAM'),
+                    ('n1-standard-16', 'Standard: 16 vCPU, 60 GB RAM'),
+                    ('n1-standard-32', 'Standard: 32 vCPU, 120 GB RAM'),
+                    ('n1-standard-64', 'Standard: 64 vCPU, 240 GB RAM')
                 ],
                 'validators': {
                     'required': True
@@ -112,7 +115,8 @@ class GceEngine(BaseEngine):
                 'validators': {
                     'required': False,
                     'cidr': True
-                }
+                },
+                'help_message': 'Provide a unique IP range or leave it empty for auto-assignment'
             },
             'network_policy': {
                 'type': 'select',
