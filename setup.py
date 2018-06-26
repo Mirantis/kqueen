@@ -40,7 +40,7 @@ setup(
         'gunicorn',
         'kubernetes',
         'oauth2client==3.0.0',
-        'openstacksdk==0.12.0',
+        'openstacksdk==0.14.0',
         'python-neutronclient==6.9.0',
         'pycrypto',
         'prometheus_client',
