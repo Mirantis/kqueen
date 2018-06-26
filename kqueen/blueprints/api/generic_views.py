@@ -139,8 +139,8 @@ class DeleteView(GenericView):
 
         try:
             self.obj.delete()
-        except Exception:
-            abort(500)
+        except Exception as e:
+            abort(500, "Failed to delete object: {}".format(repr(e)))
 
         return jsonify({'id': self.obj.id, 'state': 'deleted'})
 
