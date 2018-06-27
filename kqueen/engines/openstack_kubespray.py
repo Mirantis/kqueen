@@ -75,17 +75,17 @@ class OpenstackKubesprayEngine(BaseEngine):
                 "order": 40,
                 "default": 3,
                 "label": "Master node count",
+                "help_message": "Must be odd number",
                 "validators": {
                     "required": True,
                     "minimum": 3,
-                    # should be odd number
                 },
             },
             "slave_count": {
                 "type": "integer",
                 "order": 50,
                 "default": 1,
-                "label": "Slave(minion) count",
+                "label": "Slave node count",
                 "validators": {
                     "required": True,
                 },
@@ -137,12 +137,14 @@ class OpenstackKubesprayEngine(BaseEngine):
             },
             "domain_name": {
                 "type": "text",
-                "label": "Domain name (leave empty if using keysone v2)",
+                "label": "Domain name",
+                "help_message": "Leave empty if using keystone v2",
                 "order": 40,
             },
             "project_id": {
                 "type": "text",
-                "label": "Project ID (or tenant ID if using keystone v2)",
+                "label": "Project ID",
+                "help_message": "Tenant ID if using keystone v2",
                 "order": 50,
                 "validators": {
                     "required": True,
@@ -174,7 +176,6 @@ class OpenstackKubesprayEngine(BaseEngine):
         :param kqueen.models.Cluster cluster:
         """
         super().__init__(cluster, *args, **kwargs)
-        self.kwargs = kwargs
         short_uuid = base64.b32encode(uuid.UUID(cluster.id).bytes)[:26].lower()
         self.stack_name = "kq-" + short_uuid.decode('ascii')
         self.ks = Kubespray(
@@ -229,9 +230,8 @@ class OpenstackKubesprayEngine(BaseEngine):
         try:
             self.os.deprovision()
         except Exception as e:
-            message = "Unable to remove cluster: %s" % e
-            logger.exception(message)
-            return False, message
+            logger.exception("Unable to remove cluster: %s" % e)
+            return False, e
         return True, None
 
     def _scale_up(self, new_slave_count):
@@ -283,7 +283,7 @@ class OpenstackKubesprayEngine(BaseEngine):
             logger.info("Scaling down %s -> %s slaves" % (current_slave_count, new_slave_count))
             app.executor.submit(self._scale_down, new_slave_count)
             return True, "Resizing started"
-        return False, "Cluster has already %s nodes" % node_count
+        return False, "Cluster already has %s nodes" % node_count
 
     def get_kubeconfig(self):
         return self.cluster.kubeconfig
@@ -565,7 +565,6 @@ class OpenStack:
         resources["router_id"] = router["id"]
         resources["network_id"] = network["id"]
         resources["subnet_id"] = subnet["id"]
-        # TODO: security group
         for master in self._boot_servers(name=self.stack_name,
                                          servers_range=range(master_count),
                                          image=image,
@@ -578,7 +577,6 @@ class OpenStack:
                 "floating_ip_id": fip.id,
                 "hostname": master.name,
             })
-        # TODO: security group
         for slave in self._boot_servers(name=self.stack_name,
                                         servers_range=range(slave_count),
                                         image=image,
