@@ -140,6 +140,8 @@ def identity(payload):
 
 
 def encrypt_password(_password):
+    if not _password:
+        return None
     config = current_config()
     rounds = config.get('BCRYPT_ROUNDS', 12)
     password = str(_password).encode('utf-8')
