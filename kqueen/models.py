@@ -450,4 +450,4 @@ class User(Model, metaclass=ModelMeta):
         Returns:
             str: Namespace (from organization)
         """
-        return self.organization.namespace
+        return self.organization.namespace if self.organization else None
