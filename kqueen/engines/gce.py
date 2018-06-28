@@ -217,7 +217,7 @@ class GceEngine(BaseEngine):
             request.execute()
             # TODO: check if provisioning response is healthy
         except Exception as e:
-            msg = 'Creating cluster {} failed with the following reason: {}'.format(self.cluster_id, e)
+            msg = 'Creating cluster {} failed with the following reason: '.format(self.cluster_id)
             logger.exception(msg)
             return False, e
 
@@ -245,10 +245,9 @@ class GceEngine(BaseEngine):
             request.execute()
             # TODO: check if provisioning response is healthy
         except Exception as e:
-            msg = 'Deleting cluster {} failed with following reason: {}'.format(self.cluster_id,
-                                                                                repr(e))
+            msg = 'Deleting cluster {} failed with following reason: '.format(self.cluster_id)
             logger.exception(msg)
-            return False, msg
+            return False, repr(e)
 
         return True, None
 
@@ -273,10 +272,10 @@ class GceEngine(BaseEngine):
         try:
             request.execute()
         except Exception as e:
-            msg = 'Resizing cluster {} failed with the following reason: {}'\
-                  .format(self.cluster_id, repr(e))
+            msg = 'Resizing cluster {} failed with the following reason: '\
+                  .format(self.cluster_id)
             logger.exception(msg)
-            return False, msg
+            return False, repr(e)
 
         self.cluster.metadata['node_count'] = node_count
         self.cluster.save()
@@ -329,10 +328,10 @@ class GceEngine(BaseEngine):
         try:
             request.execute()
         except Exception as e:
-            msg = 'Setting {} Network Policy for cluster {} failed with the following reason: {}'\
-                .format(network_provider, self.cluster_id, e)
+            msg = 'Setting {} Network Policy for cluster {} failed with the following reason: '\
+                  .format(network_provider, self.cluster_id)
             logger.exception(msg)
-            return False, msg
+            return False, repr(e)
 
         logger.debug('Setting {} network policy to cluster {} passed successfully,\
                      saving metadata...'.format(network_provider, self.cluster_id))
