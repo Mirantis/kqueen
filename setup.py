@@ -52,8 +52,9 @@ setup(
         'google-api-python-client==1.6.4',
         'google-auth==1.2.1',
         'google-auth-httplib2==0.0.3',
-        'azure==2.0.0',
-        'azure-mgmt-containerservice==3.0.1',
+        'azure-common==1.1.9',
+        'azure-mgmt-containerservice==3.0.0',
+        'msrestazure==0.4.25',
         'urllib3==1.22'
     ],
     setup_requires=[
