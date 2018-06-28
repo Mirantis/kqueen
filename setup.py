@@ -50,7 +50,7 @@ setup(
         'google-api-python-client==1.6.4',
         'google-auth==1.2.1',
         'google-auth-httplib2==0.0.3',
-        'azure',
+        'azure==2.0.0',
         'azure-mgmt-containerservice==3.0.1',
         'urllib3==1.22'
     ],
