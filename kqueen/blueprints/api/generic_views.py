@@ -279,7 +279,7 @@ class CreateView(GenericView):
                 self.save_object()
                 self.after_save()
             except ValueError as e:
-                if 'unique' in str(e):
+                if 'should be unique' in str(e):
                     abort(409, description=e)
                 else:
                     abort(400, description='Error in provided JSON: {}'.format(e))

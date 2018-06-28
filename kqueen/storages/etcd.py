@@ -430,7 +430,10 @@ class Model:
 
         try:
             directory = current_app.db.client.get(key)
-        except (etcd.EtcdKeyNotFound, etcd.EtcdException):
+        except etcd.EtcdKeyNotFound:
+            logger.debug('No objects found in the following path: {}'.format(key))
+            return output
+        except etcd.EtcdException:
             logger.exception('Error while getting {} key from the etcd'.format(key))
             return output
 
