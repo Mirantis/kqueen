@@ -7,6 +7,7 @@ from .exceptions import ImproperlyConfigured
 from .middleware import setup_metrics
 from .serializers import KqueenJSONEncoder
 from .storages.etcd import EtcdBackend
+from concurrent.futures import ThreadPoolExecutor
 from flask import Flask
 from flask_jwt import JWT
 from flask_swagger_ui import get_swaggerui_blueprint
@@ -50,6 +51,7 @@ def create_app(config_file=None):
         raise ImproperlyConfigured('The SECRET_KEY must be set and longer than 16 chars.')
 
     app.config.from_mapping(config.to_dict())
+    app.executor = ThreadPoolExecutor(max_workers=app.config.get('POOL_MAX_WORKERS'))
 
     # setup database
     app.db = EtcdBackend()

@@ -10,10 +10,18 @@ RUN apt-get update && \
   rm -rf /var/lib/apt/lists/* && \
   mkdir /var/log/kqueen-api
 
-# copy app
-COPY . .
-RUN pip install .
+# install kubespray
+RUN git clone -b v2.5.0 https://github.com/kubernetes-incubator/kubespray.git && \
+  pip install -r kubespray/requirements.txt
 
+# copy app
+COPY . kqueen
+RUN pip install ./kqueen
+
+ENV KQUEEN_KS_KUBESPRAY_PATH /code/kubespray
+ENV KQUEEN_KS_ANSIBLE_CMD /usr/local/bin/ansible
+ENV KQUEEN_KS_ANSIBLE_PLAYBOOK_CMD /usr/local/bin/ansible-playbook
 
 # run app
+WORKDIR /code/kqueen
 CMD ./entrypoint.sh

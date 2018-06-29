@@ -103,6 +103,9 @@ ENV/
 # ViM swp files
 *.swp
 
+#vscode project files
+.vscode
+
 # NPM asset dir
 node_modules/
 
