@@ -34,7 +34,7 @@ class AksEngine(BaseEngine):
         'provisioner': {
             'client_id': {
                 'type': 'text',
-                'label': 'Client ID',
+                'label': 'Application ID',
                 'order': 0,
                 'validators': {
                     'required': True,
@@ -51,7 +51,7 @@ class AksEngine(BaseEngine):
             },
             'tenant': {
                 'type': 'text',
-                'label': 'Tenant ID',
+                'label': 'Directory ID',
                 'order': 2,
                 'validators': {
                     'required': True,
