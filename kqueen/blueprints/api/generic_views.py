@@ -192,7 +192,30 @@ class ListView(GenericView):
         else:
             self.obj = sorted_by_date
 
+    def _filter_objects(self, objects, filters):
+        if not filters:
+            return objects
+
+        def get_name(obj, attr_name):
+            name = getattr(obj, attr_name, '')
+            if attr_name == 'name':
+                return name
+            return getattr(name, 'name', '')
+
+        return list(filter(
+            lambda x: all(filters[key].lower() in get_name(x, key).lower()
+                          for key in filters.keys()),
+            objects
+        ))
+
     def set_object(self, *args, **kwargs):
+        supported_filters = ['name', 'provisioner']
+        filters = {}
+        for filter_name in supported_filters:
+            filter_value = request.args.get(filter_name)
+            if filter_value:
+                filters[filter_name] = filter_value
+
         self.offset = int(request.args.get('offset', -1))
         if self.offset != -1:
             self.limit = int(request.args.get('limit', 20))
@@ -205,7 +228,7 @@ class ListView(GenericView):
             objects = []
             for namespace in self.get_namespaces():
                 objects += get_objects_list(namespace)
-            self._save_objects_range(objects)
+            self._save_objects_range(self._filter_objects(objects, filters))
             self.check_authorization()
             return
 
@@ -214,7 +237,7 @@ class ListView(GenericView):
         except AttributeError:
             namespace = None
 
-        self._save_objects_range(get_objects_list(namespace))
+        self._save_objects_range(self._filter_objects(get_objects_list(namespace), filters))
         self.check_authorization()
 
     def get_content(self, *args, **kwargs):
