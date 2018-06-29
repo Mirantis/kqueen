@@ -34,6 +34,7 @@ class KubernetesAPI:
         api_client = self.get_api_client()
 
         self.api_corev1 = client.CoreV1Api(api_client=api_client)
+        self.api_storagev1 = client.StorageV1Api(api_client=api_client)
         self.api_extensionsv1beta1 = client.ExtensionsV1beta1Api(api_client=api_client)
         self.api_version = client.VersionApi(api_client=api_client)
 
