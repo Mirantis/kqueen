@@ -229,7 +229,7 @@ class OpenstackKubesprayEngine(BaseEngine):
             pvc_names = self._cleanup_pvc()
             self.ks.delete()
         except Exception as e:
-            logger.warn("Unable to cleanup cluster data: %s" % e)
+            logger.exception("Unable to cleanup cluster data: %s" % e)
             self.cluster.state = config.CLUSTER_ERROR_STATE
             self.cluster.save()
             return False, e
@@ -686,6 +686,7 @@ class OpenStack:
                 flavor=flavor,
                 userdata=self._get_userdata(),
                 network=network,
+                availability_zone=self.os_kwargs["availability_zone"],
                 key_name=self.cluster.metadata["ssh_key_name"],
             )
             server_ids.append(server.id)
