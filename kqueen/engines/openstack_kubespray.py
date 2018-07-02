@@ -227,12 +227,13 @@ class OpenstackKubesprayEngine(BaseEngine):
     def deprovision(self):
         try:
             pvc_names = self._cleanup_pvc()
+        except Exception as e:
+            logger.warn("Unable to cleanup pvc: %s" % e)
+            pvc_names = []
+        try:
             self.ks.delete()
         except Exception as e:
-            logger.exception("Unable to cleanup cluster data: %s" % e)
-            self.cluster.state = config.CLUSTER_ERROR_STATE
-            self.cluster.save()
-            return False, e
+            logger.warn("Unable to cleanup kubespray data: %s" % e)
         try:
             self.os.deprovision(volume_names=pvc_names)
         except Exception as e:
