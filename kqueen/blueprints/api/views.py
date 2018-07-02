@@ -161,9 +161,9 @@ class GetCluster(GetView):
         self.check_authentication()
         self.set_object(*args, **kwargs)
         self.check_authorization()
-        cluster = self.get_content(*args, **kwargs)
+        cluster = self.get_content(*args, hide_secure_data=False, **kwargs)
         cluster.get_state()
-
+        cluster = self.hide_secure_data(self.obj)
         return jsonify(cluster)
 
 
