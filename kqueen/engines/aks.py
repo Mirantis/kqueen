@@ -197,12 +197,14 @@ class AksEngine(BaseEngine):
         )
 
         try:
-            self.client.managed_clusters.create_or_update(self.resource_group_name, self.cluster.id, managed_cluster)
+            self.client.managed_clusters.create_or_update(self.resource_group_name,
+                                                          self.cluster.id,
+                                                          managed_cluster)
             # TODO: check if provisioning response is healthy
         except Exception as e:
-            msg = 'Creating cluster {} failed with following reason {}:'.format(self.cluster.id, e)
+            msg = 'Creating cluster {} failed with the following reason:'.format(self.cluster.id)
             logger.exception(msg)
-            return False, e
+            return False, repr(e)
 
         return True, None
 
@@ -219,9 +221,9 @@ class AksEngine(BaseEngine):
             self.client.managed_clusters.delete(self.resource_group_name, self.cluster.id)
             # TODO: check if deprovisioning response is healthy
         except Exception as e:
-            msg = 'Deleting cluster {} failed with following reason:'.format(self.cluster.id)
+            msg = 'Deleting cluster {} failed with the following reason: '.format(self.cluster.id)
             logger.exception(msg)
-            return False, msg
+            return False, repr(e)
 
         return True, None
 
@@ -238,12 +240,15 @@ class AksEngine(BaseEngine):
         )
 
         try:
-            self.client.managed_clusters.create_or_update(self.resource_group_name, self.cluster.id, managed_cluster)
+            self.client.managed_clusters.create_or_update(self.resource_group_name,
+                                                          self.cluster.id,
+                                                          managed_cluster)
             # TODO: check if resizing response is healthy
         except Exception as e:
-            msg = 'Resizing cluster {} failed with following reason:'.format(self.cluster.id)
+            msg = 'Resizing cluster {} failed with the following reason: '\
+                  .format(self.cluster.id)
             logger.exception(msg)
-            return False, msg
+            return False, repr(e)
 
         self.cluster.metadata['node_count'] = node_count
         self.cluster.save()
@@ -277,7 +282,8 @@ class AksEngine(BaseEngine):
         try:
             response = self.client.managed_clusters.get(self.resource_group_name, self.cluster.id)
         except Exception as e:
-            msg = 'Fetching data from backend for cluster {} failed with following reason:'.format(self.cluster.id)
+            msg = 'Fetching data from backend for cluster {} failed with the following reason: '\
+                  .format(self.cluster.id)
             logger.exception(msg)
             return {}
         state = STATE_MAP.get(response.provisioning_state, config.get('CLUSTER_UNKNOWN_STATE'))
