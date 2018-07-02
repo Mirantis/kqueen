@@ -37,7 +37,7 @@ class Cluster(Model, metaclass=ModelMeta):
     created_at = DatetimeField(default=datetime.utcnow)
     owner = RelationField(required=True, remote_class_name='User')
 
-    def get_state(self):
+    def update_state(self):
         try:
             remote_cluster = self.engine.cluster_get()
         except Exception as e:

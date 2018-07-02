@@ -229,7 +229,7 @@ class TestClusterState:
         self.cluster = cluster
 
     def test_stale_cluster(self):
-        cluster_state = self.cluster.get_state()
-        print(self.cluster.get_state())
+        cluster_state = self.cluster.update_state()
+        print(self.cluster.update_state())
 
         assert cluster_state == config.get('CLUSTER_ERROR_STATE')
