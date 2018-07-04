@@ -78,7 +78,7 @@ class OpenstackKubesprayEngine(BaseEngine):
                 "help_message": "Must be odd number",
                 "validators": {
                     "required": True,
-                    "minimum": 3,
+                    "min": 3,
                 },
             },
             "slave_count": {
@@ -101,6 +101,9 @@ class OpenstackKubesprayEngine(BaseEngine):
                 "order": 70,
                 "label": "Comma separated list of nameservers",
                 "default": config.KS_DEFAULT_NAMESERVERS,
+                "validators": {
+                    "ip_list": True,
+                },
             },
             "availability_zone": {
                 "type": "text",
@@ -196,7 +199,14 @@ class OpenstackKubesprayEngine(BaseEngine):
         try:
             self.cluster.state = config.CLUSTER_PROVISIONING_STATE
             self.cluster.save()
-            app.executor.submit(self._run_provisioning)
+            future = app.executor.submit(self._run_provisioning)
+            try:
+                error = future.exception(timeout=11)
+                if error:
+                    return False, error
+            except Exception as e:
+                # No error occurred for the provided timeout
+                return True, None
         except Exception as e:
             message = "Failed to submit provisioning task: %s" % e
             logger.exception(message)
@@ -219,6 +229,9 @@ class OpenstackKubesprayEngine(BaseEngine):
         except Exception as e:
             self.cluster.state = config.CLUSTER_ERROR_STATE
             logger.exception("Failed to provision cluster: %s" % e)
+            self.cluster.metadata['status_message'] = getattr(e, 'details', repr(e))
+            self.cluster.save()
+            raise e
         finally:
             self.cluster.save()
 
