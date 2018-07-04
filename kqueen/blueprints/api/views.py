@@ -72,6 +72,33 @@ def index():
 class ListClusters(ListView):
     object_class = Cluster
 
+    supported_sort_fields = {
+        'name': lambda x: x.name,
+        'provisioner': lambda x: x.provisioner.name,
+        'created_at': lambda x: x.created_at,
+        'created': lambda x: x.created_at,
+        'status': lambda x: x.state,
+        'state': lambda x: x.state,
+    }
+
+    def filter_objects(self, objects, filters):
+        if not filters:
+            return objects
+
+        get_cluster_attr = {
+            'name': lambda x: x.name,
+            'provisioner': lambda x: x.provisioner.name,
+        }
+        filter_keys = set(filters.keys()).intersection(get_cluster_attr.keys())
+        return list(filter(
+            lambda x: all(filters[key].lower() in get_cluster_attr[key](x).lower()
+                          for key in filter_keys),
+            objects
+        ))
+
+    def sort_objects(self, objects, key, order):
+        return sorted(objects, key=self.supported_sort_fields[key], reverse=order == 'asc')
+
     async def _update_clusters(self, clusters, loop):
         futures = [
             loop.run_in_executor(
@@ -275,6 +302,33 @@ def cluster_set_network_policy(pk):
 # Provisioners
 class ListProvisioners(ListView):
     object_class = Provisioner
+
+    supported_sort_fields = {
+        'name': lambda x: x.name,
+        'engine': lambda x: x.engine,
+        'created_at': lambda x: x.created_at,
+        'created': lambda x: x.created_at,
+        'status': lambda x: x.state,
+        'state': lambda x: x.state,
+    }
+
+    def filter_objects(self, objects, filters):
+        if not filters:
+            return objects
+
+        get_provisioner_attr = {
+            'name': lambda x: x.name,
+            'engine': lambda x: x.engine,
+        }
+        filter_keys = set(filters.keys()).intersection(get_provisioner_attr.keys())
+        return list(filter(
+            lambda x: all(filters[key].lower() in get_provisioner_attr[key](x).lower()
+                          for key in filter_keys),
+            objects
+        ))
+
+    def sort_objects(self, objects, key, order):
+        return sorted(objects, key=self.supported_sort_fields[key], reverse=order == 'asc')
 
     async def _update_provisioners(self, provisioners, loop):
         futures = [

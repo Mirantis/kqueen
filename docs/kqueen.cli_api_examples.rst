@@ -46,6 +46,14 @@ through the command-line interface and provides examples.
    }
 
 
+**To get sorted clusters list:**
+
+.. code-block:: bash
+
+   $ curl -s -H "Authorization: Bearer $TOKEN" 127.0.0.1:5000/api/v1/clusters?sortby=name\&order=desc | jq
+   []
+
+
 **To list the provisioners:**
 
 .. code-block:: bash
