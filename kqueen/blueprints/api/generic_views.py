@@ -124,8 +124,9 @@ class GetView(GenericView):
     methods = ['GET']
     action = 'get'
 
-    def get_content(self, *args, **kwargs):
-        self.obj = self.hide_secure_data(self.obj)
+    def get_content(self, *args, hide_secure_data=True, **kwargs):
+        if hide_secure_data:
+            self.obj = self.hide_secure_data(self.obj)
         return self.obj
 
 

@@ -76,7 +76,7 @@ class ListClusters(ListView):
         futures = [
             loop.run_in_executor(
                 None,
-                cluster.get_state
+                cluster.update_state
             )
             for cluster in clusters
         ]
@@ -102,7 +102,7 @@ class ListClusters(ListView):
                 logger.exception('Asyncio loop is NOT available, fallback to simple looping: ')
 
                 for c in clusters:
-                    c.get_state()
+                    c.update_state()
                 self.obj = clusters
 
         return super().get_content(self, *args, **kwargs)
@@ -161,9 +161,9 @@ class GetCluster(GetView):
         self.check_authentication()
         self.set_object(*args, **kwargs)
         self.check_authorization()
-        cluster = self.get_content(*args, **kwargs)
-        cluster.get_state()
-
+        cluster = self.get_content(*args, hide_secure_data=False, **kwargs)
+        cluster.update_state()
+        cluster = self.hide_secure_data(self.obj)
         return jsonify(cluster)
 
 
@@ -217,7 +217,7 @@ def cluster_progress(pk):
         progress = {
             'response': 501,
             'progress': 0,
-            'result': obj.get_state()
+            'result': obj.update_state()
         }
     except Exception:
         progress = {

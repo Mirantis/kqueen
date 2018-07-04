@@ -76,7 +76,7 @@ class TestClusterCRUD(BaseTestCRUD):
             self.namespace,
             self.obj.id
         )
-        obj.get_state()
+        obj.update_state()
 
         assert isinstance(data, list)
         assert len(data) == len(self.obj.__class__.list(
@@ -280,7 +280,7 @@ class TestClusterCRUD(BaseTestCRUD):
 
         assert response.status_code == code
 
-    def test_cluster_list_run_get_state(self, monkeypatch):
+    def test_cluster_list_run_update_state(self, monkeypatch):
         clusters_to_remove = []
         for _ in range(10):
             test_cluster = ClusterFixture()
@@ -288,13 +288,13 @@ class TestClusterCRUD(BaseTestCRUD):
             c = test_cluster.obj
             c.save()
 
-        def fake_get_state(self):
+        def fake_update_state(self):
             self.metadata = {'executed': True}
             self.save()
 
             return config.get('CLUSTER_UNKNOWN_STATE')
 
-        monkeypatch.setattr(self.obj.__class__, 'get_state', fake_get_state)
+        monkeypatch.setattr(self.obj.__class__, 'update_state', fake_update_state)
 
         response = self.client.get(
             url_for('api.cluster_list'),
@@ -306,8 +306,8 @@ class TestClusterCRUD(BaseTestCRUD):
 
         obj = self.obj.__class__.load(self.namespace, self.obj.id)
 
-        assert obj.metadata, 'get_state wasn\'t executed for cluster {}'.format(obj)
-        assert obj.metadata['executed'], 'get_state wasn\'t executed'
+        assert obj.metadata, 'update_state wasn\'t executed for cluster {}'.format(obj)
+        assert obj.metadata['executed'], 'update_state wasn\'t executed'
 
         for c in clusters_to_remove:
             c.destroy()
