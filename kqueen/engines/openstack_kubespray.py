@@ -1,6 +1,7 @@
 from .base import BaseEngine
 from kqueen.config import current_config
 from kqueen.server import app
+from kqueen import kubeapi
 
 import base64
 import json
@@ -78,7 +79,8 @@ class OpenstackKubesprayEngine(BaseEngine):
                 "help_message": "Must be odd number",
                 "validators": {
                     "required": True,
-                    "minimum": 3,
+                    "min": 3,
+                    "parity": "odd",
                 },
             },
             "slave_count": {
@@ -224,15 +226,37 @@ class OpenstackKubesprayEngine(BaseEngine):
 
     def deprovision(self):
         try:
+            pvc_names = self._cleanup_pvc()
+        except Exception as e:
+            logger.warn("Unable to cleanup pvc: %s" % e)
+            pvc_names = []
+        try:
             self.ks.delete()
         except Exception as e:
-            logger.warn("Unable to cleanup cluster data: %s" % e)
+            logger.warn("Unable to cleanup kubespray data: %s" % e)
         try:
-            self.os.deprovision()
+            self.os.deprovision(volume_names=pvc_names)
         except Exception as e:
             logger.exception("Unable to remove cluster: %s" % e)
+            self.cluster.state = config.CLUSTER_ERROR_STATE
+            self.cluster.save()
             return False, e
         return True, None
+
+    def _cleanup_pvc(self):
+        kubernetes = kubeapi.KubernetesAPI(cluster=self.cluster)
+        body = kubeapi.client.V1DeleteOptions()
+
+        # delete storage classes first
+        for sc in kubernetes.api_storagev1.list_storage_class().items:
+            name = sc.to_dict()["metadata"]["name"]
+            kubernetes.api_storagev1.delete_storage_class(name, body)
+
+        # collect persistent volume claims
+        pvc_names = []
+        for pvc in kubernetes.api_corev1.list_persistent_volume_claim_for_all_namespaces().items:
+            pvc_names.append(pvc.to_dict()["spec"]["volume_name"])
+        return pvc_names
 
     def _scale_up(self, new_slave_count):
         try:
@@ -590,10 +614,12 @@ class OpenStack:
             })
         return resources
 
-    def deprovision(self):
+    def deprovision(self, volume_names):
         self._cleanup_lbaas()
+        server_ids = []
         for server in self.c.list_servers():
             if server.name.startswith(self.stack_name):
+                server_ids.append(server.id)
                 self.c.delete_server(server.id)
         router = self.c.get_router(self.stack_name)
         if router is not None:
@@ -601,6 +627,14 @@ class OpenStack:
                 self.c.remove_router_interface(router, port_id=i.id)
             self.c.delete_router(router.id)
         self.c.delete_network(self.stack_name)
+        if volume_names:
+            for sid in server_ids:
+                while self.c.get_server(sid):
+                    time.sleep(5)
+            for v in self.c.block_storage.volumes():
+                pvc_name = v.metadata.get("kubernetes.io/created-for/pv/name")
+                if pvc_name in volume_names:
+                    self.c.delete_volume(v.id, wait=False)
 
     def grow(self, *, resources, new_slave_count):
         current_slave_count = len(resources["slaves"])
@@ -653,6 +687,7 @@ class OpenStack:
                 flavor=flavor,
                 userdata=self._get_userdata(),
                 network=network,
+                availability_zone=self.os_kwargs["availability_zone"],
                 key_name=self.cluster.metadata["ssh_key_name"],
             )
             server_ids.append(server.id)
