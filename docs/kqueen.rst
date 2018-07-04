@@ -433,7 +433,7 @@ Provision a Kubernetes cluster using Google Kubernetes Engine
 #. Select ``JSON`` as the key format.
 #. Download the JSON snippet.
 #. Log in to the KQueen web UI.
-#. From the ``Create Provisioner`` tab, select ``Google Kubernetes Engine``.
+#. From the ``Create Provisioner`` page, select ``Google Kubernetes Engine``.
 #. Insert the downloaded JSON snippet that contains the service account key
    and submit the provisioner creation.
 #. Click ``Deploy Cluster``.
@@ -441,6 +441,47 @@ Provision a Kubernetes cluster using Google Kubernetes Engine
 #. Specify the cluster requirements.
 #. Click ``Submit``.
 #. To track the cluster status, navigate to the KQueen main dashboard.
+
+Provision a Kubernetes cluster using Openstack Kubespray Engine
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+#. Log in to Openstack Horizon Dashboard.
+#. Select your Project.
+#. Navigate to Project`-> ``Compute`` -> ``Access & Security`` -> ``API Access`` tab and click
+   ``Download OpenStack RC File``.
+#. Log in to the KQueen web UI.
+#. From the ``Create Provisioner`` page, select ``Openstack Kubespray Engine``.
+#. Specify provisioner requirements with the Openstack RC File, downloaded earlier.
+#. Click ``Deploy Cluster``.
+#. Select the defined Openstack provisioner.
+#. Specify the cluster requirements, and pay attention on the following cases:
+
+   #. ``SSH key name`` is name of SSH key pair. You should choose from existing pairs or create a new one.
+   #. ``Image name`` image must be one of the `Kubespray supported Linux distributions <https://github.com/kubernetes-incubator/kubespray#supported-linux-distributions>`_.
+   #. ``Flavor`` must be at least ``m1.small`` (2GB RAM, dual-core CPU).
+   #. ``SSH username`` is login username for nodes. It depends on the defined image.
+   #. ``Comma separated list of nameservers`` check, that it contains required dns-servers to resolve Openstack url's (like authentication url).
+
+#. Click ``Submit``.
+#. To track the cluster status, navigate to the KQueen main dashboard.
+
+.. note::
+
+   The Openstack configuration should correspond to the `Kubespray deployment requirements <https://github.com/kubernetes-incubator/kubespray#requirements>`_.
+
+.. note::
+
+   Currently, the cluster can not be downscaled to lower nodes count than the count of master nodes.
+
+.. note::
+
+   Make sure the default security group allows VMs to connect with each other and access to the Internet (if current Node config does not contain full Kubespray requirements setup).
+
+.. note::
+
+   The following network `kube_pods_subnet: 10.233.64.0/18` must be unused in your network infrastructure.
+   IP addresses will be assigned from this range to individual pods.
+
 
 Provision a Kubernetes cluster using Azure Kubernetes Service
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
