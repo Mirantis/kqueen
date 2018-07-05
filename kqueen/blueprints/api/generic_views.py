@@ -181,41 +181,47 @@ class UpdateView(GenericView):
 class ListView(GenericView):
     methods = ['GET']
     action = 'list'
+
     limit = 0
     offset = 0
+    sort_field = ''
+    sort_order = 'desc'
+    supported_sort_fields = {}  # override in child class
+
     _objects_total = 0
 
     def _save_objects_range(self, objects):
         self._objects_total = len(objects)
-        sorted_by_date = sorted(objects, key=lambda x: x.created_at, reverse=True)
+        if self.sort_field:
+            objects = self.sort_objects(objects, self.sort_field, self.sort_order)
+
         if self.limit > 0:
-            self.obj = sorted_by_date[self.offset:self.offset + self.limit]
+            self.obj = objects[self.offset:self.offset + self.limit]
         else:
-            self.obj = sorted_by_date
+            self.obj = objects
 
-    def _filter_objects(self, objects, filters):
-        if not filters:
-            return objects
+    def filter_objects(self, objects, filters):
+        return objects  # implement in child class
 
-        def get_name(obj, attr_name):
-            name = getattr(obj, attr_name, '')
-            if attr_name == 'name':
-                return name
-            return getattr(name, 'name', '')
-
-        return list(filter(
-            lambda x: all(filters[key].lower() in get_name(x, key).lower()
-                          for key in filters.keys()),
-            objects
-        ))
+    def sort_objects(self, objects, key, order):
+        return objects  # implement in child class
 
     def set_object(self, *args, **kwargs):
-        supported_filters = ['name', 'provisioner']
+        supported_filters = ['name', 'provisioner', 'engine']
         filters = {}
         for filter_name in supported_filters:
             filter_value = request.args.get(filter_name)
             if filter_value:
                 filters[filter_name] = filter_value
+
+        sort_field = request.args.get('sortby')
+        sort_order = request.args.get('order', 'desc')
+        if sort_field:
+            if sort_field not in self.supported_sort_fields:
+                abort(400, description='Invalid sortby field {}'.format(sort_field))
+            else:
+                self.sort_field = sort_field
+            self.sort_order = 'desc' if sort_order not in ['asc', 'desc'] else sort_order
 
         self.offset = int(request.args.get('offset', -1))
         if self.offset != -1:
@@ -229,7 +235,7 @@ class ListView(GenericView):
             objects = []
             for namespace in self.get_namespaces():
                 objects += get_objects_list(namespace)
-            self._save_objects_range(self._filter_objects(objects, filters))
+            self._save_objects_range(self.filter_objects(objects, filters))
             self.check_authorization()
             return
 
@@ -238,7 +244,7 @@ class ListView(GenericView):
         except AttributeError:
             namespace = None
 
-        self._save_objects_range(self._filter_objects(get_objects_list(namespace), filters))
+        self._save_objects_range(self.filter_objects(get_objects_list(namespace), filters))
         self.check_authorization()
 
     def get_content(self, *args, **kwargs):
