@@ -50,7 +50,7 @@ class Cluster(Model, metaclass=ModelMeta):
                 return self.state
             self.state = remote_cluster['state']
         else:
-            return config.get('CLUSTER_UNKNOWN_STATE')
+            self.state = config.get('CLUSTER_UNKNOWN_STATE')
 
         # Check for stale clusters
         max_age = timedelta(seconds=config.get('PROVISIONER_TIMEOUT'))
