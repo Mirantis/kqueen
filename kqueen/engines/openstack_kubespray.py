@@ -616,15 +616,22 @@ class OpenStack:
         self.meta["dns"] = [validate_ip(ip) for ip in
                             self.cluster.metadata.get("dns_nameservers", []).split(",")]
 
+        try:
+            self.meta["image"] = self.c.get_image(self.cluster.metadata["image_name"])
+            if self.meta["image"] is None:
+                raise ValueError("Image '%s' is not found" % self.cluster.metadata["image_name"])
+            self.meta["flavor"] = self.c.get_flavor(self.cluster.metadata["flavor"])
+            if self.meta["flavor"] is None:
+                raise ValueError("Flavor '%s' is not found" % self.cluster.metadata["flavor"])
+            # Check that required fields are provided (KeyError is raised if not)
+            self.cluster.metadata["ssh_key_name"]
+            self.cluster.metadata["ssh_username"]
+        except KeyError as e:
+            raise ValueError("Required parameter is not set: {}".format(e))
+
         self.meta["ext_net"] = self.c.get_network(self.cluster.metadata["floating_network"])
         if self.meta["ext_net"] is None:
             raise ValueError("External network '%s' is not found" % self.cluster.metadata["floating_network"])
-        self.meta["image"] = self.c.get_image(self.cluster.metadata["image_name"])
-        if self.meta["image"] is None:
-            raise ValueError("Image '%s' is not found" % self.cluster.metadata["image_name"])
-        self.meta["flavor"] = self.c.get_flavor(self.cluster.metadata["flavor"])
-        if self.meta["flavor"] is None:
-            raise ValueError("Flavor '%s' is not found" % self.cluster.metadata["flavor"])
 
         azone = self.cluster.metadata.get("availability_zone")
         if azone and azone not in self.c.list_availability_zone_names():
@@ -762,7 +769,7 @@ class OpenStack:
                 flavor=flavor,
                 userdata=self._get_userdata(),
                 network=network,
-                availability_zone=self.os_kwargs["availability_zone"],
+                availability_zone=self.os_kwargs.get("availability_zone", "nova"),
                 key_name=self.cluster.metadata["ssh_key_name"],
             )
             server_ids.append(server.id)
