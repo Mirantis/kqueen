@@ -4,7 +4,6 @@ from kqueen.server import app
 from kqueen import kubeapi
 
 import base64
-import ipaddress
 import json
 import logging
 import openstack
@@ -104,9 +103,6 @@ class OpenstackKubesprayEngine(BaseEngine):
                 "order": 70,
                 "label": "Comma separated list of nameservers",
                 "default": config.KS_DEFAULT_NAMESERVERS,
-                "validators": {
-                    "ip_list": True,
-                },
             },
             "availability_zone": {
                 "type": "text",
@@ -200,17 +196,15 @@ class OpenstackKubesprayEngine(BaseEngine):
 
     def provision(self):
         try:
-            self.os.validate_cluster_metadata()
-
             self.cluster.state = config.CLUSTER_PROVISIONING_STATE
             self.cluster.save()
             app.executor.submit(self._run_provisioning)
         except Exception as e:
+            message = "Failed to submit provisioning task: %s" % e
+            logger.exception(message)
             self.cluster.state = config.CLUSTER_ERROR_STATE
-            self.cluster.metadata['status_message'] = repr(e)
             self.cluster.save()
-            # Reraise error to return correct error code
-            raise e
+            return False, e
         return True, None
 
     def _run_provisioning(self):
@@ -227,7 +221,6 @@ class OpenstackKubesprayEngine(BaseEngine):
         except Exception as e:
             self.cluster.state = config.CLUSTER_ERROR_STATE
             logger.exception("Failed to provision cluster: %s" % e)
-            self.cluster.metadata['status_message'] = getattr(e, 'details', repr(e))
         finally:
             self.cluster.save()
 
@@ -568,42 +561,20 @@ class OpenStack:
         self.extra_ssh_key = extra_ssh_key
         self.stack_name = stack_name
         self.os_kwargs = os_kwargs
-        self.meta = {}
-
-    def validate_cluster_metadata(self):
-        def validate_ip(address):
-            address = address.strip()
-            # Raises ValueError if IP address is not valid
-            ipaddress.ip_address(address)
-            return address
-
-        mc = self.cluster.metadata["master_count"]
-        if mc % 2 == 0 or mc == 1:
-            raise ValueError("Master node count must be an odd number at least 3 or greater")
-        self.meta["master_count"] = mc
-        self.meta["slave_count"] = self.cluster.metadata["slave_count"]
-
-        self.meta["dns"] = [validate_ip(ip) for ip in
-                            self.cluster.metadata.get("dns_nameservers", []).split(",")]
-
-        self.meta["ext_net"] = self.c.get_network(self.cluster.metadata["floating_network"])
-        if self.meta["ext_net"] is None:
-            raise ValueError("External network '%s' is not found" % self.cluster.metadata["floating_network"])
-        self.meta["image"] = self.c.get_image(self.cluster.metadata["image_name"])
-        if self.meta["image"] is None:
-            raise ValueError("Image '%s' is not found" % self.cluster.metadata["image_name"])
-        self.meta["flavor"] = self.c.get_flavor(self.cluster.metadata["flavor"])
-        if self.meta["flavor"] is None:
-            raise ValueError("Flavor '%s' is not found" % self.cluster.metadata["flavor"])
-
-        azone = self.cluster.metadata.get("availability_zone")
-        if azone and azone not in self.c.list_availability_zone_names():
-            raise ValueError("Availability zone '{}' is not found".format(self.cluster.metadata["availability_zone"]))
-        else:
-            self.meta["azone"] = azone
 
     def provision(self):
-
+        master_count = self.cluster.metadata["master_count"]
+        slave_count = self.cluster.metadata["slave_count"]
+        dns = self.cluster.metadata["dns_nameservers"].split(",")
+        ext_net = self.c.get_network(self.cluster.metadata["floating_network"])
+        if ext_net is None:
+            raise Exception("External network %s not found" % self.cluster.metadata["floating_network"])
+        image = self.c.get_image(self.cluster.metadata["image_name"])
+        if image is None:
+            raise Exception("Image %s not found" % self.cluster.metadata["image_name"])
+        flavor = self.c.get_flavor(self.cluster.metadata["flavor"])
+        if flavor is None:
+            raise Exception("Flavor %s not found" % self.cluster.metadata["flavor"])
         resources = {
             "masters": [],
             "slaves": [],
@@ -611,17 +582,17 @@ class OpenStack:
         network = self.c.create_network(self.stack_name)
         subnet = self.c.create_subnet(network, cidr="10.1.0.0/16",
                                       subnet_name=self.stack_name,
-                                      dns_nameservers=self.meta['dns'])
+                                      dns_nameservers=dns)
         router = self.c.create_router(name=self.stack_name,
-                                      ext_gateway_net_id=self.meta['ext_net'].id)
+                                      ext_gateway_net_id=ext_net.id)
         self.c.add_router_interface(router, subnet["id"])
         resources["router_id"] = router["id"]
         resources["network_id"] = network["id"]
         resources["subnet_id"] = subnet["id"]
         for master in self._boot_servers(name=self.stack_name,
-                                         servers_range=range(self.meta["master_count"]),
-                                         image=self.meta['image'],
-                                         flavor=self.meta['flavor'],
+                                         servers_range=range(master_count),
+                                         image=image,
+                                         flavor=flavor,
                                          network=network):
             fip = self.c.create_floating_ip("public", server=master)
             resources["masters"].append({
@@ -631,9 +602,9 @@ class OpenStack:
                 "hostname": master.name,
             })
         for slave in self._boot_servers(name=self.stack_name,
-                                        servers_range=range(self.meta["slave_count"]),
-                                        image=self.meta['image'],
-                                        flavor=self.meta['flavor'],
+                                        servers_range=range(slave_count),
+                                        image=image,
+                                        flavor=flavor,
                                         network=network,
                                         add_random_suffix=True):
             resources["slaves"].append({
