@@ -43,7 +43,7 @@ AUTH_MODULES = {
 def generate_auth_options(auth_list):
     auth_options = {}
 
-    methods = auth_list.strip().split(',')
+    methods = [item.strip() for item in auth_list.split(',')]
     for m in methods:
         if m in AUTH_MODULES:
             auth_options[m] = AUTH_MODULES[m]
