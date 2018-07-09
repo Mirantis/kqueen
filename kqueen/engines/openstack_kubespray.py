@@ -80,7 +80,6 @@ class OpenstackKubesprayEngine(BaseEngine):
                 "help_message": "Must be odd number",
                 "validators": {
                     "required": True,
-                    "min": 3,
                     "parity": "odd",
                 },
             },
