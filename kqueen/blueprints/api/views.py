@@ -73,12 +73,12 @@ class ListClusters(ListView):
     object_class = Cluster
 
     supported_sort_fields = {
-        'name': lambda x: x.name,
-        'provisioner': lambda x: x.provisioner.name,
-        'created_at': lambda x: x.created_at,
-        'created': lambda x: x.created_at,
-        'status': lambda x: x.state,
-        'state': lambda x: x.state,
+        'name': lambda x: (x.name, x.created_at, x.id),
+        'provisioner': lambda x: (x.provisioner.name, x.name, x.id),
+        'created_at': lambda x: (x.created_at, x.name, x.id),
+        'created': lambda x: (x.created_at, x.name, x.id),
+        'status': lambda x: (x.state, x.name, x.id),
+        'state': lambda x: (x.state, x.name, x.id),
     }
 
     def filter_objects(self, objects, filters):
@@ -304,12 +304,12 @@ class ListProvisioners(ListView):
     object_class = Provisioner
 
     supported_sort_fields = {
-        'name': lambda x: x.name,
-        'engine': lambda x: x.engine,
-        'created_at': lambda x: x.created_at,
-        'created': lambda x: x.created_at,
-        'status': lambda x: x.state,
-        'state': lambda x: x.state,
+        'name': lambda x: (x.name, x.created_at, x.id),
+        'engine': lambda x: (x.engine, x.name, x.id),
+        'created_at': lambda x: (x.created_at, x.id),
+        'created': lambda x: (x.created_at, x.id),
+        'status': lambda x: (x.state, x.name, x.id),
+        'state': lambda x: (x.state, x.name, x.id),
     }
 
     def filter_objects(self, objects, filters):
