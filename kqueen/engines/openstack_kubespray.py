@@ -680,7 +680,10 @@ class OpenStack:
     def deprovision(self, volume_names):
         self._cleanup_lbaas()
         server_ids = []
+        floating_ips = []
         for server in self.c.list_servers():
+            if server.public_v4:
+                floating_ips.append(server.public_v4)
             if server.name.startswith(self.stack_name):
                 server_ids.append(server.id)
                 self.c.delete_server(server.id)
@@ -690,10 +693,12 @@ class OpenStack:
                 self.c.remove_router_interface(router, port_id=i.id)
             self.c.delete_router(router.id)
         self.c.delete_network(self.stack_name)
-        if volume_names:
-            for sid in server_ids:
+        for sid in server_ids:
                 while self.c.get_server(sid):
                     time.sleep(5)
+        for fip in floating_ips:
+            self.c.delete_floating_ip(fip)
+        if volume_names:
             for v in self.c.block_storage.volumes():
                 pvc_name = v.metadata.get("kubernetes.io/created-for/pv/name")
                 if pvc_name in volume_names:
