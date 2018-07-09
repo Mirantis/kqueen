@@ -337,10 +337,12 @@ class OpenstackKubesprayEngine(BaseEngine):
             for cmd in ("KS_SSH_KEYGEN_CMD", "KS_SSH_CMD", "KS_ANSIBLE_CMD",
                         "KS_ANSIBLE_PLAYBOOK_CMD"):
                 if not os.access(config.get(cmd), os.X_OK):
-                    raise ValueError("%s is not properly configured" % cmd)
+                    logger.error("Unable to access cluster: '%s' is not properly configured" % cmd)
+                    return config.PROVISIONER_ERROR_STATE
             cluster_yml = os.path.join(config.KS_KUBESPRAY_PATH, "cluster.yml")
             if not os.access(cluster_yml, os.R_OK):
-                raise ValueError("KS_KUBESPRAY_PATH is not properly configured")
+                logger.error("KS_KUBESPRAY_PATH is not properly configured")
+                return config.PROVISIONER_ERROR_STATE
             OpenStack.connection_status(kwargs)
             return config.PROVISIONER_OK_STATE
         except Exception as e:
