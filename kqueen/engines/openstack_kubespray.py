@@ -393,8 +393,27 @@ class Kubespray:
         self._save_inventory(inventory, "hosts.json")
         self._create_group_vars()
         self._wait_for_ping()
+        self._add_fip_to_lo(resources)
         self._run_ansible()
-        return self._get_kubeconfig(resources["masters"][0]["ip"])
+        return self._get_kubeconfig(resources["masters"][0]["fip"])
+
+    def _add_fip_to_lo(self, resources):
+        """Add floating ip to loopback interface.
+
+        This is workaround for buggy deployments where node can't reach
+        itself by floating ip.
+        """
+        cmd_fmt = (
+            "sudo /bin/sh -c 'cat > /etc/rc.local <<EOF\n"
+            "/sbin/ip addr add %s/32 dev lo\n"
+            "EOF'"
+        )
+        for master in resources["masters"]:
+            ip = master["fip"]
+            host = "@".join((self.ssh_username, ip))
+            ssh_cmd = ("ssh", host) + self.ssh_common_args
+            subprocess.check_call(ssh_cmd + (cmd_fmt % ip, ))
+            subprocess.check_call(ssh_cmd + ("sudo /bin/sh /etc/rc.local", ))
 
     def scale(self, resources):
         inventory = self._generate_inventory(resources)
@@ -439,9 +458,9 @@ class Kubespray:
         Resources may look like this:
         {
             "masters": [
-                {"hostname": "host-1", "ip": "10.1.1.1"},
-                {"hostname": "host-2", "ip": "10.1.1.2"},
-                {"hostname": "host-3", "ip": "10.1.1.3"},
+                {"hostname": "host-1", "ip": "10.1.1.1", "fip": "172.16.1.1"},
+                {"hostname": "host-2", "ip": "10.1.1.2", "fip": "172.16.1.2"},
+                {"hostname": "host-3", "ip": "10.1.1.3", "fip": "172.16.1.3"},
             ],
             "slaves": [
                 {"hostname": "host-4", "ip": "10.1.1.4"},
@@ -472,8 +491,8 @@ class Kubespray:
         }
         for master in resources["masters"]:
             conf["all"]["hosts"][master["hostname"]] = {
-                "access_ip": master["ip"],
-                "ansible_host": master["ip"],
+                "access_ip": master["fip"],
+                "ansible_host": master["fip"],
                 "ansible_user": self.ssh_username,
                 "ansible_become": True,
             }
@@ -490,7 +509,7 @@ class Kubespray:
                 conf["kube-node"]["hosts"][slave["hostname"]] = None
 
         user = shlex.quote(self.ssh_username)
-        ip = shlex.quote(resources["masters"][0]["ip"])
+        ip = shlex.quote(resources["masters"][0]["fip"])
         ssh_args_fmt = "-o ProxyCommand=\"ssh {user}@{ip} {args} -W %h:%p\" {args}"
         ssh_args = ssh_args_fmt.format(user=user, ip=ip,
                                        args=ssh_common_args)
@@ -548,7 +567,7 @@ class Kubespray:
         )
         pipe.wait()
         if pipe.returncode:
-            raise RuntimeError("Non zero exit status from ansible (%s)" % pipe.returncode)
+            logger.warn("Non zero exit status from ansible (%s)" % pipe.returncode)
 
     def _get_kubeconfig(self, ip):
         cat_kubeconf = "sudo cat /etc/kubernetes/admin.conf"
@@ -640,7 +659,8 @@ class OpenStack:
             fip = self.c.create_floating_ip("public", server=master)
             resources["masters"].append({
                 "id": master.id,
-                "ip": fip.floating_ip_address,
+                "fip": fip.floating_ip_address,
+                "ip": list(master.addresses.values())[0][0]["addr"],
                 "floating_ip_id": fip.id,
                 "hostname": master.name,
             })
@@ -714,7 +734,14 @@ class OpenStack:
             "package_update": True,
             "packages": ["python"],
             "ssh_authorized_keys": [self.extra_ssh_key],
+            "write_files": [
+                {
+                    "content": '{"bip": "10.13.0.1/16"}',
+                    "path": "/etc/docker/daemon.json",
+                },
+            ],
         }
+        # TODO: bip network should not be hardcoded
         return "#cloud-config\n" + yaml.dump(userdata)
 
     def _boot_servers(self, *, name, servers_range, image, flavor, network,
