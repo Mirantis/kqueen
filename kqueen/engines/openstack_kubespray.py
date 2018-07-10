@@ -220,6 +220,7 @@ class OpenstackKubesprayEngine(BaseEngine):
             node_count = len(resources["masters"] + resources["slaves"])
             self.cluster.metadata["node_count"] = node_count
             self.cluster.save()
+            self.allow_addresses_for_calico(resources)
             kubeconfig = self.ks.deploy(resources)
             self.cluster.kubeconfig = kubeconfig
             self.cluster.state = config.CLUSTER_OK_STATE
@@ -230,6 +231,18 @@ class OpenstackKubesprayEngine(BaseEngine):
             self.cluster.metadata['status_message'] = getattr(e, 'details', repr(e))
         finally:
             self.cluster.save()
+
+    def allow_addresses_for_calico(self, resources):
+        kube_service_addresses = '10.233.0.0/18'
+        kube_pods_subnet = '10.233.64.0/18'
+        vm_ids = [i['id'] for i in (*resources['masters'], *resources['slaves'])]
+        neutron = self.os.get_neutron_client()
+
+        for p in neutron.list_ports(network_id=resources['network_id'])['ports']:
+            if p['device_id'] in vm_ids:
+                neutron.update_port(p['id'],
+                                    {'port': {'allowed_address_pairs': [{'ip_address': kube_service_addresses},
+                                                                        {'ip_address': kube_pods_subnet}]}})
 
     def deprovision(self):
         try:
@@ -337,10 +350,12 @@ class OpenstackKubesprayEngine(BaseEngine):
             for cmd in ("KS_SSH_KEYGEN_CMD", "KS_SSH_CMD", "KS_ANSIBLE_CMD",
                         "KS_ANSIBLE_PLAYBOOK_CMD"):
                 if not os.access(config.get(cmd), os.X_OK):
-                    raise ValueError("%s is not properly configured" % cmd)
+                    logger.error("Unable to access cluster: '%s' is not properly configured" % cmd)
+                    return config.PROVISIONER_ERROR_STATE
             cluster_yml = os.path.join(config.KS_KUBESPRAY_PATH, "cluster.yml")
             if not os.access(cluster_yml, os.R_OK):
-                raise ValueError("KS_KUBESPRAY_PATH is not properly configured")
+                logger.error("KS_KUBESPRAY_PATH is not properly configured")
+                return config.PROVISIONER_ERROR_STATE
             OpenStack.connection_status(kwargs)
             return config.PROVISIONER_OK_STATE
         except Exception as e:
@@ -732,8 +747,7 @@ class OpenStack:
                 break
         return [self.c.get_server(sid) for sid in server_ids]
 
-    def _cleanup_lbaas(self):
-        # NOTE(sskripnick) openstacksdk does not support neutron lbaas
+    def get_neutron_client(self):
         from keystoneauth1 import identity
         from keystoneauth1 import session
         from neutronclient.v2_0 import client
@@ -748,6 +762,11 @@ class OpenStack:
         neutron = client.Client(session=sess,
                                 region_name=self.os_kwargs["region_name"],
                                 endpoint_type=self.os_kwargs["identity_interface"])
+        return neutron
+
+    def _cleanup_lbaas(self):
+        # NOTE(sskripnick) openstacksdk does not support neutron lbaas
+        neutron = self.get_neutron_client()
         for n in neutron.list_networks()["networks"]:
             if n["name"] != self.stack_name:
                 continue
