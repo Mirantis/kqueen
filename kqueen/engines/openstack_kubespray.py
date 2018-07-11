@@ -610,10 +610,7 @@ class OpenStack:
             ipaddress.ip_address(address)
             return address
 
-        mc = self.cluster.metadata["master_count"]
-        if mc % 2 == 0 or mc == 1:
-            raise ValueError("Master node count must be an odd number at least 3 or greater")
-        self.meta["master_count"] = mc
+        self.meta["master_count"] = self.cluster.metadata["master_count"]
         self.meta["slave_count"] = self.cluster.metadata["slave_count"]
 
         self.meta["dns"] = [validate_ip(ip) for ip in
