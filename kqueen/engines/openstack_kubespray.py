@@ -247,12 +247,12 @@ class OpenstackKubesprayEngine(BaseEngine):
         try:
             pvc_names = self._cleanup_pvc()
         except Exception as e:
-            logger.warn("Unable to cleanup pvc: %s" % e)
+            logger.warning("Unable to cleanup pvc: %s" % e)
             pvc_names = []
         try:
             self.ks.delete()
         except Exception as e:
-            logger.warn("Unable to cleanup kubespray data: %s" % e)
+            logger.warning("Unable to cleanup kubespray data: %s" % e)
         try:
             self.os.deprovision(volume_names=pvc_names)
         except Exception as e:
@@ -567,7 +567,7 @@ class Kubespray:
         )
         pipe.wait()
         if pipe.returncode:
-            logger.warn("Non zero exit status from ansible (%s)" % pipe.returncode)
+            logger.warning("Non zero exit status from ansible (%s)" % pipe.returncode)
 
     def _get_kubeconfig(self, ip):
         cat_kubeconf = "sudo cat /etc/kubernetes/admin.conf"
@@ -682,10 +682,10 @@ class OpenStack:
         server_ids = []
         floating_ips = []
         for server in self.c.list_servers():
-            if server.public_v4:
-                floating_ips.append(server.public_v4)
             if server.name.startswith(self.stack_name):
                 server_ids.append(server.id)
+                if server.public_v4:
+                    floating_ips.append(server.public_v4)
                 self.c.delete_server(server.id)
         router = self.c.get_router(self.stack_name)
         if router is not None:
@@ -696,12 +696,15 @@ class OpenStack:
         for sid in server_ids:
                 while self.c.get_server(sid):
                     time.sleep(5)
-        for fip in floating_ips:
-            self.c.delete_floating_ip(fip)
+        for fip in self.c.list_floating_ips():
+            if fip.floating_ip_address in floating_ips:
+                logger.info("Deleting floating ip %s" % fip.floating_ip_address)
+                self.c.delete_floating_ip(fip.id)
         if volume_names:
             for v in self.c.block_storage.volumes():
                 pvc_name = v.metadata.get("kubernetes.io/created-for/pv/name")
                 if pvc_name in volume_names:
+                    logger.info("Deleting volume %s" % v.id)
                     self.c.delete_volume(v.id, wait=False)
 
     def grow(self, *, resources, new_slave_count):
