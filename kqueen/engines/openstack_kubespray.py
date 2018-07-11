@@ -80,7 +80,6 @@ class OpenstackKubesprayEngine(BaseEngine):
                 "help_message": "Must be odd number",
                 "validators": {
                     "required": True,
-                    "min": 3,
                     "parity": "odd",
                 },
             },
@@ -248,12 +247,12 @@ class OpenstackKubesprayEngine(BaseEngine):
         try:
             pvc_names = self._cleanup_pvc()
         except Exception as e:
-            logger.warn("Unable to cleanup pvc: %s" % e)
+            logger.warning("Unable to cleanup pvc: %s" % e)
             pvc_names = []
         try:
             self.ks.delete()
         except Exception as e:
-            logger.warn("Unable to cleanup kubespray data: %s" % e)
+            logger.warning("Unable to cleanup kubespray data: %s" % e)
         try:
             self.os.deprovision(volume_names=pvc_names)
         except Exception as e:
@@ -394,8 +393,27 @@ class Kubespray:
         self._save_inventory(inventory, "hosts.json")
         self._create_group_vars()
         self._wait_for_ping()
+        self._add_fip_to_lo(resources)
         self._run_ansible()
-        return self._get_kubeconfig(resources["masters"][0]["ip"])
+        return self._get_kubeconfig(resources["masters"][0]["fip"])
+
+    def _add_fip_to_lo(self, resources):
+        """Add floating ip to loopback interface.
+
+        This is workaround for buggy deployments where node can't reach
+        itself by floating ip.
+        """
+        cmd_fmt = (
+            "sudo /bin/sh -c 'cat > /etc/rc.local <<EOF\n"
+            "/sbin/ip addr add %s/32 dev lo\n"
+            "EOF'"
+        )
+        for master in resources["masters"]:
+            ip = master["fip"]
+            host = "@".join((self.ssh_username, ip))
+            ssh_cmd = ("ssh", host) + self.ssh_common_args
+            subprocess.check_call(ssh_cmd + (cmd_fmt % ip, ))
+            subprocess.check_call(ssh_cmd + ("sudo /bin/sh /etc/rc.local", ))
 
     def scale(self, resources):
         inventory = self._generate_inventory(resources)
@@ -440,9 +458,9 @@ class Kubespray:
         Resources may look like this:
         {
             "masters": [
-                {"hostname": "host-1", "ip": "10.1.1.1"},
-                {"hostname": "host-2", "ip": "10.1.1.2"},
-                {"hostname": "host-3", "ip": "10.1.1.3"},
+                {"hostname": "host-1", "ip": "10.1.1.1", "fip": "172.16.1.1"},
+                {"hostname": "host-2", "ip": "10.1.1.2", "fip": "172.16.1.2"},
+                {"hostname": "host-3", "ip": "10.1.1.3", "fip": "172.16.1.3"},
             ],
             "slaves": [
                 {"hostname": "host-4", "ip": "10.1.1.4"},
@@ -473,8 +491,8 @@ class Kubespray:
         }
         for master in resources["masters"]:
             conf["all"]["hosts"][master["hostname"]] = {
-                "access_ip": master["ip"],
-                "ansible_host": master["ip"],
+                "access_ip": master["fip"],
+                "ansible_host": master["fip"],
                 "ansible_user": self.ssh_username,
                 "ansible_become": True,
             }
@@ -491,7 +509,7 @@ class Kubespray:
                 conf["kube-node"]["hosts"][slave["hostname"]] = None
 
         user = shlex.quote(self.ssh_username)
-        ip = shlex.quote(resources["masters"][0]["ip"])
+        ip = shlex.quote(resources["masters"][0]["fip"])
         ssh_args_fmt = "-o ProxyCommand=\"ssh {user}@{ip} {args} -W %h:%p\" {args}"
         ssh_args = ssh_args_fmt.format(user=user, ip=ip,
                                        args=ssh_common_args)
@@ -549,7 +567,7 @@ class Kubespray:
         )
         pipe.wait()
         if pipe.returncode:
-            raise RuntimeError("Non zero exit status from ansible (%s)" % pipe.returncode)
+            logger.warning("Non zero exit status from ansible (%s)" % pipe.returncode)
 
     def _get_kubeconfig(self, ip):
         cat_kubeconf = "sudo cat /etc/kubernetes/admin.conf"
@@ -592,10 +610,7 @@ class OpenStack:
             ipaddress.ip_address(address)
             return address
 
-        mc = self.cluster.metadata["master_count"]
-        if mc % 2 == 0 or mc == 1:
-            raise ValueError("Master node count must be an odd number at least 3 or greater")
-        self.meta["master_count"] = mc
+        self.meta["master_count"] = self.cluster.metadata["master_count"]
         self.meta["slave_count"] = self.cluster.metadata["slave_count"]
 
         self.meta["dns"] = [validate_ip(ip) for ip in
@@ -641,7 +656,8 @@ class OpenStack:
             fip = self.c.create_floating_ip("public", server=master)
             resources["masters"].append({
                 "id": master.id,
-                "ip": fip.floating_ip_address,
+                "fip": fip.floating_ip_address,
+                "ip": list(master.addresses.values())[0][0]["addr"],
                 "floating_ip_id": fip.id,
                 "hostname": master.name,
             })
@@ -661,9 +677,12 @@ class OpenStack:
     def deprovision(self, volume_names):
         self._cleanup_lbaas()
         server_ids = []
+        floating_ips = []
         for server in self.c.list_servers():
             if server.name.startswith(self.stack_name):
                 server_ids.append(server.id)
+                if server.public_v4:
+                    floating_ips.append(server.public_v4)
                 self.c.delete_server(server.id)
         router = self.c.get_router(self.stack_name)
         if router is not None:
@@ -671,13 +690,18 @@ class OpenStack:
                 self.c.remove_router_interface(router, port_id=i.id)
             self.c.delete_router(router.id)
         self.c.delete_network(self.stack_name)
-        if volume_names:
-            for sid in server_ids:
+        for sid in server_ids:
                 while self.c.get_server(sid):
                     time.sleep(5)
+        for fip in self.c.list_floating_ips():
+            if fip.floating_ip_address in floating_ips:
+                logger.info("Deleting floating ip %s" % fip.floating_ip_address)
+                self.c.delete_floating_ip(fip.id)
+        if volume_names:
             for v in self.c.block_storage.volumes():
                 pvc_name = v.metadata.get("kubernetes.io/created-for/pv/name")
                 if pvc_name in volume_names:
+                    logger.info("Deleting volume %s" % v.id)
                     self.c.delete_volume(v.id, wait=False)
 
     def grow(self, *, resources, new_slave_count):
@@ -715,7 +739,14 @@ class OpenStack:
             "package_update": True,
             "packages": ["python"],
             "ssh_authorized_keys": [self.extra_ssh_key],
+            "write_files": [
+                {
+                    "content": '{"bip": "10.13.0.1/16"}',
+                    "path": "/etc/docker/daemon.json",
+                },
+            ],
         }
+        # TODO: bip network should not be hardcoded
         return "#cloud-config\n" + yaml.dump(userdata)
 
     def _boot_servers(self, *, name, servers_range, image, flavor, network,
