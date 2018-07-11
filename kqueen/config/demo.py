@@ -33,3 +33,16 @@ class Config(BaseConfig):
     # Creds for Kqueen Read-only user
     LDAP_DN = 'cn=admin,dc=example,dc=org'
     LDAP_PASSWORD = 'heslo123'
+
+    # Images for Kubespray (available images that can be provided are listed in the link below)
+    # https://github.com/kubernetes-incubator/kubespray/blob/master/roles/download/defaults/main.yml
+    HYPERKUBE_IMAGE_REPO = 'docker-prod-local.docker.mirantis.net/mirantis/kubernetes/hyperkube-amd64'
+    HYPERKUBE_IMAGE_TAG = 'v1.9.8-4'
+    CALICO_CNI_IMAGE_REPO = 'docker-prod-local.docker.mirantis.net/mirantis/projectcalico/calico/cni'
+    CALICO_CNI_IMAGE_TAG = 'v1.11.6'
+    CALICOCTL_IMAGE_REPO = 'docker-prod-local.docker.mirantis.net/mirantis/projectcalico/calico/ctl'
+    CALICOCTL_IMAGE_TAG = 'v1.6.4'
+    CALICO_NODE_IMAGE_REPO = 'docker-prod-local.docker.mirantis.net/mirantis/projectcalico/calico/node'
+    CALICO_NODE_IMAGE_TAG = 'v2.6.10'
+    POD_INFRA_IMAGE_REPO = 'docker-prod-local.docker.mirantis.net/mirantis/kubernetes/pause-amd64'
+    POD_INFRA_IMAGE_TAG = 'v1.10.4-4'

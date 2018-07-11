@@ -441,8 +441,14 @@ class Kubespray:
         src = os.path.join(self.kubespray_path, "inventory/sample/group_vars")
         dst = self._get_cluster_path("group_vars")
         shutil.copytree(src, dst)
+
         with open(os.path.join(dst, "all.yml"), "a") as all_yaml:
-            all_yaml.write("\ncloud_provider: openstack\n")
+            data_to_add = {'cloud_provider': 'openstack'}
+            image_var_names = [var_name for var_name in dir(config) if var_name.endswith(('_IMAGE_REPO', '_IMAGE_TAG'))]
+            image_variables = {k.lower(): getattr(config, k) for k in image_var_names}
+            data_to_add.update(image_variables)
+
+            yaml.dump(data_to_add, all_yaml, default_flow_style=False)
 
     def _make_files_dir(self):
         os.makedirs(self._get_cluster_path(), exist_ok=True)
@@ -612,7 +618,7 @@ class OpenStack:
 
         mc = self.cluster.metadata["master_count"]
         if mc % 2 == 0:
-            raise ValueError("Master node count must be an odd number at least 3 or greater")
+            raise ValueError("Master node count must be an odd number")
         self.meta["master_count"] = mc
         self.meta["slave_count"] = self.cluster.metadata["slave_count"]
 
@@ -701,8 +707,8 @@ class OpenStack:
             self.c.delete_router(router.id)
         self.c.delete_network(self.stack_name)
         for sid in server_ids:
-                while self.c.get_server(sid):
-                    time.sleep(5)
+            while self.c.get_server(sid):
+                time.sleep(5)
         for fip in self.c.list_floating_ips():
             if fip.floating_ip_address in floating_ips:
                 logger.info("Deleting floating ip %s" % fip.floating_ip_address)
