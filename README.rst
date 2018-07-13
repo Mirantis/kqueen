@@ -90,6 +90,21 @@ Development
   ::
 
      ./bootstrap_admin.py DemoOrg demoorg admin default
+
+- Create directories to store Kqueen data and log files
+
+  .. code-block:: bash
+
+    mkdir - m 666 /var/log/kqueen-api
+    mkdir - m 666 /opt/kqueen
+
+- Install kubespray or provide path to the existing installation by specifying ``KS_KUBESPRAY_PATH`` in the config file
+
+ .. code-block:: bash
+
+    git clone -b v2.5.0 https://github.com/kubernetes-incubator/kubespray.git && \
+    pip install -r kubespray/requirements.txt
+
 - You can start KQueen API service directly
 
   ::

@@ -15,8 +15,8 @@ class BaseConfig:
     POOL_MAX_WORKERS = 64
 
     # Kubespray settings
-    KS_FILES_PATH = "/tmp/kqueen"
-    KS_KUBESPRAY_PATH = "/tmp/kubespray"
+    KS_FILES_PATH = "/opt/kqueen"
+    KS_KUBESPRAY_PATH = "./kubespray"
     KS_SSH_CMD = "/usr/bin/ssh"
     KS_SSH_KEYGEN_CMD = "/usr/bin/ssh-keygen"
     KS_ANSIBLE_CMD = "/usr/bin/ansible"
