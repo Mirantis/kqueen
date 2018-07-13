@@ -64,10 +64,18 @@ class OpenstackKubesprayEngine(BaseEngine):
                     "required": True,
                 },
             },
-            "flavor": {
+            "master_flavor": {
                 "type": "text",
                 "order": 30,
-                "label": "Flavor",
+                "label": "Master flavor",
+                "validators": {
+                    "required": True,
+                },
+            },
+            "slave_flavor": {
+                "type": "text",
+                "order": 30,
+                "label": "Slave flavor",
                 "validators": {
                     "required": True,
                 },
@@ -629,9 +637,12 @@ class OpenStack:
             self.meta["image"] = self.c.get_image(self.cluster.metadata["image_name"])
             if self.meta["image"] is None:
                 raise ValueError("Image '%s' is not found" % self.cluster.metadata["image_name"])
-            self.meta["flavor"] = self.c.get_flavor(self.cluster.metadata["flavor"])
-            if self.meta["flavor"] is None:
-                raise ValueError("Flavor '%s' is not found" % self.cluster.metadata["flavor"])
+            self.meta["master_flavor"] = self.c.get_flavor(self.cluster.metadata["master_flavor"])
+            if self.meta["master_flavor"] is None:
+                raise ValueError("Flavor for master '%s' is not found" % self.cluster.metadata["master_flavor"])
+            self.meta["slave_flavor"] = self.c.get_flavor(self.cluster.metadata["slave_flavor"])
+            if self.meta["slave_flavor"] is None:
+                raise ValueError("Flavor for slave '%s' is not found" % self.cluster.metadata["master_flavor"])
             # Check that required fields are provided (KeyError is raised if not)
             self.cluster.metadata["ssh_key_name"]
             self.cluster.metadata["ssh_username"]
@@ -667,7 +678,7 @@ class OpenStack:
         for master in self._boot_servers(name=self.stack_name,
                                          servers_range=range(self.meta["master_count"]),
                                          image=self.meta['image'],
-                                         flavor=self.meta['flavor'],
+                                         flavor=self.meta['master_flavor'],
                                          network=network):
             fip = self.c.create_floating_ip("public", server=master)
             resources["masters"].append({
@@ -680,7 +691,7 @@ class OpenStack:
         for slave in self._boot_servers(name=self.stack_name,
                                         servers_range=range(self.meta["slave_count"]),
                                         image=self.meta['image'],
-                                        flavor=self.meta['flavor'],
+                                        flavor=self.meta['slave_flavor'],
                                         network=network,
                                         add_random_suffix=True):
             resources["slaves"].append({
@@ -727,7 +738,7 @@ class OpenStack:
             name=self.stack_name,
             servers_range=servers_range,
             image=self.cluster.metadata["image_name"],
-            flavor=self.cluster.metadata["flavor"],
+            flavor=self.cluster.metadata["slave_flavor"],
             network=self.c.get_network(resources["network_id"]),
             add_random_suffix=True,
         )
