@@ -8,8 +8,8 @@ WORKDIR /code
 RUN apt-get update && \
   apt-get install --no-install-recommends -y libsasl2-dev python-dev libldap2-dev libssl-dev && \
   rm -rf /var/lib/apt/lists/* && \
-  mkdir /var/log/kqueen-api
-
+  mkdir /var/log/kqueen-api && \
+  mkdir /opt/kqueen
 # install kubespray
 RUN git clone -b v2.5.0 https://github.com/kubernetes-incubator/kubespray.git && \
   pip install -r kubespray/requirements.txt
