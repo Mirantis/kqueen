@@ -12,7 +12,6 @@ import os
 import shlex
 import shutil
 import subprocess
-import sys
 import time
 import yaml
 import uuid
@@ -569,19 +568,18 @@ class Kubespray:
             "--extra-vars", "docker_dns_servers_strict=no",
         ]
         env = self._construct_env()
-        # TODO(sskripnick) Maybe collect out/err from pipe and log them
-        # separately.
-        pipe = subprocess.Popen(
-            args,
-            stdin=subprocess.DEVNULL,
-            stdout=sys.stdout,
-            stderr=sys.stderr,
-            cwd=self.kubespray_path,
-            env=env,
-        )
-        pipe.wait()
-        if pipe.returncode:
-            logger.warning("Non zero exit status from ansible (%s)" % pipe.returncode)
+        with open(os.path.join(self._get_cluster_path(), "ansible_log.txt"), "a+") as ansible_log:
+            pipe = subprocess.Popen(
+                args,
+                stdin=subprocess.DEVNULL,
+                stdout=ansible_log,
+                stderr=subprocess.STDOUT,
+                cwd=self.kubespray_path,
+                env=env,
+            )
+            pipe.wait()
+            if pipe.returncode:
+                logger.warning("Non zero exit status from ansible (%s)" % pipe.returncode)
 
     def _get_kubeconfig(self, ip):
         cat_kubeconf = "sudo cat /etc/kubernetes/admin.conf"
