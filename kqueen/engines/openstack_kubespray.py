@@ -235,6 +235,9 @@ class OpenstackKubesprayEngine(BaseEngine):
             self.cluster.state = config.CLUSTER_ERROR_STATE
             logger.exception("Failed to provision cluster: %s" % e)
             self.cluster.metadata['status_message'] = getattr(e, 'details', repr(e))
+            if getattr(self.ks, 'ansible_log'):
+                self.cluster.metadata['status_message'] += "\n More details can be found " \
+                                                           "at {}".format(self.ks.ansible_log)
         finally:
             self.cluster.save()
 
@@ -568,11 +571,12 @@ class Kubespray:
             "--extra-vars", "docker_dns_servers_strict=no",
         ]
         env = self._construct_env()
-        with open(os.path.join(self._get_cluster_path(), "ansible_log.txt"), "a+") as ansible_log:
+        self.ansible_log = os.path.join(self._get_cluster_path(), "ansible_log.txt")
+        with open(self.ansible_log, "a+") as log_file:
             pipe = subprocess.Popen(
                 args,
                 stdin=subprocess.DEVNULL,
-                stdout=ansible_log,
+                stdout=log_file,
                 stderr=subprocess.STDOUT,
                 cwd=self.kubespray_path,
                 env=env,
