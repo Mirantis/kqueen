@@ -423,7 +423,7 @@ You can provision a Kubernetes cluster using various community of engines,
 such as Google Kubernetes engine or Azure Kubernetes Service.
 
 Provision a Kubernetes cluster using Google Kubernetes Engine
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+_____________________________________________________________
 
 #. Log in to Google Kubernetes Engine (https://console.cloud.google.com).
 #. Select your Project.
@@ -443,7 +443,7 @@ Provision a Kubernetes cluster using Google Kubernetes Engine
 #. To track the cluster status, navigate to the KQueen main dashboard.
 
 Provision a Kubernetes cluster using Openstack Kubespray Engine
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+_______________________________________________________________
 
 #. Log in to Openstack Horizon Dashboard.
 #. Select your Project.
@@ -484,7 +484,7 @@ Provision a Kubernetes cluster using Openstack Kubespray Engine
 
 
 Provision a Kubernetes cluster using Azure Kubernetes Service
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+_____________________________________________________________
 
 #. Log in to Azure Kubernetes Service (https://portal.azure.com).
 #. Create an Azure Active Directory Application as described in the official
@@ -547,7 +547,7 @@ and https://docs.microsoft.com/en-us/azure/aks/faq#why-are-two-resource-groups-c
 
 
 Manually add an existing Kubernetes cluster to KQueen
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+_____________________________________________________
 
 #. Log in to the KQueen web UI.
 #. Click ``Create Provisioner``.
