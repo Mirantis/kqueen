@@ -10,9 +10,9 @@ class Config(BaseConfig):
     # App secret - set this to random string >= 16 chars
     # SECRET_KEY = 'secret'
 
-    # Jenkins engine settings
-    JENKINS_API_URL = 'https://ci.mcp.mirantis.net'
-    JENKINS_PROVISION_JOB_NAME = 'deploy_aws_k8s_kqueen_job'
+    # Set up this to enable Jenkins provisioner:
+    JENKINS_API_URL = ''
+    JENKINS_PROVISION_JOB_NAME = ''
     JENKINS_PROVISION_JOB_CTX = {}
     JENKINS_DEPROVISION_JOB_NAME = 'deploy-stack-cleanup'
     JENKINS_DEPROVISION_JOB_CTX = {
@@ -33,16 +33,3 @@ class Config(BaseConfig):
     # Creds for Kqueen Read-only user
     LDAP_DN = 'cn=admin,dc=example,dc=org'
     LDAP_PASSWORD = 'heslo123'
-
-    # Images for Kubespray (available images that can be provided are listed in the link below)
-    # https://github.com/kubernetes-incubator/kubespray/blob/master/roles/download/defaults/main.yml
-    HYPERKUBE_IMAGE_REPO = 'docker-prod-local.docker.mirantis.net/mirantis/kubernetes/hyperkube-amd64'
-    HYPERKUBE_IMAGE_TAG = 'v1.9.8-4'
-    CALICO_CNI_IMAGE_REPO = 'docker-prod-local.docker.mirantis.net/mirantis/projectcalico/calico/cni'
-    CALICO_CNI_IMAGE_TAG = 'v1.11.6'
-    CALICOCTL_IMAGE_REPO = 'docker-prod-local.docker.mirantis.net/mirantis/projectcalico/calico/ctl'
-    CALICOCTL_IMAGE_TAG = 'v1.6.4'
-    CALICO_NODE_IMAGE_REPO = 'docker-prod-local.docker.mirantis.net/mirantis/projectcalico/calico/node'
-    CALICO_NODE_IMAGE_TAG = 'v2.6.10'
-    POD_INFRA_IMAGE_REPO = 'docker-prod-local.docker.mirantis.net/mirantis/kubernetes/pause-amd64'
-    POD_INFRA_IMAGE_TAG = 'v1.10.4-4'
