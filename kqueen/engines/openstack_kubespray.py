@@ -4,6 +4,7 @@ from kqueen.server import app
 from kqueen import kubeapi
 
 import base64
+import copy
 import ipaddress
 import json
 import logging
@@ -299,31 +300,41 @@ class OpenstackKubesprayEngine(BaseEngine):
 
     def _scale_up(self, new_slave_count):
         try:
-            self.cluster.state = config.CLUSTER_UPDATING_STATE
-            self.cluster.save()
+            old_resources = copy.deepcopy(self.cluster.metadata["resources"])
+            resources = {}
             resources = self.os.grow(resources=self.cluster.metadata["resources"],
                                      new_slave_count=new_slave_count)
-            self.cluster.metadata["resources"] = resources
-            self.cluster.save()
             self.ks.scale(resources)
         except Exception as e:
             logger.exception("Failed to resize cluster: %s" % e)
+            if "slaves" in resources:
+                if len(resources["slaves"]) != len(old_resources["slaves"]):
+                    old_ids = [slave["hostname"] for slave in old_resources["slaves"]]
+                    ids = [slave["hostname"] for slave in resources["slaves"]]
+                    self.os.shrink(resources=resources,
+                                   remove_hostnames=set(ids) - set(old_ids))
+                    self.cluster.metadata["resources"] = old_resources
+        else:
+            self.cluster.metadata["resources"] = resources
+            self.cluster.metadata["slave_count"] = new_slave_count
+            self.cluster.metadata["node_count"] = new_slave_count + self.cluster.metadata["master_count"]
         finally:
             self.cluster.state = config.CLUSTER_OK_STATE
             self.cluster.save()
 
     def _scale_down(self, new_slave_count):
         try:
-            self.cluster.state = config.CLUSTER_UPDATING_STATE
-            self.cluster.save()
             resources = self.cluster.metadata["resources"]
             remove_hostnames = self.ks.shrink(resources,
                                               new_slave_count=new_slave_count)
             resources = self.os.shrink(resources=resources,
                                        remove_hostnames=remove_hostnames)
-            self.cluster.metadata["resources"] = resources
         except Exception as e:
             logger.exception("Failed to resize cluster: %s" % e)
+        else:
+            self.cluster.metadata["resources"] = resources
+            self.cluster.metadata["slave_count"] = new_slave_count
+            self.cluster.metadata["node_count"] = new_slave_count + self.cluster.metadata["master_count"]
         finally:
             self.cluster.state = config.CLUSTER_OK_STATE
             self.cluster.save()
@@ -334,10 +345,15 @@ class OpenstackKubesprayEngine(BaseEngine):
         node_count = int(node_count)
         master_count = len(self.cluster.metadata["resources"]["masters"])
         new_slave_count = node_count - master_count
-        if new_slave_count < 0:
-            return False, "Node count should be at least %s" % master_count
+        if new_slave_count <= 0:
+            return False, "Node count should be at least %s" % (master_count + 1)
         current_slave_count = len(self.cluster.metadata["resources"]["slaves"])
         delta = new_slave_count - current_slave_count
+
+        if delta == 0:
+            return False, "Cluster already has %s nodes" % node_count
+        self.cluster.state = config.CLUSTER_UPDATING_STATE
+        self.cluster.save()
         if delta > 0:
             logger.info("Scaling up %s -> %s slaves" % (current_slave_count, new_slave_count))
             app.executor.submit(self._scale_up, new_slave_count)
@@ -346,7 +362,6 @@ class OpenstackKubesprayEngine(BaseEngine):
             logger.info("Scaling down %s -> %s slaves" % (current_slave_count, new_slave_count))
             app.executor.submit(self._scale_down, new_slave_count)
             return True, "Resizing started"
-        return False, "Cluster already has %s nodes" % node_count
 
     def get_kubeconfig(self):
         return self.cluster.kubeconfig
