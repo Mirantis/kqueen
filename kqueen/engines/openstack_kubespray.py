@@ -346,7 +346,7 @@ class OpenstackKubesprayEngine(BaseEngine):
         master_count = len(self.cluster.metadata["resources"]["masters"])
         new_slave_count = node_count - master_count
         if new_slave_count <= 0:
-            return False, "Node count should be at least %s" % (master_count + 1)
+            return False, "There are should be at least one slave node besides master nodes"
         current_slave_count = len(self.cluster.metadata["resources"]["slaves"])
         delta = new_slave_count - current_slave_count
 
@@ -358,7 +358,7 @@ class OpenstackKubesprayEngine(BaseEngine):
             logger.info("Scaling up %s -> %s slaves" % (current_slave_count, new_slave_count))
             app.executor.submit(self._scale_up, new_slave_count)
             return True, "Resizing started"
-        elif delta < 0:
+        else:
             logger.info("Scaling down %s -> %s slaves" % (current_slave_count, new_slave_count))
             app.executor.submit(self._scale_down, new_slave_count)
             return True, "Resizing started"
@@ -607,8 +607,11 @@ class Kubespray:
                 env=env,
             )
             pipe.wait()
-            if pipe.returncode:
-                logger.warning("Non zero exit status from ansible (%s)" % pipe.returncode)
+        if pipe.returncode:
+            with open(self.ansible_log, "r") as log_file:
+                result = log_file.read()
+            if result.find("fatal:"):
+                raise RuntimeError("Ansible command execution failed ({})".format(" ".join(args)))
 
     def _get_kubeconfig(self, ip):
         cat_kubeconf = "sudo cat /etc/kubernetes/admin.conf"
