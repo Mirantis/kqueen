@@ -1,7 +1,9 @@
 from .exceptions import BackendError
 from .exceptions import FieldError
-from Crypto import Random
-from Crypto.Cipher import AES
+from cryptography.hazmat.primitives.ciphers.algorithms import AES
+from cryptography.hazmat.primitives.ciphers.modes import CBC
+from cryptography.hazmat.primitives.ciphers import Cipher
+from cryptography.hazmat.backends import default_backend
 from datetime import datetime
 from dateutil.parser import parse as du_parse
 from flask import current_app
@@ -10,6 +12,7 @@ from kqueen.config import current_config
 import base64
 import etcd
 import hashlib
+import os
 import importlib
 import json
 import logging
@@ -142,12 +145,12 @@ class Field:
         if serialized is not None:
             key = self._get_encryption_key()
             padded = self._pad(str(serialized))
-
-            iv = Random.new().read(self.bs)
-            suite = AES.new(key, AES.MODE_CBC, iv)
-            encrypted = suite.encrypt(padded)
+            backend = default_backend()
+            iv = os.urandom(self.bs)
+            cipher = Cipher(AES(key), CBC(iv), backend=backend)
+            enc = cipher.encryptor()
+            encrypted = enc.update(str(padded).encode('utf-8')) + enc.finalize()
             encoded = base64.b64encode(iv + encrypted).decode('utf-8')
-
             return encoded
 
     def decrypt(self, crypted, **kwargs):
@@ -158,8 +161,10 @@ class Field:
         decoded = base64.b64decode(crypted)
 
         iv = decoded[:self.bs]
-        suite = AES.new(key, AES.MODE_CBC, iv)
-        decrypted = suite.decrypt(decoded[self.bs:])
+        backend = default_backend()
+        cipher = Cipher(AES(key), CBC(iv), backend=backend)
+        decryptor = cipher.decryptor()
+        decrypted = decryptor.update(decoded[self.bs:]) + decryptor.finalize()
         decrypted_decoded = decrypted.decode('utf-8')
 
         serialized = self._unpad(decrypted_decoded)
