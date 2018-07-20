@@ -38,26 +38,25 @@ class Cluster(Model, metaclass=ModelMeta):
     owner = RelationField(required=True, remote_class_name='User')
 
     def update_state(self):
+        # Check for stale clusters
+        max_age = timedelta(seconds=config.get('PROVISIONER_TIMEOUT'))
+        provisioning_state = config.get('CLUSTER_PROVISIONING_STATE')
         try:
             remote_cluster = self.engine.cluster_get()
         except Exception as e:
             logger.exception('Unable to get data from backend for cluster {}'.format(self.name))
-            remote_cluster = {}
-
-        if 'state' in remote_cluster:
-            self.set_status(remote_cluster)
-            if remote_cluster['state'] == self.state:
-                return self.state
-            self.state = remote_cluster['state']
-        else:
             return config.get('CLUSTER_UNKNOWN_STATE')
 
-        # Check for stale clusters
-        max_age = timedelta(seconds=config.get('PROVISIONER_TIMEOUT'))
-        provisioning_state = config.get('CLUSTER_PROVISIONING_STATE')
-        if self.state == provisioning_state and datetime.utcnow() - self.created_at > max_age:
+        if remote_cluster['state'] == provisioning_state and datetime.utcnow() - self.created_at > max_age:
             self.state = config.get('CLUSTER_ERROR_STATE')
+            self.metadata['status_message'] = "Cluster deployment haven't finish in {}".format(max_age)
+            self.save()
+            return self.state
 
+        self.set_status(remote_cluster)
+        if remote_cluster['state'] == self.state:
+            return self.state
+        self.state = remote_cluster['state']
         self.save()
         return self.state
 

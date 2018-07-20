@@ -43,7 +43,8 @@ class ClusterFixture:
             'state': config.get('CLUSTER_UNKNOWN_STATE'),
             'kubeconfig': yaml.load(open('kubeconfig_localhost', 'r').read()),
             'created_at': datetime.datetime.utcnow().replace(microsecond=0),
-            'owner': owner
+            'owner': owner,
+            'metadata': {}
         }
         self.obj = Cluster.create(owner.namespace, **create_kwargs)
 

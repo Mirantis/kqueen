@@ -218,7 +218,8 @@ class TestClusterState:
     @pytest.fixture(autouse=True)
     def prepare(self, cluster, monkeypatch):
         def fake_cluster_get(self):
-            return {'state': config.get('CLUSTER_PROVISIONING_STATE')}
+            return {'state': config.get('CLUSTER_PROVISIONING_STATE'),
+                    'metadata': {}}
 
         monkeypatch.setattr(ManualEngine, 'cluster_get', fake_cluster_get)
 
