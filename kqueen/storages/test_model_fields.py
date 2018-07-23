@@ -489,16 +489,6 @@ class TestBoolField:
 # Encryption
 #
 class TestFieldEncryption:
-    def test_get_encryption_key(self, get_model):
-
-        obj = get_model(get_model._namespace, **model_kwargs)
-
-        field = obj._string
-        KEY_LENGTH = obj._string.bs
-        key = field._get_encryption_key()
-
-        assert len(key) == KEY_LENGTH
-
     @pytest.mark.parametrize('field_name', model_kwargs.keys())
     def test_encrypt_none(self, field_name):
         field_value = None

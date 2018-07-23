@@ -1,7 +1,6 @@
 from .exceptions import BackendError
 from .exceptions import FieldError
-from Crypto import Random
-from Crypto.Cipher import AES
+from cryptography.fernet import Fernet
 from datetime import datetime
 from dateutil.parser import parse as du_parse
 from flask import current_app
@@ -9,10 +8,10 @@ from kqueen.config import current_config
 
 import base64
 import etcd
-import hashlib
 import importlib
 import json
 import logging
+import hashlib
 import uuid
 
 logger = logging.getLogger('kqueen_api')
@@ -110,11 +109,11 @@ class Field:
         """
         return True
 
-    def _get_encryption_key(self):
-        """Read encryption key and format it.
+    def _get_fernet_obj(self):
+        """Created Fernet object based  on secret key.
 
         Returns:
-            Encryption key.
+            Cryptography Fernet object.
         """
         # Check for key
         config = current_config()
@@ -124,13 +123,9 @@ class Field:
             raise Exception('Missing SECRET_KEY')
 
         # Calculate hash password
-        return hashlib.sha256(key.encode('utf-8')).digest()[:self.bs]
-
-    def _pad(self, s):
-        return s + (self.bs - len(s) % self.bs) * chr(self.bs - len(s) % self.bs)
-
-    def _unpad(self, s):
-        return s[:-ord(s[len(s) - 1:])]
+        key = hashlib.md5(key.encode('utf-8')).hexdigest()
+        key_64 = base64.urlsafe_b64encode(key.encode('utf-8'))
+        return Fernet(key_64)
 
     def encrypt(self):
         """Encrypt stored value."""
@@ -140,31 +135,18 @@ class Field:
             return serialized
 
         if serialized is not None:
-            key = self._get_encryption_key()
-            padded = self._pad(str(serialized))
-
-            iv = Random.new().read(self.bs)
-            suite = AES.new(key, AES.MODE_CBC, iv)
-            encrypted = suite.encrypt(padded)
-            encoded = base64.b64encode(iv + encrypted).decode('utf-8')
-
-            return encoded
+            fernet = self._get_fernet_obj()
+            encoded = fernet.encrypt(str(serialized).encode('utf-8'))
+            return encoded.decode('utf-8')
 
     def decrypt(self, crypted, **kwargs):
         if not self.encrypted:
             return self.deserialize(crypted, **kwargs)
 
-        key = self._get_encryption_key()
-        decoded = base64.b64decode(crypted)
+        fernet = self._get_fernet_obj()
+        decoded = fernet.decrypt(crypted.encode('utf-8')).decode('utf-8')
 
-        iv = decoded[:self.bs]
-        suite = AES.new(key, AES.MODE_CBC, iv)
-        decrypted = suite.decrypt(decoded[self.bs:])
-        decrypted_decoded = decrypted.decode('utf-8')
-
-        serialized = self._unpad(decrypted_decoded)
-
-        self.deserialize(serialized, **kwargs)
+        self.deserialize(decoded, **kwargs)
 
     def __str__(self):
         return str(self.value)
