@@ -131,6 +131,12 @@ class OpenstackKubesprayEngine(BaseEngine):
                 "label": "Availability zone",
                 "default": "nova",
             },
+            "persistent_volume": {
+                "type": "checkbox",
+                "order": 90,
+                "label": "Add Persistent Volumes Storage Class",
+                "help_message": "Default OpenStack Cinder Storage Class"
+            }
         },
         "provisioner": {
             "auth_url": {
@@ -238,7 +244,8 @@ class OpenstackKubesprayEngine(BaseEngine):
             self.cluster.metadata["node_count"] = node_count
             self.cluster.save()
             self.allow_addresses_for_calico(resources)
-            kubeconfig = self.ks.deploy(resources)
+
+            kubeconfig = self.ks.deploy(self.cluster.metadata)
             self.cluster.kubeconfig = kubeconfig
             self.cluster.state = config.CLUSTER_OK_STATE
             logger.info("Cluster provision completed")
@@ -423,10 +430,11 @@ class Kubespray:
                                 "-i", os.path.join(clusters_path, "ssh_key"))
         self._make_files_dir()
 
-    def deploy(self, resources):
+    def deploy(self, cluster_metadata):
+        resources = cluster_metadata['resources']
         inventory = self._generate_inventory(resources)
         self._save_inventory(inventory, "hosts.json")
-        self._create_group_vars()
+        self._create_group_vars(cluster_metadata)
         self._wait_for_ping()
         self._add_fip_to_lo(resources)
         self._run_ansible()
@@ -477,18 +485,21 @@ class Kubespray:
         with open(self._get_cluster_path(filename), "w") as fp:
             json.dump(inventory, fp, indent=4)
 
-    def _create_group_vars(self):
+    def _create_group_vars(self, metadata):
         src = os.path.join(self.kubespray_path, "inventory/sample/group_vars")
         dst = self._get_cluster_path("group_vars")
         shutil.copytree(src, dst)
 
-        with open(os.path.join(dst, "all.yml"), "a") as all_yaml:
-            data_to_add = {'cloud_provider': 'openstack'}
-            image_var_names = [var_name for var_name in dir(config) if var_name.endswith(('_IMAGE_REPO', '_IMAGE_TAG'))]
-            image_variables = {k.lower(): getattr(config, k) for k in image_var_names}
-            data_to_add.update(image_variables)
+        persistent_volumes = metadata.get("persistent_volume")
+        kubespray_vars = {"persistent_volumes_enabled": True} if persistent_volumes else {}
 
-            yaml.dump(data_to_add, all_yaml, default_flow_style=False)
+        kubespray_vars["cloud_provider"] = "openstack"
+        kubespray_vars["openstack_blockstorage_version"] = "v2"
+        image_var_names = [var_name for var_name in dir(config) if var_name.endswith(('_IMAGE_REPO', '_IMAGE_TAG'))]
+        image_variables = {k.lower(): getattr(config, k) for k in image_var_names}
+        kubespray_vars.update(image_variables)
+        with open(os.path.join(dst, "all.yml"), "a") as all_yaml:
+            yaml.dump(kubespray_vars, all_yaml, default_flow_style=False)
 
     def _make_files_dir(self):
         os.makedirs(self._get_cluster_path(), exist_ok=True)
