@@ -47,4 +47,4 @@ class Config(BaseConfig):
     POD_INFRA_IMAGE_REPO = 'docker-prod-local.docker.mirantis.net/mirantis/kubernetes/pause-amd64'
     POD_INFRA_IMAGE_TAG = 'v1.10.4-4'
 
-    KS_DEFAULT_NAMESERVERS = "172.18.80.136, 1.1.1.1"
+    KS_DEFAULT_NAMESERVERS = "172.18.80.136"
