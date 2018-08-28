@@ -18,8 +18,6 @@ RUN git clone -b v2.5.0 https://github.com/kubernetes-incubator/kubespray.git &&
 COPY . kqueen
 RUN pip install ./kqueen
 
-# Avoid Ssh issues with docker overlayfs and sockets
-ENV ANSIBLE_SSH_CONTROL_PATH /dev/shm/cp%%h-%%p-%%r
 ENV KQUEEN_KS_KUBESPRAY_PATH /code/kubespray
 ENV KQUEEN_KS_ANSIBLE_CMD /usr/local/bin/ansible
 ENV KQUEEN_KS_ANSIBLE_PLAYBOOK_CMD /usr/local/bin/ansible-playbook

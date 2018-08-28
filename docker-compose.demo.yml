@@ -1,13 +1,13 @@
 version: '3.2'
 services:
   api:
-    image: kqueen/api:v1.0
+    image: kqueen/api:test-wrong-commit
     ports:
       - 127.0.0.1:5000:5000
     depends_on:
       - etcd
     environment:
-      KQUEEN_CONFIG_FILE: config/demo.py
+      KQUEEN_CONFIG_FILE: config/demo_mirantis.py
       KQUEEN_DEBUG: 'False'
       KQUEEN_LDAP_URI: 'ldap://ldap'
       KQUEEN_LDAP_DN: 'cn=admin,dc=example,dc=org'
@@ -23,7 +23,7 @@ services:
     extra_hosts:
       - "ci.mcp.mirantis.net:172.16.48.254"
   ui:
-    image: kqueen/ui:v1.0
+    image: kqueen/ui:master
     ports:
       - 127.0.0.1:5080:5080
     depends_on:
