@@ -425,11 +425,11 @@ class Kubespray:
 
     def deploy(self, resources):
         inventory = self._generate_inventory(resources)
-        self._save_inventory(inventory, "hosts.json")
+        inventory_file = self._save_inventory(inventory, "hosts.json")
         self._create_group_vars()
-        self._wait_for_ping()
+        self._wait_for_ping(inventory_file)
         self._add_fip_to_lo(resources)
-        self._run_ansible()
+        self._run_ansible(inventory=inventory_file)
         return self._get_kubeconfig(resources["masters"][0]["fip"])
 
     def _add_fip_to_lo(self, resources):
@@ -440,20 +440,25 @@ class Kubespray:
         """
         cmd_fmt = (
             "sudo /bin/sh -c 'cat > /etc/rc.local <<EOF\n"
-            "/sbin/ip addr add %s/32 dev lo\n"
+            "/sbin/ip addr add %s/32 scope host dev lo\n"
             "EOF'"
         )
         for master in resources["masters"]:
             ip = master["fip"]
             host = "@".join((self.ssh_username, ip))
             ssh_cmd = ("ssh", host) + self.ssh_common_args
-            subprocess.check_call(ssh_cmd + (cmd_fmt % ip, ))
-            subprocess.check_call(ssh_cmd + ("sudo /bin/sh /etc/rc.local", ))
+            try:
+                subprocess.check_call(ssh_cmd + (cmd_fmt % ip, ))
+                subprocess.check_call(ssh_cmd + ("sudo /bin/sh /etc/rc.local", ))
+            except subprocess.CalledProcessError as e:
+                raise RuntimeError("Enable to add a loopback "
+                                   "to make localhost accessible by floating IP. "
+                                   "The reason is: {}".format(e))
 
     def scale(self, resources):
         inventory = self._generate_inventory(resources)
-        self._save_inventory(inventory, "hosts.json")
-        self._wait_for_ping()
+        inventory_file = self._save_inventory(inventory, "hosts.json")
+        self._wait_for_ping(inventory_file)
         self._run_ansible(playbook="scale.yml")
 
     def shrink(self, resources, *, new_slave_count):
@@ -469,8 +474,10 @@ class Kubespray:
         shutil.rmtree(self._get_cluster_path())
 
     def _save_inventory(self, inventory, filename):
-        with open(self._get_cluster_path(filename), "w") as fp:
+        file_path = self._get_cluster_path(filename)
+        with open(file_path, "w") as fp:
             json.dump(inventory, fp, indent=4)
+        return file_path
 
     def _create_group_vars(self):
         src = os.path.join(self.kubespray_path, "inventory/sample/group_vars")
@@ -561,16 +568,18 @@ class Kubespray:
     def _get_cluster_path(self, *args):
         return os.path.join(self.clusters_path, self.cluster_id, *args)
 
-    def _wait_for_ping(self, retries=30, sleep=10):
+    def _wait_for_ping(self, inventory_file, retries=30, sleep=10):
         args = [config.KS_ANSIBLE_CMD, "-m",
-                "ping", "all", "-i", "hosts.json"]
+                "ping", "all", "-i", inventory_file]
         while retries:
-            retries -= 1
-            time.sleep(sleep)
-            cp = subprocess.run(args, cwd=self._get_cluster_path())
-            if cp.returncode == 0:
+            try:
+                subprocess.check_call(args)
                 return
-        raise RuntimeError("At least one node is unreachable")
+            except subprocess.CalledProcessError as e:
+                retries -= 1
+                time.sleep(sleep)
+                error = e
+        raise RuntimeError("At least one node is unreachable: {}".format(error))
 
     def _construct_env(self):
         env = os.environ.copy()
