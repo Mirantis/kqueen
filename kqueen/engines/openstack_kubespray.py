@@ -596,7 +596,7 @@ class Kubespray:
             "--extra-vars", "docker_dns_servers_strict=no",
         ]
         env = self._construct_env()
-        self.ansible_log = os.path.join(self._get_cluster_path(), "ansible_log.txt")
+        self.ansible_log = os.path.join(self._get_cluster_path(), "ansible_log_for_{0}_playbook.txt".format(playbook))
         with open(self.ansible_log, "a+") as log_file:
             pipe = subprocess.Popen(
                 args,
