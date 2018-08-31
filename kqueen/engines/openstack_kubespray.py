@@ -20,6 +20,9 @@ import uuid
 logger = logging.getLogger("kqueen_api")
 config = current_config()
 
+MASTER_SECURITY_GR = "kqueen_master"
+COMMON_SECURITY_GR = "kqueen_common"
+
 
 class OpenstackKubesprayEngine(BaseEngine):
     """OpenStack Kubespray engine.
@@ -712,6 +715,7 @@ class OpenStack:
         router = self.c.create_router(name=self.stack_name,
                                       ext_gateway_net_id=self.meta['ext_net'].id)
         self.c.add_router_interface(router, subnet["id"])
+        master_sg, common_sg = self._set_up_security_groups()
         resources["router_id"] = router["id"]
         resources["network_id"] = network["id"]
         resources["subnet_id"] = subnet["id"]
@@ -719,7 +723,8 @@ class OpenStack:
                                          servers_range=range(self.meta["master_count"]),
                                          image=self.meta['image'],
                                          flavor=self.meta['master_flavor'],
-                                         network=network):
+                                         network=network,
+                                         sg=["default", master_sg.name, common_sg.name]):
             fip = self.c.create_floating_ip("public", server=master)
             resources["masters"].append({
                 "id": master.id,
@@ -733,7 +738,8 @@ class OpenStack:
                                         image=self.meta['image'],
                                         flavor=self.meta['slave_flavor'],
                                         network=network,
-                                        add_random_suffix=True):
+                                        add_random_suffix=True,
+                                        sg=["default", common_sg.name]):
             resources["slaves"].append({
                 "id": slave.id,
                 "ip": list(slave.addresses.values())[0][0]["addr"],
@@ -816,7 +822,39 @@ class OpenStack:
         }
         return "#cloud-config\n" + yaml.dump(userdata)
 
-    def _boot_servers(self, *, name, servers_range, image, flavor, network,
+    def _set_up_security_groups(self):
+        master_sg = self.c.get_security_group(MASTER_SECURITY_GR)
+        if not master_sg:
+            master_sg = self.c.create_security_group(name=MASTER_SECURITY_GR,
+                                                     description="Kqueen master")
+            # etcd server client API
+            self.c.create_security_group_rule(master_sg.id, protocol="tcp",
+                                              port_range_min="2379",
+                                              port_range_max="2380")
+            # k8s API
+            self.c.create_security_group_rule(master_sg.id, protocol="tcp",
+                                              port_range_min="6443",
+                                              port_range_max="6443")
+            # Calico
+            self.c.create_security_group_rule(master_sg.id, protocol="tcp",
+                                              port_range_min="179",
+                                              port_range_max="179")
+
+        common_sg = self.c.get_security_group(COMMON_SECURITY_GR)
+        if not common_sg:
+            common_sg = self.c.create_security_group(name=COMMON_SECURITY_GR,
+                                                     description="Kqueen common")
+            # Kubelet API
+            self.c.create_security_group_rule(common_sg.id, protocol="tcp",
+                                              port_range_min="10250",
+                                              port_range_max="10255")
+            # NodePort Services
+            self.c.create_security_group_rule(common_sg.id, protocol="tcp",
+                                              port_range_min="30000",
+                                              port_range_max="32767")
+        return master_sg, common_sg
+
+    def _boot_servers(self, *, name, servers_range, image, flavor, network, sg,
                       add_random_suffix=False):
         server_ids = []
         for i in servers_range:
@@ -831,6 +869,7 @@ class OpenStack:
                 network=network,
                 availability_zone=self.os_kwargs.get("availability_zone", "nova"),
                 key_name=self.cluster.metadata["ssh_key_name"],
+                security_groups=sg
             )
             server_ids.append(server.id)
         retries = 50
