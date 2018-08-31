@@ -546,6 +546,13 @@ class DeleteUser(DeleteView):
         policy_key = super().get_policy_key()
         return '{}_{}'.format(policy_key, self.obj.role)
 
+    def dispatch_request(self, *args, **kwargs):
+        self.check_authentication()
+        if str(kwargs['pk']) == current_identity.id:
+            abort(400, "You can not delete yourself")
+
+        return super().dispatch_request(*args, **kwargs)
+
 
 api.add_url_rule('/users', view_func=ListUsers.as_view('user_list'))
 api.add_url_rule('/users', view_func=CreateUser.as_view('user_create'))
