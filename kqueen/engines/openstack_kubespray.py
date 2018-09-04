@@ -440,15 +440,19 @@ class Kubespray:
         """
         cmd_fmt = (
             "sudo /bin/sh -c 'cat > /etc/rc.local <<EOF\n"
-            "/sbin/ip addr add %s/32 dev lo\n"
+            "/sbin/ip addr add %s/32 scope host dev lo\n"
             "EOF'"
         )
         for master in resources["masters"]:
             ip = master["fip"]
             host = "@".join((self.ssh_username, ip))
             ssh_cmd = ("ssh", host) + self.ssh_common_args
-            subprocess.check_call(ssh_cmd + (cmd_fmt % ip, ))
-            subprocess.check_call(ssh_cmd + ("sudo /bin/sh /etc/rc.local", ))
+            try:
+                subprocess.check_call(ssh_cmd + (cmd_fmt % ip, ))
+                subprocess.check_call(ssh_cmd + ("sudo /bin/sh /etc/rc.local", ))
+            except subprocess.CalledProcessError as e:
+                raise RuntimeError("Enable to add loopback"
+                                   " to make localhost accessible by floating IP. Rease is: {}".format(e))
 
     def scale(self, resources):
         inventory = self._generate_inventory(resources)
@@ -532,7 +536,7 @@ class Kubespray:
         }
         for master in resources["masters"]:
             conf["all"]["hosts"][master["hostname"]] = {
-                "access_ip": master["fip"],
+                "access_ip": master["ip"],
                 "ansible_host": master["fip"],
                 "ansible_user": self.ssh_username,
                 "ansible_become": True,
