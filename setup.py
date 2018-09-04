@@ -54,7 +54,6 @@ setup(
         'google-auth-httplib2==0.0.3',
         'azure-common==1.1.9',
         'azure-mgmt-containerservice==3.0.0',
-        'msrestazure==0.4.25',
         'urllib3==1.22'
     ],
     setup_requires=[
