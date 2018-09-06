@@ -20,6 +20,9 @@ import uuid
 logger = logging.getLogger("kqueen_api")
 config = current_config()
 
+MASTER_SECURITY_GR = "kqueen_master"
+COMMON_SECURITY_GR = "kqueen_common"
+
 
 class OpenstackKubesprayEngine(BaseEngine):
     """OpenStack Kubespray engine.
@@ -425,11 +428,11 @@ class Kubespray:
 
     def deploy(self, resources):
         inventory = self._generate_inventory(resources)
-        self._save_inventory(inventory, "hosts.json")
+        inventory_file = self._save_inventory(inventory, "hosts.json")
         self._create_group_vars()
-        self._wait_for_ping()
+        self._wait_for_ping(inventory_file)
         self._add_fip_to_lo(resources)
-        self._run_ansible()
+        self._run_ansible(inventory=inventory_file)
         return self._get_kubeconfig(resources["masters"][0]["fip"])
 
     def _add_fip_to_lo(self, resources):
@@ -440,20 +443,25 @@ class Kubespray:
         """
         cmd_fmt = (
             "sudo /bin/sh -c 'cat > /etc/rc.local <<EOF\n"
-            "/sbin/ip addr add %s/32 dev lo\n"
+            "/sbin/ip addr add %s/32 scope host dev lo\n"
             "EOF'"
         )
         for master in resources["masters"]:
             ip = master["fip"]
             host = "@".join((self.ssh_username, ip))
             ssh_cmd = ("ssh", host) + self.ssh_common_args
-            subprocess.check_call(ssh_cmd + (cmd_fmt % ip, ))
-            subprocess.check_call(ssh_cmd + ("sudo /bin/sh /etc/rc.local", ))
+            try:
+                subprocess.check_call(ssh_cmd + (cmd_fmt % ip, ))
+                subprocess.check_call(ssh_cmd + ("sudo /bin/sh /etc/rc.local", ))
+            except subprocess.CalledProcessError as e:
+                raise RuntimeError("Enable to add a loopback "
+                                   "to make localhost accessible by floating IP. "
+                                   "The reason is: {}".format(e))
 
     def scale(self, resources):
         inventory = self._generate_inventory(resources)
-        self._save_inventory(inventory, "hosts.json")
-        self._wait_for_ping()
+        inventory_file = self._save_inventory(inventory, "hosts.json")
+        self._wait_for_ping(inventory_file)
         self._run_ansible(playbook="scale.yml")
 
     def shrink(self, resources, *, new_slave_count):
@@ -469,8 +477,10 @@ class Kubespray:
         shutil.rmtree(self._get_cluster_path())
 
     def _save_inventory(self, inventory, filename):
-        with open(self._get_cluster_path(filename), "w") as fp:
+        file_path = self._get_cluster_path(filename)
+        with open(file_path, "w") as fp:
             json.dump(inventory, fp, indent=4)
+        return file_path
 
     def _create_group_vars(self):
         src = os.path.join(self.kubespray_path, "inventory/sample/group_vars")
@@ -561,16 +571,18 @@ class Kubespray:
     def _get_cluster_path(self, *args):
         return os.path.join(self.clusters_path, self.cluster_id, *args)
 
-    def _wait_for_ping(self, retries=30, sleep=10):
+    def _wait_for_ping(self, inventory_file, retries=30, sleep=10):
         args = [config.KS_ANSIBLE_CMD, "-m",
-                "ping", "all", "-i", "hosts.json"]
+                "ping", "all", "-i", inventory_file, "-e", "ansible_python_interpreter=/usr/bin/python3"]
         while retries:
-            retries -= 1
-            time.sleep(sleep)
-            cp = subprocess.run(args, cwd=self._get_cluster_path())
-            if cp.returncode == 0:
+            try:
+                subprocess.check_call(args)
                 return
-        raise RuntimeError("At least one node is unreachable")
+            except subprocess.CalledProcessError as e:
+                retries -= 1
+                time.sleep(sleep)
+                error = e
+        raise RuntimeError("At least one node is unreachable: {}".format(error))
 
     def _construct_env(self):
         env = os.environ.copy()
@@ -594,9 +606,10 @@ class Kubespray:
             inventory, playbook,
             "--extra-vars", "delete_nodes_confirmation=yes",
             "--extra-vars", "docker_dns_servers_strict=no",
+            "-e", "ansible_python_interpreter=/usr/bin/python3"
         ]
         env = self._construct_env()
-        self.ansible_log = os.path.join(self._get_cluster_path(), "ansible_log.txt")
+        self.ansible_log = os.path.join(self._get_cluster_path(), "ansible_log_for_{0}_playbook.txt".format(playbook))
         with open(self.ansible_log, "a+") as log_file:
             pipe = subprocess.Popen(
                 args,
@@ -703,6 +716,7 @@ class OpenStack:
         router = self.c.create_router(name=self.stack_name,
                                       ext_gateway_net_id=self.meta['ext_net'].id)
         self.c.add_router_interface(router, subnet["id"])
+        master_sg, common_sg = self._set_up_security_groups()
         resources["router_id"] = router["id"]
         resources["network_id"] = network["id"]
         resources["subnet_id"] = subnet["id"]
@@ -710,7 +724,8 @@ class OpenStack:
                                          servers_range=range(self.meta["master_count"]),
                                          image=self.meta['image'],
                                          flavor=self.meta['master_flavor'],
-                                         network=network):
+                                         network=network,
+                                         sg=["default", master_sg.name, common_sg.name]):
             fip = self.c.create_floating_ip("public", server=master)
             resources["masters"].append({
                 "id": master.id,
@@ -724,7 +739,8 @@ class OpenStack:
                                         image=self.meta['image'],
                                         flavor=self.meta['slave_flavor'],
                                         network=network,
-                                        add_random_suffix=True):
+                                        add_random_suffix=True,
+                                        sg=["default", common_sg.name]):
             resources["slaves"].append({
                 "id": slave.id,
                 "ip": list(slave.addresses.values())[0][0]["addr"],
@@ -807,7 +823,39 @@ class OpenStack:
         }
         return "#cloud-config\n" + yaml.dump(userdata)
 
-    def _boot_servers(self, *, name, servers_range, image, flavor, network,
+    def _set_up_security_groups(self):
+        master_sg = self.c.get_security_group(MASTER_SECURITY_GR)
+        if not master_sg:
+            master_sg = self.c.create_security_group(name=MASTER_SECURITY_GR,
+                                                     description="Kqueen master")
+            # etcd server client API
+            self.c.create_security_group_rule(master_sg.id, protocol="tcp",
+                                              port_range_min="2379",
+                                              port_range_max="2380")
+            # k8s API
+            self.c.create_security_group_rule(master_sg.id, protocol="tcp",
+                                              port_range_min="6443",
+                                              port_range_max="6443")
+            # Calico
+            self.c.create_security_group_rule(master_sg.id, protocol="tcp",
+                                              port_range_min="179",
+                                              port_range_max="179")
+
+        common_sg = self.c.get_security_group(COMMON_SECURITY_GR)
+        if not common_sg:
+            common_sg = self.c.create_security_group(name=COMMON_SECURITY_GR,
+                                                     description="Kqueen common")
+            # Kubelet API
+            self.c.create_security_group_rule(common_sg.id, protocol="tcp",
+                                              port_range_min="10250",
+                                              port_range_max="10255")
+            # NodePort Services
+            self.c.create_security_group_rule(common_sg.id, protocol="tcp",
+                                              port_range_min="30000",
+                                              port_range_max="32767")
+        return master_sg, common_sg
+
+    def _boot_servers(self, *, name, servers_range, image, flavor, network, sg,
                       add_random_suffix=False):
         server_ids = []
         for i in servers_range:
@@ -822,6 +870,7 @@ class OpenStack:
                 network=network,
                 availability_zone=self.os_kwargs.get("availability_zone", "nova"),
                 key_name=self.cluster.metadata["ssh_key_name"],
+                security_groups=sg
             )
             server_ids.append(server.id)
         retries = 50
