@@ -573,7 +573,7 @@ class Kubespray:
 
     def _wait_for_ping(self, inventory_file, retries=30, sleep=10):
         args = [config.KS_ANSIBLE_CMD, "-m",
-                "ping", "all", "-i", inventory_file]
+                "ping", "all", "-i", inventory_file, "-e", "ansible_python_interpreter=/usr/bin/python3"]
         while retries:
             try:
                 subprocess.check_call(args)
@@ -606,6 +606,7 @@ class Kubespray:
             inventory, playbook,
             "--extra-vars", "delete_nodes_confirmation=yes",
             "--extra-vars", "docker_dns_servers_strict=no",
+            "-e", "ansible_python_interpreter=/usr/bin/python3"
         ]
         env = self._construct_env()
         self.ansible_log = os.path.join(self._get_cluster_path(), "ansible_log_for_{0}_playbook.txt".format(playbook))
