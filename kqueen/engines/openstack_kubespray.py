@@ -711,6 +711,9 @@ class OpenStack:
                                          image=self.meta['image'],
                                          flavor=self.meta['master_flavor'],
                                          network=network):
+            if master.status == 'ERROR':
+                raise RuntimeError('Could not spawn the instance with id {0}. Check Openstack logs'.format(master.id))
+
             fip = self.c.create_floating_ip("public", server=master)
             resources["masters"].append({
                 "id": master.id,
@@ -725,6 +728,8 @@ class OpenStack:
                                         flavor=self.meta['slave_flavor'],
                                         network=network,
                                         add_random_suffix=True):
+            if slave.status == 'ERROR':
+                raise RuntimeError('Could not spawn the instance with id {0}. Check Openstack logs'.format(slave.id))
             resources["slaves"].append({
                 "id": slave.id,
                 "ip": list(slave.addresses.values())[0][0]["addr"],
