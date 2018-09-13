@@ -744,27 +744,35 @@ class OpenStack:
 
     def deprovision(self, volume_names):
         self._cleanup_lbaas()
-        server_ids = []
-        floating_ips = []
-        for server in self.c.list_servers():
-            if server.name.startswith(self.stack_name):
-                server_ids.append(server.id)
-                if server.public_v4:
-                    floating_ips.append(server.public_v4)
-                self.c.delete_server(server.id)
-        router = self.c.get_router(self.stack_name)
-        if router is not None:
-            for i in self.c.list_router_interfaces(router):
-                self.c.remove_router_interface(router, port_id=i.id)
-            self.c.delete_router(router.id)
-        self.c.delete_network(self.stack_name)
+
+        for attempt in range(3):
+            try:
+                router = self.c.get_router(self.stack_name)
+                if router is not None:
+                    for i in self.c.list_router_interfaces(router):
+                        self.c.remove_router_interface(router, port_id=i.id)
+                        time.sleep(2)
+                    self.c.delete_router(router.id)
+                server_ids = [server["id"] for server in (*self.cluster.metadata["resources"]["masters"],
+                                                          *self.cluster.metadata["resources"]["slaves"])]
+                for server_id in server_ids:
+                    self.c.delete_server(server_id)
+
+                floating_ips = [server["floating_ip_id"] for server in self.cluster.metadata["resources"]["masters"]]
+                break
+            except Exception as e:
+                if attempt == 2:
+                    raise e
+
+        # Wait for instances to be deleted
         for sid in server_ids:
             while self.c.get_server(sid):
                 time.sleep(5)
-        for fip in self.c.list_floating_ips():
-            if fip.floating_ip_address in floating_ips:
-                logger.info("Deleting floating ip %s" % fip.floating_ip_address)
-                self.c.delete_floating_ip(fip.id)
+
+        self.c.delete_network(self.stack_name)
+        for fip in floating_ips:
+            logger.info("Disassociating floating ip %s" % fip)
+            self.c.delete_floating_ip(fip)
         if volume_names:
             for v in self.c.block_storage.volumes():
                 pvc_name = v.metadata.get("kubernetes.io/created-for/pv/name")
