@@ -717,6 +717,8 @@ class OpenStack:
                                          flavor=self.meta['master_flavor'],
                                          network=network):
             if master.status == 'ERROR':
+                resources["masters"].append({"id": master.id})
+                self.cluster.metadata["resources"] = resources
                 raise RuntimeError('Could not spawn the instance with id {0}. Check Openstack logs'.format(master.id))
 
             fip = self.c.create_floating_ip("public", server=master)
@@ -734,6 +736,8 @@ class OpenStack:
                                         network=network,
                                         add_random_suffix=True):
             if slave.status == 'ERROR':
+                resources["slaves"].append({"id": master.id})
+                self.cluster.metadata["resources"] = resources
                 raise RuntimeError('Could not spawn the instance with id {0}. Check Openstack logs'.format(slave.id))
             resources["slaves"].append({
                 "id": slave.id,
@@ -758,16 +762,25 @@ class OpenStack:
                 for server_id in server_ids:
                     self.c.delete_server(server_id)
 
-                floating_ips = [server["floating_ip_id"] for server in self.cluster.metadata["resources"]["masters"]]
+                floating_ips = [server.get("floating_ip_id")
+                                for server in self.cluster.metadata["resources"]["masters"]]
                 break
             except Exception as e:
                 if attempt == 2:
                     raise e
 
         # Wait for instances to be deleted
+
         for sid in server_ids:
-            while self.c.get_server(sid):
-                time.sleep(5)
+            for attempt in range(5):
+                try:
+                    if self.c.get_server(sid) is not None:
+                        time.sleep(5)
+                    else:
+                        break
+                except openstack.exceptions.HttpException:
+                    # Catch error that is raised for an object that is being deleting
+                    pass
 
         self.c.delete_network(self.stack_name)
         for fip in floating_ips:
