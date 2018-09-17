@@ -436,32 +436,8 @@ class Kubespray:
         self._save_inventory(inventory, "hosts.json")
         self._create_group_vars(cluster_metadata)
         self._wait_for_ping()
-        self._add_fip_to_lo(resources)
         self._run_ansible()
         return self._get_kubeconfig(resources["masters"][0]["fip"])
-
-    def _add_fip_to_lo(self, resources):
-        """Add floating ip to loopback interface.
-
-        This is workaround for buggy deployments where node can't reach
-        itself by floating ip.
-        """
-        cmd_fmt = (
-            "sudo /bin/sh -c 'cat > /etc/rc.local <<EOF\n"
-            "/sbin/ip addr add %s/32 scope host dev lo\n"
-            "EOF'"
-        )
-        for master in resources["masters"]:
-            ip = master["fip"]
-            host = "@".join((self.ssh_username, ip))
-            ssh_cmd = ("ssh", host) + self.ssh_common_args
-            try:
-                subprocess.check_call(ssh_cmd + (cmd_fmt % ip, ))
-                subprocess.check_call(ssh_cmd + ("sudo /bin/sh /etc/rc.local", ))
-            except subprocess.CalledProcessError as e:
-                raise RuntimeError("Enable to add a loopback "
-                                   "to make localhost accessible by floating IP. "
-                                   "The reason is: {}".format(e))
 
     def scale(self, resources):
         inventory = self._generate_inventory(resources)
@@ -494,12 +470,22 @@ class Kubespray:
         kubespray_vars = {"persistent_volumes_enabled": True} if persistent_volumes else {}
 
         kubespray_vars["cloud_provider"] = "openstack"
-        kubespray_vars["openstack_blockstorage_version"] = "v2"
+        kubespray_vars["openstack_blockstorage_version"] = config.get("KS_OS_BLOCKSTORAGE_VERSION") or "v2"
+        kubespray_vars["calico_endpoint_to_host_action"] = "ACCEPT"
+        if config.get("KS_NO_PROXY"):
+            kubespray_vars["no_proxy"] = config.KS_NO_PROXY
+
+        kubespray_vars["openstack_lbaas_subnet_id"] = metadata["resources"]["subnet_id"]
+        kubespray_vars["openstack_lbaas_floating_network_id"] = metadata["resources"]["ext_net_id"]
+        # See https://github.com/kubernetes-incubator/kubespray/issues/2141
+        # Set this variable to true to get rid of this issue```
+        kubespray_vars["volume_cross_zone_attachment"] = True
+
         image_var_names = [var_name for var_name in dir(config) if var_name.endswith(('_IMAGE_REPO', '_IMAGE_TAG'))]
         image_variables = {k.lower(): getattr(config, k) for k in image_var_names}
         kubespray_vars.update(image_variables)
-        with open(os.path.join(dst, "all.yml"), "a") as all_yaml:
-            yaml.dump(kubespray_vars, all_yaml, default_flow_style=False)
+        with open(os.path.join(dst, "k8s-cluster.yml"), "a") as k8s_yaml:
+            yaml.dump(kubespray_vars, k8s_yaml, default_flow_style=False)
 
     def _make_files_dir(self):
         os.makedirs(self._get_cluster_path(), exist_ok=True)
@@ -548,7 +534,7 @@ class Kubespray:
         }
         for master in resources["masters"]:
             conf["all"]["hosts"][master["hostname"]] = {
-                "access_ip": master["fip"],
+                "access_ip": master["ip"],
                 "ansible_host": master["fip"],
                 "ansible_user": self.ssh_username,
                 "ansible_become": True,
@@ -577,7 +563,7 @@ class Kubespray:
     def _get_cluster_path(self, *args):
         return os.path.join(self.clusters_path, self.cluster_id, *args)
 
-    def _wait_for_ping(self, retries=30, sleep=10):
+    def _wait_for_ping(self, retries=15, sleep=10):
         args = [config.KS_ANSIBLE_CMD, "-m",
                 "ping", "all", "-i", "hosts.json"]
         while retries:
@@ -608,8 +594,9 @@ class Kubespray:
         args = [
             config.KS_ANSIBLE_PLAYBOOK_CMD, "-b", "-i",
             inventory, playbook,
-            "--extra-vars", "delete_nodes_confirmation=yes",
-            "--extra-vars", "docker_dns_servers_strict=no",
+            "-e", "delete_nodes_confirmation=yes",
+            "-e", "docker_dns_servers_strict=no",
+            "-e", "ansible_python_interpreter=/usr/bin/python3"
         ]
         env = self._construct_env()
         self.ansible_log = os.path.join(self._get_cluster_path(), "ansible_log_for_{0}_playbook.txt".format(playbook))
@@ -717,8 +704,9 @@ class OpenStack:
                                       subnet_name=self.stack_name,
                                       dns_nameservers=self.meta['dns'])
         router = self.c.create_router(name=self.stack_name,
-                                      ext_gateway_net_id=self.meta['ext_net'].id)
+                                      ext_gateway_net_id=self.meta["ext_net"].id)
         self.c.add_router_interface(router, subnet["id"])
+        resources["ext_net_id"] = self.meta["ext_net"].id
         resources["router_id"] = router["id"]
         resources["network_id"] = network["id"]
         resources["subnet_id"] = subnet["id"]
