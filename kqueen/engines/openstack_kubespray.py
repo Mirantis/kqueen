@@ -110,7 +110,7 @@ class OpenstackKubesprayEngine(BaseEngine):
                 "type": "text",
                 "order": 70,
                 "label": "Docker0 bridge IP",
-                "default": "10.13.0.1/16",
+                "default": config.KS_DOCKER_BIP if config.get("KS_DOCKER_BIP") else None,
                 "help_message": "network IP and netmask in CIDR format",
                 "validators": {
                     "cidr": True,
@@ -662,11 +662,8 @@ class OpenStack:
             raise ValueError("Master node count must be an odd number")
         self.meta["master_count"] = mc
         self.meta["slave_count"] = self.cluster.metadata["slave_count"]
-        self.meta["docker_bip_network"] = self.cluster.metadata.get("docker_bip_network", "10.13.0.1/16")
-
         self.meta["dns"] = [validate_ip(ip) for ip in
                             self.cluster.metadata.get("dns_nameservers", []).split(",")]
-
         try:
             self.meta["image"] = self.c.get_image(self.cluster.metadata["image_name"])
             if self.meta["image"] is None:
@@ -756,6 +753,10 @@ class OpenStack:
                         self.c.remove_router_interface(router, port_id=i.id)
                         time.sleep(2)
                     self.c.delete_router(router.id)
+                    logger.debug("Router {0} has been deleted".format(self.stack_name))
+                if "resources" not in self.cluster.metadata:
+                    # Deployment failed before instance spawning
+                    return
                 server_ids = [server["id"] for server in (*self.cluster.metadata["resources"]["masters"],
                                                           *self.cluster.metadata["resources"]["slaves"])]
                 for server_id in server_ids:
@@ -781,7 +782,6 @@ class OpenStack:
                     # Catch error that is raised for an object that is being deleting
                     pass
 
-        self.c.delete_network(self.stack_name)
         for fip in floating_ips:
             logger.info("Disassociating floating ip %s" % fip)
             self.c.delete_floating_ip(fip)
@@ -791,6 +791,12 @@ class OpenStack:
                 if pvc_name in volume_names:
                     logger.info("Deleting volume %s" % v.id)
                     self.c.delete_volume(v.id, wait=False)
+        for attempt in range(3):
+            try:
+                self.c.delete_network(self.stack_name)
+            except Exception as e:
+                if attempt == 2:
+                    raise e
 
     def grow(self, *, resources, new_slave_count):
         current_slave_count = len(resources["slaves"])
@@ -800,7 +806,7 @@ class OpenStack:
             servers_range=servers_range,
             image=self.cluster.metadata["image_name"],
             flavor=self.cluster.metadata["slave_flavor"],
-            network=self.c.get_network(resources["network_id"]),
+            network=resources["network_id"],
             add_random_suffix=True,
         )
         for slave in new_slaves:
@@ -822,19 +828,20 @@ class OpenStack:
         return resources
 
     def _get_userdata(self):
-        docker_bip = {"bip": self.meta["docker_bip_network"]}
         userdata = {
             "manage_etc_hosts": True,
             "package_update": True,
             "packages": ["python"],
-            "ssh_authorized_keys": [self.extra_ssh_key],
-            "write_files": [
-                {
-                    "content": json.dumps(docker_bip),
-                    "path": "/etc/docker/daemon.json",
-                },
-            ],
+            "ssh_authorized_keys": [self.extra_ssh_key]
         }
+        bip = self.cluster.metadata.get("docker_bip_network")
+        if bip:
+            docker_bip = {"bip": bip}
+            userdata["write_files"] = [
+                {"content": json.dumps(docker_bip),
+                 "path": "/etc/docker/daemon.json",
+                 }
+            ]
         return "#cloud-config\n" + yaml.dump(userdata)
 
     def _boot_servers(self, *, name, servers_range, image, flavor, network,
@@ -851,7 +858,7 @@ class OpenStack:
                 userdata=self._get_userdata(),
                 network=network,
                 availability_zone=self.os_kwargs.get("availability_zone", "nova"),
-                key_name=self.cluster.metadata["ssh_key_name"],
+                key_name=self.cluster.metadata["ssh_key_name"]
             )
             server_ids.append(server.id)
         retries = 50

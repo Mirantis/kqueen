@@ -51,3 +51,4 @@ class Config(BaseConfig):
     KS_NO_PROXY = "127.0.0.1,localhost,docker-prod-local.docker.mirantis.net,172.16.48.254," \
                   "cloud-cz.bud.mirantis.net,172.17.45.80"
     KS_OS_BLOCKSTORAGE_VERSION = "v2"
+    KS_DOCKER_BIP = "10.13.0.1/16"
