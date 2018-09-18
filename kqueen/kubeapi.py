@@ -51,6 +51,8 @@ class KubernetesAPI:
         # functions in https://github.com/kubernetes-client/python
         client_config = type.__call__(client.Configuration)
         kubeconfig = self.cluster.get_kubeconfig()
+        if kubeconfig is None:
+            raise ValueError("Could not create kubernetes API client: kubeconfig is not found ")
         kcl = KubeConfigLoader(
             config_dict=kubeconfig,
         )

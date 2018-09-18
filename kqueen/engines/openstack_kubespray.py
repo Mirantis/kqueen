@@ -131,6 +131,12 @@ class OpenstackKubesprayEngine(BaseEngine):
                 "label": "Availability zone",
                 "default": "nova",
             },
+            "persistent_volume": {
+                "type": "checkbox",
+                "order": 90,
+                "label": "Add Persistent Volumes Storage Class",
+                "help_message": "Default OpenStack Cinder Storage Class"
+            }
         },
         "provisioner": {
             "auth_url": {
@@ -238,7 +244,8 @@ class OpenstackKubesprayEngine(BaseEngine):
             self.cluster.metadata["node_count"] = node_count
             self.cluster.save()
             self.allow_addresses_for_calico(resources)
-            kubeconfig = self.ks.deploy(resources)
+
+            kubeconfig = self.ks.deploy(self.cluster.metadata)
             self.cluster.kubeconfig = kubeconfig
             self.cluster.state = config.CLUSTER_OK_STATE
             logger.info("Cluster provision completed")
@@ -423,37 +430,14 @@ class Kubespray:
                                 "-i", os.path.join(clusters_path, "ssh_key"))
         self._make_files_dir()
 
-    def deploy(self, resources):
+    def deploy(self, cluster_metadata):
+        resources = cluster_metadata['resources']
         inventory = self._generate_inventory(resources)
         self._save_inventory(inventory, "hosts.json")
-        self._create_group_vars()
+        self._create_group_vars(cluster_metadata)
         self._wait_for_ping()
-        self._add_fip_to_lo(resources)
         self._run_ansible()
         return self._get_kubeconfig(resources["masters"][0]["fip"])
-
-    def _add_fip_to_lo(self, resources):
-        """Add floating ip to loopback interface.
-
-        This is workaround for buggy deployments where node can't reach
-        itself by floating ip.
-        """
-        cmd_fmt = (
-            "sudo /bin/sh -c 'cat > /etc/rc.local <<EOF\n"
-            "/sbin/ip addr add %s/32 scope host dev lo\n"
-            "EOF'"
-        )
-        for master in resources["masters"]:
-            ip = master["fip"]
-            host = "@".join((self.ssh_username, ip))
-            ssh_cmd = ("ssh", host) + self.ssh_common_args
-            try:
-                subprocess.check_call(ssh_cmd + (cmd_fmt % ip, ))
-                subprocess.check_call(ssh_cmd + ("sudo /bin/sh /etc/rc.local", ))
-            except subprocess.CalledProcessError as e:
-                raise RuntimeError("Enable to add a loopback "
-                                   "to make localhost accessible by floating IP. "
-                                   "The reason is: {}".format(e))
 
     def scale(self, resources):
         inventory = self._generate_inventory(resources)
@@ -477,18 +461,31 @@ class Kubespray:
         with open(self._get_cluster_path(filename), "w") as fp:
             json.dump(inventory, fp, indent=4)
 
-    def _create_group_vars(self):
+    def _create_group_vars(self, metadata):
         src = os.path.join(self.kubespray_path, "inventory/sample/group_vars")
         dst = self._get_cluster_path("group_vars")
         shutil.copytree(src, dst)
 
-        with open(os.path.join(dst, "all.yml"), "a") as all_yaml:
-            data_to_add = {'cloud_provider': 'openstack'}
-            image_var_names = [var_name for var_name in dir(config) if var_name.endswith(('_IMAGE_REPO', '_IMAGE_TAG'))]
-            image_variables = {k.lower(): getattr(config, k) for k in image_var_names}
-            data_to_add.update(image_variables)
+        persistent_volumes = metadata.get("persistent_volume")
+        kubespray_vars = {"persistent_volumes_enabled": True} if persistent_volumes else {}
 
-            yaml.dump(data_to_add, all_yaml, default_flow_style=False)
+        kubespray_vars["cloud_provider"] = "openstack"
+        kubespray_vars["openstack_blockstorage_version"] = config.get("KS_OS_BLOCKSTORAGE_VERSION") or "v2"
+        kubespray_vars["calico_endpoint_to_host_action"] = "ACCEPT"
+        if config.get("KS_NO_PROXY"):
+            kubespray_vars["no_proxy"] = config.KS_NO_PROXY
+
+        kubespray_vars["openstack_lbaas_subnet_id"] = metadata["resources"]["subnet_id"]
+        kubespray_vars["openstack_lbaas_floating_network_id"] = metadata["resources"]["ext_net_id"]
+        # See https://github.com/kubernetes-incubator/kubespray/issues/2141
+        # Set this variable to true to get rid of this issue```
+        kubespray_vars["volume_cross_zone_attachment"] = True
+
+        image_var_names = [var_name for var_name in dir(config) if var_name.endswith(('_IMAGE_REPO', '_IMAGE_TAG'))]
+        image_variables = {k.lower(): getattr(config, k) for k in image_var_names}
+        kubespray_vars.update(image_variables)
+        with open(os.path.join(dst, "k8s-cluster.yml"), "a") as k8s_yaml:
+            yaml.dump(kubespray_vars, k8s_yaml, default_flow_style=False)
 
     def _make_files_dir(self):
         os.makedirs(self._get_cluster_path(), exist_ok=True)
@@ -537,7 +534,7 @@ class Kubespray:
         }
         for master in resources["masters"]:
             conf["all"]["hosts"][master["hostname"]] = {
-                "access_ip": master["fip"],
+                "access_ip": master["ip"],
                 "ansible_host": master["fip"],
                 "ansible_user": self.ssh_username,
                 "ansible_become": True,
@@ -566,7 +563,7 @@ class Kubespray:
     def _get_cluster_path(self, *args):
         return os.path.join(self.clusters_path, self.cluster_id, *args)
 
-    def _wait_for_ping(self, retries=30, sleep=10):
+    def _wait_for_ping(self, retries=15, sleep=10):
         args = [config.KS_ANSIBLE_CMD, "-m",
                 "ping", "all", "-i", "hosts.json"]
         while retries:
@@ -597,8 +594,9 @@ class Kubespray:
         args = [
             config.KS_ANSIBLE_PLAYBOOK_CMD, "-b", "-i",
             inventory, playbook,
-            "--extra-vars", "delete_nodes_confirmation=yes",
-            "--extra-vars", "docker_dns_servers_strict=no",
+            "-e", "delete_nodes_confirmation=yes",
+            "-e", "docker_dns_servers_strict=no",
+            "-e", "ansible_python_interpreter=/usr/bin/python3"
         ]
         env = self._construct_env()
         self.ansible_log = os.path.join(self._get_cluster_path(), "ansible_log_for_{0}_playbook.txt".format(playbook))
@@ -706,8 +704,9 @@ class OpenStack:
                                       subnet_name=self.stack_name,
                                       dns_nameservers=self.meta['dns'])
         router = self.c.create_router(name=self.stack_name,
-                                      ext_gateway_net_id=self.meta['ext_net'].id)
+                                      ext_gateway_net_id=self.meta["ext_net"].id)
         self.c.add_router_interface(router, subnet["id"])
+        resources["ext_net_id"] = self.meta["ext_net"].id
         resources["router_id"] = router["id"]
         resources["network_id"] = network["id"]
         resources["subnet_id"] = subnet["id"]
@@ -717,6 +716,8 @@ class OpenStack:
                                          flavor=self.meta['master_flavor'],
                                          network=network):
             if master.status == 'ERROR':
+                resources["masters"].append({"id": master.id})
+                self.cluster.metadata["resources"] = resources
                 raise RuntimeError('Could not spawn the instance with id {0}. Check Openstack logs'.format(master.id))
 
             fip = self.c.create_floating_ip("public", server=master)
@@ -734,6 +735,8 @@ class OpenStack:
                                         network=network,
                                         add_random_suffix=True):
             if slave.status == 'ERROR':
+                resources["slaves"].append({"id": master.id})
+                self.cluster.metadata["resources"] = resources
                 raise RuntimeError('Could not spawn the instance with id {0}. Check Openstack logs'.format(slave.id))
             resources["slaves"].append({
                 "id": slave.id,
@@ -758,16 +761,25 @@ class OpenStack:
                 for server_id in server_ids:
                     self.c.delete_server(server_id)
 
-                floating_ips = [server["floating_ip_id"] for server in self.cluster.metadata["resources"]["masters"]]
+                floating_ips = [server.get("floating_ip_id")
+                                for server in self.cluster.metadata["resources"]["masters"]]
                 break
             except Exception as e:
                 if attempt == 2:
                     raise e
 
         # Wait for instances to be deleted
+
         for sid in server_ids:
-            while self.c.get_server(sid):
-                time.sleep(5)
+            for attempt in range(5):
+                try:
+                    if self.c.get_server(sid) is not None:
+                        time.sleep(5)
+                    else:
+                        break
+                except openstack.exceptions.HttpException:
+                    # Catch error that is raised for an object that is being deleting
+                    pass
 
         self.c.delete_network(self.stack_name)
         for fip in floating_ips:

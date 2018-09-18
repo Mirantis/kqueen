@@ -20,7 +20,7 @@ RUN pip install ./kqueen
 
 # Avoid Ssh issues with docker overlayfs and sockets
 ENV ANSIBLE_SSH_CONTROL_PATH /dev/shm/cp%%h-%%p-%%r
-ENV ANSIBLE_SSH_RETRIES 3
+ENV ANSIBLE_SSH_RETRIES 5
 ENV ANSIBLE_TIMEOUT 25
 ENV KQUEEN_KS_KUBESPRAY_PATH /code/kubespray
 ENV KQUEEN_KS_ANSIBLE_CMD /usr/local/bin/ansible
