@@ -565,7 +565,7 @@ class Kubespray:
 
     def _wait_for_ping(self, retries=15, sleep=10):
         args = [config.KS_ANSIBLE_CMD, "-m",
-                "ping", "all", "-i", "hosts.json"]
+                "ping", "all", "-i", "hosts.json", "-e", "ansible_python_interpreter=/usr/bin/python3"]
         while retries:
             retries -= 1
             time.sleep(sleep)
