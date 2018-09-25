@@ -12,6 +12,7 @@ test_require = [
     'coveralls',
     'faker',
     'flake8',
+    'mccabe',
     'pytest',
     'pytest-cov',
     'pytest-env',
