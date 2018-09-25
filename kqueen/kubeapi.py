@@ -56,8 +56,10 @@ class KubernetesAPI:
         kcl = KubeConfigLoader(
             config_dict=kubeconfig,
         )
-        kcl.load_and_set(client_config)
 
+        kcl.load_and_set(client_config)
+        if self.cluster.provisioner.engine == 'kqueen.engines.OpenstackKubesprayEngine':
+            client_config.assert_hostname = False
         return client.ApiClient(configuration=client_config)
 
     def get_version(self):
