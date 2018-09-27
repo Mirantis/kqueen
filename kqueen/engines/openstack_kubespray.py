@@ -478,8 +478,14 @@ class Kubespray:
         kubespray_vars["openstack_lbaas_subnet_id"] = metadata["resources"]["subnet_id"]
         kubespray_vars["openstack_lbaas_floating_network_id"] = metadata["resources"]["ext_net_id"]
         # See https://github.com/kubernetes-incubator/kubespray/issues/2141
-        # Set this variable to true to get rid of this issue```
+        # Set this variable to true to get rid of this issue
         kubespray_vars["volume_cross_zone_attachment"] = True
+
+        # See https://github.com/kubernetes-incubator/kubespray/issues/1430
+        # Set all fips in this var to get rid of kubectl ssl-certs issue
+        ssl_fips = [master["fip"] for master in metadata["resources"]["masters"]]
+        if ssl_fips:
+            kubespray_vars["supplementary_addresses_in_ssl_keys"] = ssl_fips
 
         image_var_names = [var_name for var_name in dir(config) if var_name.endswith(('_IMAGE_REPO', '_IMAGE_TAG'))]
         image_variables = {k.lower(): getattr(config, k) for k in image_var_names}
