@@ -96,7 +96,7 @@ class AksEngine(BaseEngine):
                     'required': True
                 }
             },
-            'node_count': {
+            'node_count_aks': {
                 'type': 'integer',
                 'label': 'Node Count',
                 'default': 1,
