@@ -51,7 +51,7 @@ class GceEngine(BaseEngine):
             }
         },
         'cluster': {
-            'node_count': {
+            'node_count_gke': {
                 'type': 'integer',
                 'label': 'Node Count',
                 'order': 1,
