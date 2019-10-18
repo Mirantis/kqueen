@@ -34,7 +34,7 @@ setup(
     include_package_data=True,
     install_requires=[
         'bcrypt',
-        'Flask==0.12.2',
+        'Flask==1.0',
         'Flask-JWT==0.3.2',
         'flask-swagger-ui',
         'gunicorn',
