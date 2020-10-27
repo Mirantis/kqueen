@@ -42,7 +42,7 @@ setup(
         'oauth2client==3.0.0',
         'openstacksdk==0.16.0',
         'python-neutronclient==6.9.0',
-        'cryptography==2.3',
+        'cryptography==3.2',
         'prometheus_client',
         'python-etcd',
         'python-jenkins==0.4.16',
